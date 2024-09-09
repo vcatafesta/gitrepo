@@ -4,7 +4,7 @@
 #
 #  gitrepo.sh
 #  Created: qui 05 set 2024 00:51:12 -04
-#  Altered: sáb 07 set 2024 15:20:09 -04
+#  Altered: seg 09 set 2024 14:07:08 -04
 #
 #  Copyright (c) 2024-2024, Tales A. Mendonça <talesam@gmail.com>
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
@@ -32,7 +32,7 @@
 ##############################################################################
 # system
 declare APP="${0##*/}"
-declare VERSION="1.19.0" # Versão do script
+declare VERSION="1.20.1" # Versão do script
 declare distro="$(uname -n)"
 readonly DEPENDENCIES=('git' 'tput')
 
@@ -520,8 +520,8 @@ update_commit_push() {
 		print_and_log_message "$GREEN" "Commit realizado com sucesso: $commit_message"
 
 		print_and_log_message "$CYAN" "Realizando push para o GitHub..."
-		if ! git push --set-upstream origin main; then
-			die "$RED" "Erro: 'git push --set-upstream origin main' - Falha ao realizar push"
+		if ! git push --set-upstream origin "$mainbranch"; then
+			die "$RED" "Erro: 'git push --set-upstream origin ${mainbranch}' - Falha ao realizar push"
 		fi
 		print_and_log_message "$YELLOW" "Commit hash: $(get_git_last_commit_url)"
 		print_and_log_message "$GREEN" "Commit e push realizados com sucesso. Processo finalizado."
@@ -531,6 +531,7 @@ update_commit_push() {
 }
 
 create_branch_and_push() {
+	local mainbranch="$(get_main_branch)"
 	local branch_type="$1"
 	declare -g new_branch
 
@@ -538,13 +539,13 @@ create_branch_and_push() {
 	print_and_log_message "$CYAN" "Atualizando o branch main..."
 
 	# Certifique-se de estar no branch main e atualize-o
-	if ! git checkout main; then
+	if ! git checkout "$mainbranch"; then
 		die "$RED" "Falha ao mudar para o branch main"
 	fi
-	if ! git pull origin main; then
-		die "$RED" "Falha ao atualizar o branch main"
+	if ! git pull origin "$mainbranch"; then
+		die "$RED" "Falha ao atualizar o branch $mainbranch"
 	fi
-	print_and_log_message "$GREEN" "Branch main atualizado"
+	print_and_log_message "$GREEN" "Branch ${mainbranch} atualizado"
 
 	print_and_log_message "$CYAN" "Criando e mudando para o novo branch: $new_branch"
 	if ! git checkout -b "$new_branch"; then
@@ -561,14 +562,14 @@ create_branch_and_push() {
 
 	# Voltar para o branch main e fazer push das alterações
 	print_and_log_message "$CYAN" "Realizando push das alterações no branch main..."
-	if ! git checkout main; then
-		die "$RED" "Falha ao mudar para o branch main"
+	if ! git checkout "$mainbranch"; then
+		die "$RED" "Falha ao mudar para o branch ${mainbranch}"
 	fi
 
-	if ! git push origin main; then
-		die "$RED" "Falha ao realizar push do branch main"
+	if ! git push origin "$mainbranch"; then
+		die "$RED" "Falha ao realizar push do branch ${mainbranch}"
 	fi
-	print_and_log_message "$GREEN" "Push realizado com sucesso para o branch main"
+	print_and_log_message "$GREEN" "Push realizado com sucesso para o branch ${mainbranch}"
 }
 
 get_url_actionsOLD() {
