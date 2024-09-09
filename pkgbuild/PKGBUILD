@@ -3,7 +3,8 @@
 
 pkgname=gitrepo
 pkgdesc="Wrapper git para o CommunityBig"
-#depends=('')
+depends=('git')
+depends+=('ncurses') # tput
 #makedepends=('')
 #optdepends=('')
 #conflicts=('')

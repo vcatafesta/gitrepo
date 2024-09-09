@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # -*- coding: utf-8 -*-
-# shellcheck shell=bash disable=SC1091,SC2039,SC2166,SC2317,SC2155,SC2034,SC2229
+# shellcheck shell=bash disable=SC1091,SC2039,SC2166,SC2317,SC2155,SC2034,SC2229,SC2076
 #
 #  gitrepo.sh
 #  Created: qui 05 set 2024 00:51:12 -04
-#  Altered: seg 09 set 2024 14:07:08 -04
+#  Altered: seg 09 set 2024 14:26:23 -04
 #
 #  Copyright (c) 2024-2024, Tales A. Mendonça <talesam@gmail.com>
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
@@ -184,60 +184,60 @@ set_varcolors() {
 	# does the terminal support true-color?
 	if [[ -n "$(command -v "tput")" ]]; then
 		#tput setaf 127 | cat -v  #capturar saida
-		declare -g RED=$(tput bold)$(tput setaf 196)
-		declare -g GREEN=$(tput bold)$(tput setaf 2)
-		declare -g YELLOW=$(tput bold)$(tput setaf 3)
-		declare -g BLUE=$(tput setaf 4)
-		declare -g PURPLE=$(tput setaf 125)
-		declare -g CYAN=$(tput setaf 6)
-		declare -g NC=$(tput sgr0)
-		declare -g RESET=$(tput sgr0)
-		declare -g BOLD=$(tput bold)
-		declare -g black=$(tput bold)$(tput setaf 0)
-		declare -g reverse=$(tput rev)
-		declare -g branca="${black}$(tput setab 7)"
 
-		reset=$(tput sgr0)
-		rst=$(tput sgr0)
-		bold=$(tput bold)
-		underline=$(tput smul)
-		nounderline=$(tput rmul)
-		reverse=$(tput rev)
+		: "${RED=$(tput bold)$(tput setaf 196)}"
+		: "${GREEN=$(tput bold)$(tput setaf 2)}"
+		: "${YELLOW=$(tput bold)$(tput setaf 3)}"
+		: "${BLUE=$(tput setaf 4)}"
+		: "${PURPLE=$(tput setaf 125)}"
+		: "${CYAN=$(tput setaf 6)}"
+		: "${NC=$(tput sgr0)}"
+		: "${RESET=$(tput sgr0)}"
+		: "${BOLD=$(tput bold)}"
+		: "${black=$(tput bold)$(tput setaf 0)}"
+		: "${reverse=$(tput rev)}"
+		: "${branca=${black}$(tput setab 7)}"
 
-		black=$(tput bold)$(tput setaf 0)
-		red=$(tput bold)$(tput setaf 196)
-		green=$(tput bold)$(tput setaf 2)
-		yellow=$(tput bold)$(tput setaf 3)
-		#   blue=$(tput setaf 4)
-		blue=$(tput setaf 27)
-		magenta=$(tput setaf 5)
-		cyan=$(tput setaf 6)
-		white=$(tput setaf 7)
-		gray=$(tput setaf 8)
-		light_red=$(tput setaf 9)
-		light_green=$(tput setaf 10)
-		light_yellow=$(tput setaf 11)
-		light_blue=$(tput setaf 12)
-		light_magenta=$(tput setaf 13)
-		light_cyan=$(tput setaf 14)
-		light_white=$(tput setaf 15)
-		orange=$(tput setaf 202)
-		purple=$(tput setaf 125)
-		violet=$(tput setaf 61)
+		: "${reset=$(tput sgr0)}"
+		: "${rst=$(tput sgr0)}"
+		: "${bold=$(tput bold)}"
+		: "${underline=$(tput smul)}"
+		: "${nounderline=$(tput rmul)}"
+		: "${reverse=$(tput rev)}"
+
+		: "${black=$(tput bold)$(tput setaf 0)}"
+		: "${red=$(tput bold)$(tput setaf 196)}"
+		: "${green=$(tput bold)$(tput setaf 2)}"
+		: "${yellow=$(tput bold)$(tput setaf 3)}"
+		: "${blue=$(tput setaf 27)}"
+		: "${magenta=$(tput setaf 5)}"
+		: "${cyan=$(tput setaf 6)}"
+		: "${white=$(tput setaf 7)}"
+		: "${gray=$(tput setaf 8)}"
+		: "${light_red=$(tput setaf 9)}"
+		: "${light_green=$(tput setaf 10)}"
+		: "${light_yellow=$(tput setaf 11)}"
+		: "${light_blue=$(tput setaf 12)}"
+		: "${light_magenta=$(tput setaf 13)}"
+		: "${light_cyan=$(tput setaf 14)}"
+		: "${light_white=$(tput setaf 15)}"
+		: "${orange=$(tput setaf 202)}"
+		: "${purple=$(tput setaf 125)}"
+		: "${violet=$(tput setaf 61)}"
 
 		# Definir cores de fundo
-		preto=$(tput setab 0)
-		vermelho=$(tput setab 196)
-		verde=$(tput setab 2)
-		amarelo=$(tput setab 3)
-		azul=$(tput setab 20)
-		roxo=$(tput setab 5)
-		ciano=$(tput setab 6)
-		branca="${black}$(tput setab 7)"
-		cinza=$(tput setab 8)
-		laranja=$(tput setab 202)
-		roxa=$(tput setab 125)
-		violeta=$(tput setab 61)
+		: "${preto=$(tput setab 0)}"
+		: "${vermelho=$(tput setab 196)}"
+		: "${verde=$(tput setab 2)}"
+		: "${amarelo=$(tput setab 3)}"
+		: "${azul=$(tput setab 20)}"
+		: "${roxo=$(tput setab 5)}"
+		: "${ciano=$(tput setab 6)}"
+		: "${branca="${black}$(tput setab 7)"}"
+		: "${cinza=$(tput setab 8)}"
+		: "${laranja=$(tput setab 202)}"
+		: "${roxa=$(tput setab 125)}"
+		: "${violeta=$(tput setab 61)}"
 	else
 		unset_varcolors
 	fi
@@ -307,7 +307,7 @@ gclean_branch_remote_and_update_local() {
 	print_and_log_message "${RED}" "Apaga todos os branches remotos (exceto $mainbranch e os mais novos com prefixo testing- e stable-) e atualiza o repositório local"
 
 	# Confirmar a operação
-	read -p "${PURPLE}Digite --confirm para confirmar: " clean
+	read -r -p "${PURPLE}Digite --confirm para confirmar: " clean
 	if [[ "$clean" != "--confirm" ]]; then
 		print_and_log_message "${YELLOW}" "Operação cancelada. Retornando ao menu em 5s"
 		sleep 5
@@ -341,7 +341,6 @@ gclean_branch_remote_and_update_local() {
 	print_and_log_message "${CYAN}" "Excluir todos os branches remotos (exceto $branches_to_keep_remote)"
 	for branch in $remote_branches; do
 		branch_name=${branch#origin/} # Usa expansão de parâmetro para remover 'origin/'
-		echo $branch_name
 		if [[ ! " $branches_to_keep_remote " =~ " origin/$branch_name " ]]; then
 			git branch -D "$branch_name"
 			git push origin --delete "$branch_name"
@@ -357,8 +356,8 @@ gclean_branch_remote_and_update_local() {
 	git pull origin "$mainbranch"
 
 	# Listar os branches finais para confirmação
-  print_and_log_message "${CYAN}" "Branches finais:"
-  git branch -a
+	print_and_log_message "${CYAN}" "Branches finais:"
+	git branch -a
 	print_and_log_message "${GREEN}" "Branches remotos limpos e repositório local atualizado."
 	checkout_and_exit 0
 }
@@ -608,6 +607,8 @@ get_url_actions() {
 }
 
 delete_failed_runs() {
+	local result
+
 	# Requisição para listar todas as execuções da workflow
 	runs=$(curl -s -X GET \
 		-H "Accept: application/vnd.github.v3+json" \
@@ -639,8 +640,9 @@ delete_failed_runs() {
 				-H "Authorization: token $TOKEN_RELEASE" \
 				"https://api.github.com/repos/${REPO}/actions/runs/$run_id")
 
+			result="$?"
 			# Verifique a resposta para confirmar a exclusão
-			if [ $? -eq 0 ]; then
+			if [[ $result -eq 0 ]]; then
 				echo "Run ID $run_id excluído com sucesso."
 			else
 				echo "Falha ao excluir o run ID $run_id."
@@ -652,6 +654,8 @@ delete_failed_runs() {
 }
 
 debug_json() {
+	local result
+
 	# Requisição para listar todas as execuções da workflow
 	runs=$(curl -s -X GET \
 		-H "Accept: application/vnd.github.v3+json" \
@@ -683,8 +687,9 @@ debug_json() {
 				-H "Authorization: token $TOKEN_RELEASE" \
 				"https://api.github.com/repos/${REPO}/actions/runs/$run_id")
 
+			result="$?"
 			# Verifique a resposta para confirmar a exclusão
-			if [ $? -eq 0 ]; then
+			if [[ "$result" -eq 0 ]]; then
 				echo "Run ID $run_id excluído com sucesso."
 			else
 				echo "Falha ao excluir o run ID $run_id."
