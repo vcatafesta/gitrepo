@@ -611,7 +611,7 @@ update_commit_push() {
 	local mainbranch="$(get_main_branch)"
 
 	if [[ "$USER" == "vcatafesta" ]]; then
-		default_commit_message="$(date) Vilmar Catafesta (vcatafesta@gmail.com)"
+		[[ -z "$default_commit_message" ]] && default_commit_message="$(date) Vilmar Catafesta (vcatafesta@gmail.com)"
 	else
 		[[ -z "$default_commit_message" ]] && default_commit_message=""
 	fi
