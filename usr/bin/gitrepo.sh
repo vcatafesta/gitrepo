@@ -33,7 +33,7 @@
 # system
 declare APP="${0##*/}"
 declare APPDESC="Wrapper git para o BigCommunity"
-declare VERSION="2.0.1" # Versão do script
+declare VERSION="2.0.2" # Versão do script
 declare distro="$(uname -n)"
 readonly DEPENDENCIES=('git' 'tput')
 readonly organizations=("communitybig" "chililinux" "biglinux" "talesam" "vcatafesta")
