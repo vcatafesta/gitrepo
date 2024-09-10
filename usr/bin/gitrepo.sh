@@ -502,6 +502,8 @@ parse_parameters() {
 		ORGANIZATION="${REPO%%/*}"                 # communitybig
 	fi
 
+	get_token_release # Obtem o TOKEN_RELEASE utilizando a função get_token_release
+
 	if $param_build_was_supplied; then
 		branch_type="$value_build"
 		if $param_commit_was_supplied; then
@@ -520,6 +522,7 @@ Ao usar o parametro ${YELLOW}'-b|--build' ${reset}é necessário também este pa
 
 	if $param_aur_was_supplied; then
 		Construir_pacote_do_AUR "$value_aur"
+		checkout_and_exit 0
 	fi
 }
 
@@ -919,7 +922,6 @@ sh_configure_environment() {
 
 	checkDependencies
 	parse_parameters "$@"
-	get_token_release # Obtem o TOKEN_RELEASE utilizando a função get_token_release
 }
 
 Apenas_fazer_commit_push() {
