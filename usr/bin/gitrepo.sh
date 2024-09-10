@@ -989,7 +989,7 @@ for arg in "$@"; do
 done
 
 # Cores e estilos
-[[ $nocolor == false ]] && unset_varcolors || set_varcolors
+[[ $nocolor == "true" ]] && unset_varcolors || set_varcolors
 
 [[ "$1" = @(-V|--version) ]] && {
 	sh_version
