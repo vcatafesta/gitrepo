@@ -908,6 +908,7 @@ Apenas_fazer_commit_push() {
 	else
 		die "$RED" "Esta opção só está disponível em repositórios git."
 	fi
+	checkout_and_exit 0
 }
 
 Realizar_commit_e_gerar_pacote() {
