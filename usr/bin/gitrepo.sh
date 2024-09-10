@@ -980,15 +980,16 @@ Construir_pacote_do_AUR() {
 ########################################
 # Verificações iniciais
 
-# Cores e estilos
-set_varcolors
-
+nocolor=false
 # Loop através de todos os parâmetros ($@)
 for arg in "$@"; do
   if [[ "$arg" = @(-n|--nocolor) ]]; then
-		unset_varcolors
+  	nocolor=true
   fi
 done
+
+# Cores e estilos
+[[ $nocolor ]] && unset_varcolors || set_varcolors
 
 [[ "$1" = @(-V|--version) ]] && {
 	sh_version
