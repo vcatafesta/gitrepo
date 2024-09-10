@@ -4,7 +4,7 @@
 #
 #  gitrepo.sh - Wrapper git para o BigCommunity
 #  Created: qui 05 set 2024 00:51:12 -04
-#  Altered: seg 09 set 2024 20:31:51 -04
+#  Altered: ter 10 set 2024 01:12:39 -04
 #
 #  Copyright (c) 2024-2024, Tales A. Mendonça <talesam@gmail.com>
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
@@ -33,7 +33,7 @@
 # system
 declare APP="${0##*/}"
 declare APPDESC="Wrapper git para o BigCommunity"
-declare VERSION="2.0.2" # Versão do script
+declare VERSION="2.0.8" # Versão do script
 declare distro="$(uname -n)"
 readonly DEPENDENCIES=('git' 'tput')
 readonly organizations=("communitybig" "chililinux" "biglinux" "talesam" "vcatafesta")
@@ -127,9 +127,9 @@ p_log() {
 	[[ -z "$died" ]] && died=false
 #	echo -e "${color}=> ${message}${RESET}"
 	if $died; then
-		printf "${red}${CROSS} => ${color}%s\n\033[m" "$message"
+		printf "${CROSS} => ${color}%s\n\033[m" "$message"
 	else
-		printf "${green}${TICK} => ${color}%s\n\033[m" "$message"
+		printf "${TICK} => ${color}%s\n\033[m" "$message"
 	fi
 	# Remover códigos de escape ANSI do log
 	clean_log=$(sed -E 's/\x1b\[[0-9;]*[a-zA-Z]//g; s/\x1b\(B//g' <<<"$message")
@@ -256,20 +256,23 @@ set_varcolors() {
 		: "${DONE="${COL_LIGHT_GREEN} done!${COL_NC}"}"
 		: "${OVER="\\r\\033[K"}"
 		: "${DOTPREFIX="  ${black}::${reset} "}"
-		: "${TICK="${white}[${verde}✓${reset}${white}]${reset}"}"
-		: "${CROSS="${white}[${roxa}✗${reset}${white}]${reset}"}"
-		: "${INFO="${white}[${cinza}i${reset}${white}]${reset}"}"
+		: "${TICK="${white}[${verde}✓${rst}${white}]${rst}"}"
+		: "${CROSS="${white}[${roxa}✗${rst}${white}]${rst}"}"
+		: "${INFO="${white}[${cinza}i${rst}${white}]${rst}"}"
 	else
 		unset_varcolors
 	fi
 }
 
 unset_varcolors() {
-	unset RED GREEN YELLOW BLUE PURPLE CYAN NC RESET BOLD black reverse branca
+	unset RED GREEN YELLOW BLUE PURPLE CYAN NC RESET BOLD
 	unset reset rst bold underline nounderline reverse
 	unset black red green yellow blue magenta cyan white gray orange purple violet
 	unset light_red light_green light_yellow light_blue light_magenta light_cyan light_white
 	unset preto vermelho verde amarelo azul roxo ciano branca cinza laranja roxa violeta
+	TICK="${white}[${verde}✓${rst}${white}]${rst}"
+	CROSS="${white}[${roxa}✗${rst}${white}]${rst}"
+	INFO="${white}[${cinza}i${rst}${white}]${rst}"
 }
 
 checkDependencies() {
@@ -396,6 +399,7 @@ sh_usage() {
 		      -c|--commit          ${orange}<message> ${cyan} # Apenas fazer commit/push ${yellow}obrigátorio mensagem do commit ${reset}
 		      -b|--build            ${orange}<branch> ${cyan} # Realizar commit/push e gerar pacote ${reset} branch válidos: ${yellow}testing ${cyan}ou ${yellow}stable ${reset}
 		      -a|--aur              ${orange}<pacote> ${cyan} # Construir pacote do AUR ${yellow}obrigátorio nome do pacote para construir ${reset}
+		      -n|--nocolor                   ${cyan} # Suprime a impressão de cores ${reset}
 		      -V|--version                   ${cyan} # Imprime a versão do aplicativo ${reset}
 		      -h|--help                      ${cyan} # Mostra este Help ${reset}
 	EOF
@@ -448,13 +452,16 @@ parse_parameters() {
 
 	while [[ $# -gt 0 ]]; do
 		case $1 in
+		-n | --nocolor)
+			unset_varcolors
+			shift # past argument
+			;;
 		-o | --org | --organization)
 			param_organization="$1"
 			value_organization="$2"
 			# Teste se o parâmetro foi fornecido e se o valor é válido
 			check_param_org "$value_organization"
 			param_organization_was_supplied=true
-			shift # past argument
 			shift # past value
 			;;
 		-c | --commit)
