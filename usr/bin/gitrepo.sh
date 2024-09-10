@@ -129,7 +129,7 @@ p_log() {
 	if $died; then
 		printf "${red}$CROSS => ${color}%s\n\033[m" "$message"
 	else
-		printf "${green}$TICK => ${color}%s\n\033[m" "$message"
+		printf "${black}$TICK => ${color}%s\n\033[m" "$message"
 	fi
 	# Remover códigos de escape ANSI do log
 	clean_log=$(sed -E 's/\x1b\[[0-9;]*[a-zA-Z]//g; s/\x1b\(B//g' <<<"$message")
