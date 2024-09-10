@@ -478,7 +478,7 @@ parse_parameters() {
 	fi
 
 	if $param_build_was_supplied; then
-		branch_type="$param_value"
+		branch_type="$value_build"
 		if $param_commit_was_supplied; then
 			default_commit_message="$value_commit"
 		else
