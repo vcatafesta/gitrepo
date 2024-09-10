@@ -898,9 +898,6 @@ trigger_workflow() {
 }
 
 sh_configure_environment() {
-	# Cores e estilos
-	set_varcolors
-
 	#debug
 	export PS4='${RED}${0##*/}${GREEN}[$FUNCNAME]${PURPLE}[$LINENO]${RESET}'
 	#set -x
@@ -982,10 +979,14 @@ Construir_pacote_do_AUR() {
 ## main() { Início do script principal }
 ########################################
 # Verificações iniciais
+
+# Cores e estilos
+set_varcolors
+
 # Loop através de todos os parâmetros ($@)
 for arg in "$@"; do
   if [[ "$arg" = @(-n|--nocolor) ]]; then
-  	unset_varcolors
+		unset_varcolors
   fi
 done
 
