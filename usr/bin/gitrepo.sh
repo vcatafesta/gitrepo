@@ -250,6 +250,13 @@ set_varcolors() {
 		: "${roxa=$(tput setab 125)}"
 		: "${violeta=$(tput setab 61)}"
 
+		: "${COL_NC='\e[0m'}" # No Color
+		: "${COL_LIGHT_GREEN='\e[1;32m'}"
+		: "${COL_LIGHT_RED='\e[1;31m'}"
+		: "${INFO="[i]"}"
+		: "${DONE="${COL_LIGHT_GREEN} done!${COL_NC}"}"
+		: "${OVER="\\r\\033[K"}"
+		: "${DOTPREFIX="  ${black}::${reset} "}"
 		: "${TICK="${white}[${COL_LIGHT_GREEN}✓${COL_NC}${white}]"}"
 		: "${CROSS="${white}[${COL_LIGHT_RED}✗${COL_NC}$white]"}"
 	else
