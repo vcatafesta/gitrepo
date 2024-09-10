@@ -667,7 +667,7 @@ update_commit_push() {
 		if ! git push --set-upstream origin "$mainbranch"; then
 			die "$RED" "Erro: 'git push --set-upstream origin ${mainbranch}' - Falha ao realizar push"
 		fi
-		p_log "$YELLOW" "Commit hash: ${reset}$(get_git_last_commit_url)"
+		p_log "$YELLOW" "Commit hash: ${gray}$(get_git_last_commit_url)${reset}"
 		p_log "$GREEN" "Commit e push realizados com sucesso. Processo finalizado."
 	else
 		p_log "$YELLOW" "Não há mudanças para commitar."
