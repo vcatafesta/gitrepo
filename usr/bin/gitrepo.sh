@@ -36,9 +36,10 @@ declare APPDESC="Wrapper git para o BigCommunity"
 declare VERSION="1.20.1" # Versão do script
 declare distro="$(uname -n)"
 readonly DEPENDENCIES=('git' 'tput')
+readonly organizations=("communitybig" "chililinux" "biglinux" "talesam" "vcatafesta")
+readonly branchs=("testing" "stable")
 
 # Funções auxiliares
-
 get() {
 	local row="$1"
 	local col="$2"
@@ -369,17 +370,128 @@ gclean_branch_remote_and_update_local() {
 sh_usage() {
 	set_varcolors
 	cat <<-EOF
-${reset}${APP} v${VERSION} - ${APPDESC}${reset}
-${red}Uso: ${reset}$APP ${cyan}[opções]${reset}
+		${reset}${APP} v${VERSION} - ${APPDESC}${reset}
+		${red}Uso: ${reset}$APP ${cyan}[opções]${reset}
 
-    ${cyan}Opções:${reset}
-      -o|--org|--organization <name> ${cyan} # Configura organização de trabalho no Github ${yellow}(default: communitybig)${reset}
-      -c|--commit          <message> ${cyan} # Apenas fazer commit/push ${reset}
-      -b|--build                     ${cyan} # Realizar commit/push e gerar pacote ${reset}
-      -a|--aur                       ${cyan} # Construir pacote do AUR ${reset}
-      -V|--version                   ${cyan} # Imprime a versão do aplicativo ${reset}
-      -h|--help                      ${cyan} # Mostra este Help ${reset}
+		    ${cyan}Opções:${reset}
+		      -o|--org|--organization ${orange}<name> ${cyan} # Configura organização de trabalho no Github ${yellow}(default: communitybig)${reset}
+		      -c|--commit          ${orange}<message> ${cyan} # Apenas fazer commit/push ${yellow}obrigátorio mensagem do commit ${reset}
+		      -b|--build            ${orange}<branch> ${cyan} # Realizar commit/push e gerar pacote ${reset} branch válidos: ${yellow}testing ${cyan}ou ${yellow}stable ${reset}
+		      -a|--aur              ${orange}<pacote> ${cyan} # Construir pacote do AUR ${yellow}obrigátorio nome do pacote para construir ${reset}
+		      -V|--version                   ${cyan} # Imprime a versão do aplicativo ${reset}
+		      -h|--help                      ${cyan} # Mostra este Help ${reset}
 	EOF
+}
+
+check_param_org() {
+	local value_organization="$1"
+	if [[ ! " ${organizations[@]} " =~ " $value_organization " ]]; then
+		die "$RED" "Erro fatal: Valor inválido para o parâmetro ${YELLOW}'-o|--organization|--org' ${RESET};
+São válidos: ${organizations[*]}
+${CYAN}ex.: $APP -o communitybig
+     $APP --org talesam
+     $APP --organization vcatafesta${RESET}"
+	fi
+}
+
+check_param_commit() {
+	local value_commit="$1"
+	if [[ -z "$value_commit" || "$value_commit" == -* ]]; then
+		die "$RED" "Erro fatal: Valor inválido para o parâmetro ${YELLOW}'-c|--commit' ${RESET}
+O valor do parâmetro está vazio ou é outro/ou próximo parâmetro.
+São válidos: Qualquer string não vazia"
+	fi
+}
+
+check_param_build() {
+	local value_build="$1"
+	if [[ ! " ${branchs[@]} " =~ " $value_build " ]]; then
+		die "$RED" "Erro fatal: Valor inválido para o parâmetro ${YELLOW}'-b|--build' ${RESET};
+São válidos: ${branchs[*]}"
+	fi
+}
+
+check_param_aur() {
+	local value_aur="$1"
+	if [[ -z "$value_aur" || "$value_aur" == -* ]]; then
+		die "$RED" "Erro fatal: Valor inválido para o parâmetro ${YELLOW}'-a|--aur' ${RESET}
+O valor do parâmetro está vazio ou é outro/ou próximo parâmetro.
+São válidos: Qualquer nome de pacote/string não vazia"
+	fi
+}
+
+parse_parameters() {
+	local param_organization
+	local value_organization
+	local param_organization_was_supplied=false
+	local param_commit_was_supplied=false
+	local param_build_was_supplied=false
+	local param_aur_was_supplied=false
+
+	while [[ $# -gt 0 ]]; do
+		case $1 in
+		-o | --org | --organization)
+			param_organization="$1"
+			value_organization="$2"
+			# Teste se o parâmetro foi fornecido e se o valor é válido
+			check_param_org "$value_organization"
+			param_organization_was_supplied=true
+			shift # past argument
+			shift # past value
+			;;
+		-c | --commit)
+			param_commit="$1"
+			value_commit="$2"
+			# Teste se o parâmetro foi fornecido e se o valor é válido
+			check_param_commit "$value_commit"
+			param_commit_was_supplied=true
+			shift # past argument
+			shift # past value
+			;;
+		-b | --build)
+			param_build="$1"
+			value_build="$2"
+			# Teste se o parâmetro foi fornecido e se o valor é válido
+			check_param_build "$value_build"
+			param_build_was_supplied=true
+			shift # past argument
+			shift # past value
+			;;
+		-a | --aur)
+			param_aur="$1"
+			value_aur="$2"
+			# Teste se o parâmetro foi fornecido e se o valor é válido
+			check_param_aur "$value_aur"
+			param_aur_was_supplied=true
+			shift # past argument
+			shift # past value
+			;;
+		*)
+			shift # unknown option
+			;;
+		esac
+	done
+
+	if $param_organization_was_supplied; then
+		REPO="${value_organization}/build-package" # Repositório que contém os workflows
+		ORGANIZATION="${REPO%%/*}"                 # communitybig
+	fi
+
+	if $param_build_was_supplied; then
+		branch_type="$param_value"
+		if $param_commit_was_supplied; then
+			default_commit_message="$value_commit"
+		else
+			die "$RED" "Erro fatal: Valor inválido para o parâmetro ${YELLOW}'-c|--commit' ${RESET}
+Ao usar o parametro ${YELLOW}'-b|--build' ${reset}é necessário também este parâmetro"
+		fi
+	fi
+	Realizar_commit_e_gerar_pacote
+
+	if $param_commit_was_supplied; then
+		default_commit_message="$value_commit"
+		Apenas_fazer_commit_push
+	fi
 }
 
 sh_version() {
@@ -492,10 +604,13 @@ get_package_name() {
 
 update_commit_push() {
 	local commit_message
-	local default_commit_message
 	local mainbranch="$(get_main_branch)"
 
-	[[ "$USER" == "vcatafesta" ]] && default_commit_message="$(date) Vilmar Catafesta (vcatafesta@gmail.com)"
+	if [[ "$USER" == "vcatafesta" ]]; then
+		default_commit_message="$(date) Vilmar Catafesta (vcatafesta@gmail.com)"
+	else
+		[[ -z "$default_commit_message" ]] && default_commit_message=""
+	fi
 	p_log "$CYAN" "Mudando para o branch ${mainbranch}"
 	if ! git checkout "$mainbranch"; then
 		die "$RED" "Erro: git checkout ${mainbranch} - Falha ao mudar para o branch ${mainbranch}"
@@ -750,60 +865,6 @@ trigger_workflow() {
 	p_log "$RESET" "$(get_url_actions)"
 }
 
-parse_parameters() {
-	local param_organization
-	local value_organization
-	local param_organization_was_supplied=false
-
-	while [[ $# -gt 0 ]]; do
-		case $1 in
-		-o | --org | --organization)
-			param_organization="$1"
-			value_organization="$2"
-			param_organization_was_supplied=true
-			shift # past argument
-			shift # past value
-			;;
-		-c | --commit)
-			param_commit="$1"
-			value_commit="$2"
-			param_commit_was_supplied=true
-			shift # past argument
-			shift # past value
-			;;
-		-b | --build)
-			param_build="$1"
-			param_build_was_supplied=true
-			shift # past argument
-			shift # past value
-			;;
-		-a | --aur)
-			param_aur="$1"
-			param_aur_was_supplied=true
-			shift # past argument
-			shift # past value
-			;;
-		*)
-			shift # unknown option
-			;;
-		esac
-	done
-
-	# Teste se o parâmetro --organization foi fornecido e se o valor é válido
-	if $param_organization_was_supplied; then
-		if [[ ! "$value_organization" =~ ^(communitybig|chililinux|biglinux|talesam|vcatafesta)$ ]]; then
-			die "$RED" "Erro fatal: Valor inválido para o parâmetro ${YELLOW}'-o|--organization|--org' ${RESET};
-São válidos: communitybig, chililinux, biglinux, talesam ou vcatafesta
-${CYAN}ex.: $APP -o communitybig
-     $APP --org talesam
-     $APP --organization vcatafesta${RESET}"
-		else
-			REPO="${value_organization}/build-package" # Repositório que contém os workflows
-			ORGANIZATION="${REPO%%/*}"                 # communitybig
-		fi
-	fi
-}
-
 sh_configure_environment() {
 	# Cores e estilos
 	set_varcolors
@@ -833,6 +894,54 @@ sh_configure_environment() {
 	checkDependencies
 	parse_parameters "$@"
 	get_token_release # Obtem o TOKEN_RELEASE utilizando a função get_token_release
+}
+
+Apenas_fazer_commit_push() {
+	if $IS_GIT_REPO; then
+		update_commit_push
+	else
+		die "$RED" "Esta opção só está disponível em repositórios git."
+	fi
+}
+
+Realizar_commit_e_gerar_pacote() {
+	branch_type=$MENU_RESULT
+	update_commit_push
+	create_branch_and_push "$branch_type"
+	package_name=$(get_package_name)
+	trigger_workflow "$package_name" "$branch_type"
+}
+
+Construir_pacote_do_AUR() {
+	IS_AUR_PACKAGE=true
+
+	# Verifica se existe um arquivo PKGBUILD
+	if ! $IS_AUR_PACKAGE; then
+		PKGBUILD_PATH=$(find "$REPO_PATH" -name PKGBUILD -print -quit)
+		if [[ -z "$PKGBUILD_PATH" ]]; then
+			die "$RED" "Erro: Nenhum arquivo PKGBUILD foi encontrado no diretório atual ou subdiretórios."
+		else
+			p_log "$GREEN" "Arquivo PKGBUILD encontrado em: $PKGBUILD_PATH"
+			cd "$(dirname "$PKGBUILD_PATH")" || die "$RED" "Erro: não consegui entrar em $PKGBUILD_PATH"
+		fi
+	fi
+
+	while true; do
+		p_log "$PURPLE" "Digite o nome do pacote AUR (ex: showtime): digite ${YELLOW}SAIR ${PURPLE}para sair"
+		read -r aur_package_name
+		if [[ "${aur_package_name^^}" == "SAIR" ]]; then
+			die "$YELLOW" "Saindo do script. Nenhuma ação foi realizada."
+		elif [[ -z "$aur_package_name" ]]; then
+			p_log "$RED" "Erro: Nenhum nome de pacote foi inserido."
+			continue
+		fi
+		break
+	done
+
+	if $IS_GIT_REPO; then
+		create_branch_and_push "aur"
+	fi
+	trigger_workflow "$aur_package_name" "aur" "true"
 }
 
 ## main() { Início do script principal }
@@ -870,12 +979,7 @@ while true; do
 
 	case "$ACTION" in
 	"Apenas fazer commit/push")
-		if $IS_GIT_REPO; then
-			update_commit_push
-			break
-		else
-			die "$RED" "Esta opção só está disponível em repositórios git."
-		fi
+		Apenas_fazer_commit_push
 		;;
 	"Realizar commit e gerar pacote")
 		if $IS_GIT_REPO; then
@@ -887,47 +991,15 @@ while true; do
 			if [[ $MENU_RESULT == "Voltar" ]]; then
 				continue
 			fi
-
 			branch_type=$MENU_RESULT
-			update_commit_push
-			create_branch_and_push "$branch_type"
-			package_name=$(get_package_name)
-			trigger_workflow "$package_name" "$branch_type"
+			Realizar_commit_e_gerar_pacote
 			break
 		else
 			die "$RED" "Esta opção só está disponível em repositórios git."
 		fi
 		;;
 	"Construir pacote do AUR")
-		IS_AUR_PACKAGE=true
-
-		# Verifica se existe um arquivo PKGBUILD
-		if ! $IS_AUR_PACKAGE; then
-			PKGBUILD_PATH=$(find "$REPO_PATH" -name PKGBUILD -print -quit)
-			if [[ -z "$PKGBUILD_PATH" ]]; then
-				die "$RED" "Erro: Nenhum arquivo PKGBUILD foi encontrado no diretório atual ou subdiretórios."
-			else
-				p_log "$GREEN" "Arquivo PKGBUILD encontrado em: $PKGBUILD_PATH"
-				cd "$(dirname "$PKGBUILD_PATH")" || die "$RED" "Erro: não consegui entrar em $PKGBUILD_PATH"
-			fi
-		fi
-
-		while true; do
-			p_log "$PURPLE" "Digite o nome do pacote AUR (ex: showtime): digite ${YELLOW}SAIR ${PURPLE}para sair"
-			read -r aur_package_name
-			if [[ "${aur_package_name^^}" == "SAIR" ]]; then
-				die "$YELLOW" "Saindo do script. Nenhuma ação foi realizada."
-			elif [[ -z "$aur_package_name" ]]; then
-				p_log "$RED" "Erro: Nenhum nome de pacote foi inserido."
-				continue
-			fi
-			break
-		done
-
-		if $IS_GIT_REPO; then
-			create_branch_and_push "aur"
-		fi
-		trigger_workflow "$aur_package_name" "aur" "true"
+		Construir_pacote_do_AUR
 		break
 		;;
 	"Excluir todos os branchs locais e remoto (exceto main, e os últimos testing e stable)")
