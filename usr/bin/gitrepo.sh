@@ -905,7 +905,6 @@ Apenas_fazer_commit_push() {
 }
 
 Realizar_commit_e_gerar_pacote() {
-	branch_type=$MENU_RESULT
 	update_commit_push
 	create_branch_and_push "$branch_type"
 	package_name=$(get_package_name)
