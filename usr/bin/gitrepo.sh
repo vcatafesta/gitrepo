@@ -485,12 +485,16 @@ parse_parameters() {
 			die "$RED" "Erro fatal: Valor inválido para o parâmetro ${YELLOW}'-c|--commit' ${RESET}
 Ao usar o parametro ${YELLOW}'-b|--build' ${reset}é necessário também este parâmetro"
 		fi
+		Realizar_commit_e_gerar_pacote
 	fi
-	Realizar_commit_e_gerar_pacote
 
 	if $param_commit_was_supplied; then
 		default_commit_message="$value_commit"
 		Apenas_fazer_commit_push
+	fi
+
+	if $param_aur_was_supplied; then
+		Construir_pacote_do_AUR "$value_aur"
 	fi
 }
 
@@ -629,9 +633,11 @@ update_commit_push() {
 		fi
 		p_log "$GREEN" "Mudanças adicionadas com sucesso"
 
-		#		p_log "$PURPLE" "Digite o comentário para o commit:"
-		#		read -r commit_message
-		get 10 10 "${orange}=> Digite o comentário para o commit: " commit_message "$default_commit_message"
+		if [[ -z "$default_commit_message" ]]; then
+			get 10 10 "${orange}=> Digite o comentário para o commit: " commit_message "$default_commit_message"
+		else
+			commit_message="$default_commit_message"
+		fi
 
 		p_log "$CYAN" "Realizando commit..."
 		if ! git commit -m "$commit_message"; then
@@ -912,6 +918,8 @@ Realizar_commit_e_gerar_pacote() {
 }
 
 Construir_pacote_do_AUR() {
+	local aur_package_name="$1"
+
 	IS_AUR_PACKAGE=true
 
 	# Verifica se existe um arquivo PKGBUILD
@@ -925,17 +933,19 @@ Construir_pacote_do_AUR() {
 		fi
 	fi
 
-	while true; do
-		p_log "$PURPLE" "Digite o nome do pacote AUR (ex: showtime): digite ${YELLOW}SAIR ${PURPLE}para sair"
-		read -r aur_package_name
-		if [[ "${aur_package_name^^}" == "SAIR" ]]; then
-			die "$YELLOW" "Saindo do script. Nenhuma ação foi realizada."
-		elif [[ -z "$aur_package_name" ]]; then
-			p_log "$RED" "Erro: Nenhum nome de pacote foi inserido."
-			continue
-		fi
-		break
-	done
+	if [[ -z "$aur_package_name" ]]; then
+		while true; do
+			p_log "$PURPLE" "Digite o nome do pacote AUR (ex: showtime): digite ${YELLOW}SAIR ${PURPLE}para sair"
+			read -r aur_package_name
+			if [[ "${aur_package_name^^}" == "SAIR" ]]; then
+				die "$YELLOW" "Saindo do script. Nenhuma ação foi realizada."
+			elif [[ -z "$aur_package_name" ]]; then
+				p_log "$RED" "Erro: Nenhum nome de pacote foi inserido."
+				continue
+			fi
+			break
+		done
+	fi
 
 	if $IS_GIT_REPO; then
 		create_branch_and_push "aur"
@@ -986,7 +996,6 @@ while true; do
 				"testing" \
 				"stable" \
 				"Voltar"
-
 			if [[ $MENU_RESULT == "Voltar" ]]; then
 				continue
 			fi
