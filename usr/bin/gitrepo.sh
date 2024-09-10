@@ -143,13 +143,6 @@ die() {
 	checkout_and_exit 1
 }
 
-function info_msg() {
-  ((++ncontador))
-  # ((++njobs))
-  printf "${green}$TICK ${pink}%03d/%03d => ${yellow}%s\n\033[m" "$ncontador" "$njobs" "$@"
-}
-
-
 check_repo_is_git() {
 	if git rev-parse --is-inside-work-tree >/dev/null 2>&-; then
 		echo true
@@ -203,9 +196,6 @@ set_varcolors() {
 	# does the terminal support true-color?
 	if [[ -n "$(command -v "tput")" ]]; then
 		#tput setaf 127 | cat -v  #capturar saida
-		: "${TICK="${white}[${COL_LIGHT_GREEN}✓${COL_NC}${white}]"}"
-		: "${CROSS="${white}[${COL_LIGHT_RED}✗${COL_NC}$white]"}"
-
 		: "${RED=$(tput bold)$(tput setaf 196)}"
 		: "${GREEN=$(tput bold)$(tput setaf 2)}"
 		: "${YELLOW=$(tput bold)$(tput setaf 3)}"
@@ -259,6 +249,9 @@ set_varcolors() {
 		: "${laranja=$(tput setab 202)}"
 		: "${roxa=$(tput setab 125)}"
 		: "${violeta=$(tput setab 61)}"
+
+		: "${TICK="${white}[${COL_LIGHT_GREEN}✓${COL_NC}${white}]"}"
+		: "${CROSS="${white}[${COL_LIGHT_RED}✗${COL_NC}$white]"}"
 	else
 		unset_varcolors
 	fi
