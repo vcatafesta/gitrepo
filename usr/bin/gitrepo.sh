@@ -38,6 +38,7 @@ declare distro="$(uname -n)"
 readonly DEPENDENCIES=('git' 'tput')
 readonly organizations=("communitybig" "chililinux" "biglinux" "talesam" "vcatafesta")
 readonly branchs=("testing" "stable")
+shopt -s extglob  # Habilita o uso de padrões estendidos (extglob)
 
 # Funções auxiliares
 get() {
@@ -904,7 +905,6 @@ sh_configure_environment() {
 	export PS4='${RED}${0##*/}${GREEN}[$FUNCNAME]${PURPLE}[$LINENO]${RESET}'
 	#set -x
 	#set -e
-	shopt -s extglob
 
 	declare -g REPO="communitybig/build-package" # Repositório que contém os workflows
 	declare -g ORGANIZATION="${REPO%%/*}"        # communitybig
@@ -981,8 +981,14 @@ Construir_pacote_do_AUR() {
 
 ## main() { Início do script principal }
 ########################################
-
 # Verificações iniciais
+# Loop através de todos os parâmetros ($@)
+for arg in "$@"; do
+  if [[ "$arg" = @(-n|--nocolor) ]]; then
+  	unset_varcolors
+  fi
+done
+
 [[ "$1" = @(-V|--version) ]] && {
 	sh_version
 	exit $(($# ? 0 : 1))
