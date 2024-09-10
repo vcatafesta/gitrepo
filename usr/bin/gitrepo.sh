@@ -256,9 +256,9 @@ set_varcolors() {
 		: "${DONE="${COL_LIGHT_GREEN} done!${COL_NC}"}"
 		: "${OVER="\\r\\033[K"}"
 		: "${DOTPREFIX="  ${black}::${reset} "}"
-		: "${TICK="${white}[${verde}✓${reset}${white}]${reset}"}"
-		: "${CROSS="${white}[${vermelho}✗${reset}${white}]${reset}"}"
-		: "${INFO="${white}[${amarelo}i${reset}${white}]${reset}"}"
+		: "${TICK="${white}[${green}✓${reset}${white}]${reset}"}"
+		: "${CROSS="${white}[${red}✗${reset}${white}]${reset}"}"
+		: "${INFO="${white}[${yellow}i${reset}${white}]${reset}"}"
 	else
 		unset_varcolors
 	fi
