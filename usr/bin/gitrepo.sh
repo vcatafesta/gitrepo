@@ -253,12 +253,12 @@ set_varcolors() {
 		: "${COL_NC='\e[0m'}" # No Color
 		: "${COL_LIGHT_GREEN='\e[1;32m'}"
 		: "${COL_LIGHT_RED='\e[1;31m'}"
-		: "${INFO="[i]"}"
 		: "${DONE="${COL_LIGHT_GREEN} done!${COL_NC}"}"
 		: "${OVER="\\r\\033[K"}"
 		: "${DOTPREFIX="  ${black}::${reset} "}"
-		: "${TICK="${white}[${green}✓${white}]${reset}"}"
-		: "${CROSS="${white}[${red}✗${white}]${reset}"}"
+		: "${TICK="${white}[${verde}✓${reset}${white}]${reset}"}"
+		: "${CROSS="${white}[${vermelho}✗${reset}${white}]${reset}"}"
+		: "${INFO="${white}[${amarelo}i${reset}${white}]${reset}"}"
 	else
 		unset_varcolors
 	fi
@@ -284,6 +284,7 @@ checkDependencies() {
 			printf '%s\n' "${RED}ERRO${RESET}: não encontrei o comando ${CYAN}'$d'${RESET}"
 		fi
 	done
+
 	if $errorFound; then
 		echo "${YELLOW}--------------IMPOSSÍVEL CONTINUAR-------------${RESET}"
 		echo "Esse script precisa dos comandos listados acima" >&2
@@ -404,7 +405,7 @@ check_param_org() {
 	local value_organization="$1"
 	if [[ ! " ${organizations[@]} " =~ " $value_organization " ]]; then
 		die "$RED" "Erro fatal: Valor inválido para o parâmetro ${YELLOW}'-o|--organization|--org' ${RESET};
-São válidos: ${organizations[*]}
+${INFO}São válidos: ${organizations[*]}
 ${CYAN}ex.: $APP -o communitybig
      $APP --org talesam
      $APP --organization vcatafesta${RESET}"
@@ -415,7 +416,7 @@ check_param_commit() {
 	local value_commit="$1"
 	if [[ -z "$value_commit" || "$value_commit" == -* ]]; then
 		die "$RED" "Erro fatal: Valor inválido para o parâmetro ${YELLOW}'-c|--commit' ${RESET}
-O valor do parâmetro está vazio ou é outro/ou próximo parâmetro.
+${INFO}O valor do parâmetro está vazio ou é outro/ou próximo parâmetro.
 São válidos: Qualquer string não vazia"
 	fi
 }
@@ -424,7 +425,7 @@ check_param_build() {
 	local value_build="$1"
 	if [[ ! " ${branchs[@]} " =~ " $value_build " ]]; then
 		die "$RED" "Erro fatal: Valor inválido para o parâmetro ${YELLOW}'-b|--build' ${RESET};
-São válidos: ${branchs[*]}"
+${INFO}São válidos: ${branchs[*]}"
 	fi
 }
 
@@ -432,7 +433,7 @@ check_param_aur() {
 	local value_aur="$1"
 	if [[ -z "$value_aur" || "$value_aur" == -* ]]; then
 		die "$RED" "Erro fatal: Valor inválido para o parâmetro ${YELLOW}'-a|--aur' ${RESET}
-O valor do parâmetro está vazio ou é outro/ou próximo parâmetro.
+${INFO}O valor do parâmetro está vazio ou é outro/ou próximo parâmetro.
 São válidos: Qualquer nome de pacote/string não vazia"
 	fi
 }
