@@ -122,18 +122,33 @@ log_message() {
 p_log() {
 	local color="$1"
 	local message="$2"
+	local died="$3"
+
+	[[ -z "$died" ]] && died=false
+#	echo -e "${color}=> ${message}${RESET}"
+	if $died; then
+		printf "${red}$CROSS => ${color}%s\n\033[m" "$message"
+	else
+		printf "${green}$TICK => ${color}%s\n\033[m" "$message"
+	fi
 	# Remover códigos de escape ANSI do log
 	clean_log=$(sed -E 's/\x1b\[[0-9;]*[a-zA-Z]//g; s/\x1b\(B//g' <<<"$message")
-	echo -e "${color}=> ${message}${RESET}"
 	echo "[$(date '+%Y-%m-%d %H:%M:%S')] ${clean_log}" >>"${LOG_FILE}"
 }
 
 die() {
 	local color="$1"
 	local message="$2"
-	p_log "$color" "$message"
+	p_log "$color" "$message" true
 	checkout_and_exit 1
 }
+
+function info_msg() {
+  ((++ncontador))
+  # ((++njobs))
+  printf "${green}$TICK ${pink}%03d/%03d => ${yellow}%s\n\033[m" "$ncontador" "$njobs" "$@"
+}
+
 
 check_repo_is_git() {
 	if git rev-parse --is-inside-work-tree >/dev/null 2>&-; then
@@ -188,6 +203,8 @@ set_varcolors() {
 	# does the terminal support true-color?
 	if [[ -n "$(command -v "tput")" ]]; then
 		#tput setaf 127 | cat -v  #capturar saida
+		: "${TICK="${white}[${COL_LIGHT_GREEN}✓${COL_NC}${white}]"}"
+		: "${CROSS="${white}[${COL_LIGHT_RED}✗${COL_NC}$white]"}"
 
 		: "${RED=$(tput bold)$(tput setaf 196)}"
 		: "${GREEN=$(tput bold)$(tput setaf 2)}"
