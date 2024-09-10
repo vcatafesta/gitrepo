@@ -390,7 +390,6 @@ gclean_branch_remote_and_update_local() {
 
 # Função para exibir informações de ajuda
 sh_usage() {
-	set_varcolors
 	cat <<-EOF
 		${reset}${APP} v${VERSION} - ${APPDESC}${reset}
 		${red}Uso: ${reset}$APP ${cyan}[opções]${reset}
@@ -525,7 +524,6 @@ Ao usar o parametro ${YELLOW}'-b|--build' ${reset}é necessário também este pa
 }
 
 sh_version() {
-	set_varcolors
 	cat <<-EOF
 		    ${BOLD}${CYAN}${0##*/} v${VERSION}${RESET}
 		    ${APPDESC}
@@ -982,23 +980,20 @@ Construir_pacote_do_AUR() {
 
 # Cores e estilos
 nocolor=false
+set_varcolors
 # Loop através de todos os parâmetros ($@)
 for arg in "$@"; do
   if [[ "$arg" = @(-n|--nocolor) ]]; then
   	nocolor=true
-  	break
+		[[ "$nocolor" == "true" ]] && unset_varcolors || set_varcolors
+	elif [[ "$arg" = @(-V|--version) ]]; then
+		sh_version
+		exit $(($# ? 0 : 1))
+	elif [[ "$arg" = @(-h|--help) ]]; then
+		sh_usage
+		exit $(($# ? 0 : 1))
   fi
 done
-[[ "$nocolor" == "true" ]] && unset_varcolors || set_varcolors
-
-[[ "$1" = @(-V|--version) ]] && {
-	sh_version
-	exit $(($# ? 0 : 1))
-}
-[[ "$1" = @(-h|--help) ]] && {
-	sh_usage
-	exit $(($# ? 0 : 1))
-}
 
 sh_configure_environment "$@"
 p_log "$BLUE" "Iniciando processo de gerenciamento de repositório (v${VERSION})"
