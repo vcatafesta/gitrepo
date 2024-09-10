@@ -660,7 +660,7 @@ update_commit_push() {
 		if ! git commit -m "$commit_message"; then
 			die "$RED" "Erro: 'git commit -m $commit_message' - Falha ao realizar commit"
 		fi
-		p_log "$GREEN" "Commit realizado com sucesso: $commit_message"
+		p_log "$GREEN" "Commit realizado com sucesso: ${yellow}$commit_message ${reset}"
 
 		p_log "$CYAN" "Realizando push para o GitHub..."
 		if ! git push --set-upstream origin "$mainbranch"; then
