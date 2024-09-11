@@ -113,6 +113,7 @@ parse_parameters() {
 		ORGANIZATION="${REPO%%/*}"                 # communitybig
 	fi
 	get_token_release # Obtem o TOKEN_RELEASE utilizando a função get_token_release
+	check_valid_token
 }
 
 sh_configure_environment() {

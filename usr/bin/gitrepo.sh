@@ -154,6 +154,7 @@ parse_parameters() {
 	fi
 
 	get_token_release # Obtem o TOKEN_RELEASE utilizando a função get_token_release
+	check_valid_token
 
 	if $param_build_was_supplied; then
 		branch_type="$value_build"

@@ -43,6 +43,17 @@ conf() {
 	[[ ${REPLY^} == N ]]  && return 1 || return 0
 }
 
+check_valid_token() {
+	# Verificar o token
+  p_log "${cyan}" "Verificando permissões do token GitHub..."
+  token_check=$(curl -s -H "Authorization: token $TOKEN_RELEASE" https://api.github.com/user)
+  p_log "$cyan" "Token verificado: ${yellow}$(echo "$token_check" | jq .login)"
+
+  if [[ -z "$(echo "$token_check" | jq .login)" ]]; then
+    die "${red}" "Token inválido ou sem permissões necessárias."
+  fi
+}
+
 get() {
 	local row="$1"
 	local col="$2"
@@ -332,7 +343,7 @@ gclean_branch_remote_and_update_local() {
 	local branches_to_keep_remote
 	local branch_name
 
-	p_log "${RED}" "Apaga todos os branches remotos (exceto $mainbranch e os mais novos com prefixo testing- e stable-) e atualiza o repositório local"
+	p_log "${RED}" "Apaga todos os branches remotos (exceto $mainbranch e os mais novos com prefixo testing-, stable- e aur-) e atualiza o repositório local"
 
 	# Confirmar a operação
 	read -r -p "${PURPLE}Digite --confirm para confirmar: " clean
@@ -342,7 +353,7 @@ gclean_branch_remote_and_update_local() {
 		exit 1
 	fi
 
-	p_log "${YELLOW}" "$clean ${RED}checado. ${black}Prosseguindo com a exclusão dos branches remotos (exceto $mainbranch e os mais novos com prefixo testing- e stable-) ${RESET}"
+	p_log "${YELLOW}" "$clean ${RED}checado. ${black}Prosseguindo com a exclusão dos branches remotos (exceto $mainbranch e os mais novos com prefixo testing-, stable- e aur-) ${RESET}"
 	# Obtém o nome do branch principal
 	mainbranch="$(get_main_branch)"
 	# Mudar para o branch principal
@@ -352,18 +363,20 @@ gclean_branch_remote_and_update_local() {
 	p_log "${CYAN}" "Atualizando o repositório local para refletir as alterações remotas"
 	git fetch --prune
 
-	# Encontrar e ordenar os branches remotos com prefixo testing- e stable-
-	p_log "${CYAN}" "Encontrar os branches remotos com prefixo testing- e stable-"
-	remote_branches=$(git branch -r | grep -E 'origin/(testing-|stable-)' | sort)
+	# Encontrar e ordenar os branches remotos com prefixo testing-, stable- e aur-
+	p_log "${CYAN}" "Encontrar os branches remotos com prefixo testing-, stable- e aur-"
+	remote_branches=$(git branch -r | grep -E 'origin/(testing-|stable-|aur-)' | sort)
 
 	# Obter o mais recente de cada prefixo
 	latest_testing_branch_remote=$(echo "$remote_branches" | grep 'origin/testing-' | tail -n 1)
 	latest_stable_branch_remote=$(echo "$remote_branches" | grep 'origin/stable-' | tail -n 1)
+	latest_aur_branch_remote=$(echo "$remote_branches" | grep 'origin/aur-' | tail -n 1)
 
 	# Criar uma lista de branches remotos a manter
 	branches_to_keep_remote="origin/$mainbranch"
 	[[ -n "$latest_testing_branch_remote" ]] && branches_to_keep_remote+=" $latest_testing_branch_remote"
 	[[ -n "$latest_stable_branch_remote" ]] && branches_to_keep_remote+=" $latest_stable_branch_remote"
+	[[ -n "$latest_aur_branch_remote" ]] && branches_to_keep_remote+=" $latest_aur_branch_remote"
 
 	# Excluir branches remotos que não estão na lista de branches a manter
 	p_log "${CYAN}" "Excluir todos os branches remotos (exceto $branches_to_keep_remote)"
