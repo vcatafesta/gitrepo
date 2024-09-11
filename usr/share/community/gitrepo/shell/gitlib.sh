@@ -49,8 +49,10 @@ check_valid_token() {
   token_check=$(curl -s -H "Authorization: token $TOKEN_RELEASE" https://api.github.com/user)
   p_log "$cyan" "Token verificado: ${yellow}$(echo "$token_check" | jq .login)"
 
-  if [[ -z "$(echo "$token_check" | jq .login)" ]]; then
-    die "${red}" "Token inválido ou sem permissões necessárias."
+	if [[ -z "$(echo "$token_check" | jq .login)" ]]; then
+    if ! conf "=>${red}Token inválido ou sem permissões necessárias. Deseja prosseguir mesmo assim?"; then
+			die "${red}" "Erro fatal: Token inválido ou sem permissões necessárias."
+		fi
   fi
 }
 
