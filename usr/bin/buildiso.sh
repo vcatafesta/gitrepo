@@ -34,8 +34,8 @@
 declare APP="${0##*/}"
 declare APPDESC="Wrapper para construção de ISO BigCommunity"
 declare VERSION="1.1.0" # Versão do script
-LIBRARY=${LIBRARY:-"$PWD"}
-source "$LIBRARY"/lib.sh
+LIBRARY=${LIBRARY:-"/usr/share/community/gitrepo/shell"}
+source "$LIBRARY"/gitlib.sh
 
 # Função para exibir informações de ajuda
 sh_usage() {
