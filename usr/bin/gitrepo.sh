@@ -34,8 +34,10 @@
 declare APP="${0##*/}"
 declare APPDESC="Wrapper git para o BigCommunity"
 declare VERSION="2.0.8" # Versão do script
+: "${reset=$(tput sgr0)}"
+: "${red=$(tput bold)$(tput setaf 196)}"
 LIBRARY=${LIBRARY:-"/usr/share/community/gitrepo/shell"}
-source "$LIBRARY"/gitlib.sh
+[[ -s "$LIBRARY/gitlib.sh" ]] && source "$LIBRARY"/gitlib.sh || { echo "${red}=> ERRO FATAL: Não foi possível ler a biblioteca $LIBRARY/gitlib.sh ${reset}"; exit 1; }
 
 # Função para exibir informações de ajuda
 sh_usage() {
