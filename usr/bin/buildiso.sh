@@ -109,8 +109,8 @@ parse_parameters() {
 	done
 
 	if $param_organization_was_supplied; then
-		REPO="${value_organization}/build-package" # Repositório que contém os workflows
-		ORGANIZATION="${REPO%%/*}"                 # communitybig
+		REPO="${value_organization}/build-iso"	# Repositório que contém os workflows
+		ORGANIZATION="${REPO%%/*}"							# communitybig
 	fi
 	get_token_release # Obtem o TOKEN_RELEASE utilizando a função get_token_release
 	check_valid_token
@@ -122,7 +122,7 @@ sh_configure_environment() {
 	#set -x
 	#set -e
 
-	declare -g REPO="talesam/build-package" 			# Repositório que contém os workflows
+	declare -g REPO="talesam/build-iso" 					# Repositório que contém os workflows
 	declare -g ORGANIZATION="${REPO%%/*}"         # talesam
 	declare -g CFILETOKEN="$HOME/.GITHUB_TOKEN"   # path do arquivo que contem os tokens do github
 
