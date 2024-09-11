@@ -439,9 +439,9 @@ create_menu() {
 		for i in "${!options[@]}"; do
 			if [[ "$i" -eq $selected ]]; then
 				if [[ "${options[$i]}" =~ ^(Sair|Voltar)$ ]]; then
-					echo -e "${RED}${BOLD}> ${options[$i]}${NC}"
+					echo -e "${RED}${BOLD}${reverse}> ${options[$i]}${NC}"
 				else
-					echo -e "${GREEN}${BOLD}> ${options[$i]}${NC}"
+					echo -e "${GREEN}${BOLD}${reverse}> ${options[$i]}${NC}"
 				fi
 			else
 				if [[ "${options[$i]}" =~ ^(Sair|Voltar)$ ]]; then
