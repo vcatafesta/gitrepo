@@ -34,37 +34,46 @@ declare distro="$(uname -n)"
 readonly DEPENDENCIES=('git' 'tput')
 readonly organizations=("communitybig" "chililinux" "biglinux" "talesam" "vcatafesta")
 readonly branchs=("testing" "stable")
-shopt -s extglob  # Habilita o uso de padrões estendidos (extglob)
+shopt -s extglob # Habilita o uso de padrões estendidos (extglob)
 
 # Funções auxiliares
 conf() {
 	read -r -p "$1 [S/n]"
 	[[ ${REPLY^} == "" ]] && return 0
-	[[ ${REPLY^} == N ]]  && return 1 || return 0
+	[[ ${REPLY^} == N ]] && return 1 || return 0
 }
 
 check_param_org() {
-  local value_organization="$1"
-  if [[ ! " ${organizations[@]} " =~ " $value_organization " ]]; then
-    die "$RED" "Erro fatal: Valor inválido para o parâmetro ${YELLOW}'-o|--organization|--org' ${RESET};
+	local value_organization="$1"
+	if [[ ! " ${organizations[@]} " =~ " $value_organization " ]]; then
+		die "$RED" "Erro fatal: Valor inválido para o parâmetro ${YELLOW}'-o|--organization|--org' ${RESET};
 ${INFO}São válidos: ${organizations[*]}
 ${CYAN}ex.: $APP -o communitybig
      $APP --org talesam
      $APP --organization vcatafesta${RESET}"
-  fi
+	fi
+}
+
+check_param_aur() {
+	local value_aur="$1"
+	if [[ -z "$value_aur" || "$value_aur" == -* ]]; then
+		die "$RED" "Erro fatal: Valor inválido para o parâmetro ${YELLOW}'-a|--aur' ${RESET}
+${INFO}O valor do parâmetro está vazio ou é outro/ou próximo parâmetro.
+São válidos: Qualquer nome de pacote/string não vazia"
+	fi
 }
 
 check_valid_token() {
 	# Verificar o token
-  p_log "${cyan}" "Verificando permissões do token GitHub..."
-  token_check=$(curl -s -H "Authorization: token $TOKEN_RELEASE" https://api.github.com/user)
-  p_log "$cyan" "Token verificado: ${yellow}$(echo "$token_check" | jq .login)"
+	p_log "${cyan}" "Verificando permissões do token GitHub..."
+	token_check=$(curl -s -H "Authorization: token $TOKEN_RELEASE" https://api.github.com/user)
+	p_log "$cyan" "Token verificado: ${yellow}$(echo "$token_check" | jq .login)"
 
 	if [[ -z "$(echo "$token_check" | jq .login)" ]]; then
-    if ! conf "=>${red}Token inválido ou sem permissões necessárias. Deseja prosseguir mesmo assim?"; then
+		if ! conf "=>${red}Token inválido ou sem permissões necessárias. Deseja prosseguir mesmo assim?"; then
 			die "${red}" "Erro fatal: Token inválido ou sem permissões necessárias."
 		fi
-  fi
+	fi
 }
 
 get() {
@@ -152,7 +161,7 @@ p_log() {
 	local died="$3"
 
 	[[ -z "$died" ]] && died=false
-#	echo -e "${color}=> ${message}${RESET}"
+	#	echo -e "${color}=> ${message}${RESET}"
 	if $died; then
 		printf "${CROSS} => ${color}%s\n\033[m" "$message"
 	else

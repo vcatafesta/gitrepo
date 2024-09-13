@@ -37,7 +37,10 @@ declare VERSION="2.0.8" # Versão do script
 : "${reset=$(tput sgr0)}"
 : "${red=$(tput bold)$(tput setaf 196)}"
 LIBRARY=${LIBRARY:-"/usr/share/community/gitrepo/shell"}
-[[ -s "$LIBRARY/gitlib.sh" ]] && source "$LIBRARY"/gitlib.sh || { echo "${red}=> ERRO FATAL: Não foi possível ler a biblioteca $LIBRARY/gitlib.sh ${reset}"; exit 1; }
+[[ -s "$LIBRARY/gitlib.sh" ]] && source "$LIBRARY"/gitlib.sh || {
+	echo "${red}=> ERRO FATAL: Não foi possível ler a biblioteca $LIBRARY/gitlib.sh ${reset}"
+	exit 1
+}
 
 # Função para exibir informações de ajuda
 sh_usage() {
@@ -70,15 +73,6 @@ check_param_build() {
 	if [[ ! " ${branchs[@]} " =~ " $value_build " ]]; then
 		die "$RED" "Erro fatal: Valor inválido para o parâmetro ${YELLOW}'-b|--build' ${RESET};
 ${INFO}São válidos: ${branchs[*]}"
-	fi
-}
-
-check_param_aur() {
-	local value_aur="$1"
-	if [[ -z "$value_aur" || "$value_aur" == -* ]]; then
-		die "$RED" "Erro fatal: Valor inválido para o parâmetro ${YELLOW}'-a|--aur' ${RESET}
-${INFO}O valor do parâmetro está vazio ou é outro/ou próximo parâmetro.
-São válidos: Qualquer nome de pacote/string não vazia"
 	fi
 }
 
@@ -314,8 +308,8 @@ nocolor=false
 set_varcolors
 # Loop através de todos os parâmetros ($@)
 for arg in "$@"; do
-  if [[ "$arg" = @(-n|--nocolor) ]]; then
-  	nocolor=true
+	if [[ "$arg" = @(-n|--nocolor) ]]; then
+		nocolor=true
 		[[ "$nocolor" == "true" ]] && unset_varcolors || set_varcolors
 	elif [[ "$arg" = @(-V|--version) ]]; then
 		sh_version
@@ -323,7 +317,7 @@ for arg in "$@"; do
 	elif [[ "$arg" = @(-h|--help) ]]; then
 		sh_usage
 		exit $(($# ? 0 : 1))
-  fi
+	fi
 done
 
 sh_configure_environment "$@"
