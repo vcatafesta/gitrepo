@@ -43,6 +43,17 @@ conf() {
 	[[ ${REPLY^} == N ]]  && return 1 || return 0
 }
 
+check_param_org() {
+  local value_organization="$1"
+  if [[ ! " ${organizations[@]} " =~ " $value_organization " ]]; then
+    die "$RED" "Erro fatal: Valor inválido para o parâmetro ${YELLOW}'-o|--organization|--org' ${RESET};
+${INFO}São válidos: ${organizations[*]}
+${CYAN}ex.: $APP -o communitybig
+     $APP --org talesam
+     $APP --organization vcatafesta${RESET}"
+  fi
+}
+
 check_valid_token() {
 	# Verificar o token
   p_log "${cyan}" "Verificando permissões do token GitHub..."
@@ -431,22 +442,24 @@ create_menu() {
 		tput clear # Limpa a tela
 		if $IS_GIT_REPO; then
 			echo '---------------------------------------------------------------------------------'
-			echo -e "Organization : ${CYAN}$ORGANIZATION${RESET}"
-			echo -e "Repo Name    : ${CYAN}$REPO_NAME${RESET}"
-			echo -e "Local Path   : ${CYAN}$REPO_PATH${RESET}"
-			echo -e "Branchs      : ${RED}$(git branch 2>/dev/null)${RESET}"
+			echo -e "Organization  : ${CYAN}$ORGANIZATION${RESET}"
+			echo -e "Repo Name     : ${CYAN}$REPO_NAME${RESET}"
+			echo -e "Repo Workflow : ${CYAN}$REPO${RESET}"
+			echo -e "Local Path    : ${CYAN}$REPO_PATH${RESET}"
+			echo -e "Branchs       : ${RED}$(git branch 2>/dev/null)${RESET}"
 			git remote -v 2>/dev/null
 			echo '---------------------------------------------------------------------------------'
 		elif $IS_AUR_PACKAGE; then
 			echo '---------------------------------------------------------------------------------'
-			echo -e "Organization : ${CYAN}$ORGANIZATION${RESET}"
-			echo -e "Local Path   : ${CYAN}$REPO_PATH${RESET}"
+			echo -e "Organization  : ${CYAN}$ORGANIZATION${RESET}"
+			echo -e "Repo Workflow : ${CYAN}$REPO${RESET}"
+			echo -e "Local Path    : ${CYAN}$REPO_PATH${RESET}"
 			echo '---------------------------------------------------------------------------------'
 		elif $IS_BUILD_ISO; then
 			echo '---------------------------------------------------------------------------------'
-			echo -e "Organization : ${CYAN}$ORGANIZATION${RESET}"
-			echo -e "Repo         : ${CYAN}$REPO${RESET}"
-			echo -e "Local Path   : ${CYAN}$REPO_PATH${RESET}"
+			echo -e "Organization  : ${CYAN}$ORGANIZATION${RESET}"
+			echo -e "Repo Workflow : ${CYAN}$REPO${RESET}"
+			echo -e "Local Path    : ${CYAN}$REPO_PATH${RESET}"
 			echo '---------------------------------------------------------------------------------'
 		fi
 		echo -e "${BLUE}${BOLD}$title${NC}\n"

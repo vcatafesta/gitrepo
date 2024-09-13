@@ -56,17 +56,6 @@ sh_usage() {
 	EOF
 }
 
-check_param_org() {
-	local value_organization="$1"
-	if [[ ! " ${organizations[@]} " =~ " $value_organization " ]]; then
-		die "$RED" "Erro fatal: Valor inválido para o parâmetro ${YELLOW}'-o|--organization|--org' ${RESET};
-${INFO}São válidos: ${organizations[*]}
-${CYAN}ex.: $APP -o communitybig
-     $APP --org talesam
-     $APP --organization vcatafesta${RESET}"
-	fi
-}
-
 check_param_commit() {
 	local value_commit="$1"
 	if [[ -z "$value_commit" || "$value_commit" == -* ]]; then

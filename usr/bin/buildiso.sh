@@ -37,19 +37,22 @@ declare VERSION="1.1.0" # Versão do script
 : "${reset=$(tput sgr0)}"
 : "${red=$(tput bold)$(tput setaf 196)}"
 LIBRARY=${LIBRARY:-"/usr/share/community/gitrepo/shell"}
-[[ -s "$LIBRARY/gitlib.sh" ]] && source "$LIBRARY"/gitlib.sh || { echo "${red}=> ERRO FATAL: Não foi possível ler a biblioteca $LIBRARY/gitlib.sh ${reset}"; exit 1; }
+[[ -s "$LIBRARY/gitlib.sh" ]] && source "$LIBRARY"/gitlib.sh || {
+	echo "${red}=> ERRO FATAL: Não foi possível ler a biblioteca $LIBRARY/gitlib.sh ${reset}"
+	exit 1
+}
 
 # Função para exibir informações de ajuda
 sh_usage() {
 	cat <<-EOF
-    ${reset}${APP} v${VERSION} - ${APPDESC}${reset}
-    ${red}Uso: ${reset}$APP ${cyan}[opções]${reset}
+		    ${reset}${APP} v${VERSION} - ${APPDESC}${reset}
+		    ${red}Uso: ${reset}$APP ${cyan}[opções]${reset}
 
-        ${cyan}Opções:${reset}
-          -o|--org|--organization ${orange}<name> ${cyan} # Configura organização de trabalho no Github ${yellow}(default: talesam)${reset}
-          -n|--nocolor                   ${cyan} # Suprime a impressão de cores ${reset}
-          -V|--version                   ${cyan} # Imprime a versão do aplicativo ${reset}
-          -h|--help                      ${cyan} # Mostra este Help ${reset}
+		        ${cyan}Opções:${reset}
+		          -o|--org|--organization ${orange}<name> ${cyan} # Configura organização de trabalho no Github ${yellow}(default: talesam)${reset}
+		          -n|--nocolor                   ${cyan} # Suprime a impressão de cores ${reset}
+		          -V|--version                   ${cyan} # Imprime a versão do aplicativo ${reset}
+		          -h|--help                      ${cyan} # Mostra este Help ${reset}
 	EOF
 }
 
@@ -109,8 +112,8 @@ parse_parameters() {
 	done
 
 	if $param_organization_was_supplied; then
-		REPO="${value_organization}/build-iso"	# Repositório que contém os workflows
-		ORGANIZATION="${REPO%%/*}"							# communitybig
+		REPO="${value_organization}/build-iso" # Repositório que contém os workflows
+		ORGANIZATION="${REPO%%/*}"             # communitybig
 	fi
 	get_token_release # Obtem o TOKEN_RELEASE utilizando a função get_token_release
 	check_valid_token
@@ -122,9 +125,9 @@ sh_configure_environment() {
 	#set -x
 	#set -e
 
-	declare -g REPO="talesam/build-iso" 					# Repositório que contém os workflows
-	declare -g ORGANIZATION="${REPO%%/*}"         # talesam
-	declare -g CFILETOKEN="$HOME/.GITHUB_TOKEN"   # path do arquivo que contem os tokens do github
+	declare -g REPO="talesam/build-iso"         # Repositório que contém os workflows
+	declare -g ORGANIZATION="${REPO%%/*}"       # talesam
+	declare -g CFILETOKEN="$HOME/.GITHUB_TOKEN" # path do arquivo que contem os tokens do github
 
 	declare -g REPO_NAME="$(get_repo_name)"      # Obtém o nome do repositório utilizando a função get_repo_name
 	declare -g REPO_PATH="$(get_repo_root_path)" # Obtém o caminho raiz do repositório utilizando a função get_repo_root_path
@@ -145,7 +148,7 @@ sh_configure_environment() {
 
 # Função para disparar o workflow
 trigger_workflow() {
-	local current_datetime=$(date "+%Y-%m-%d_%H-%M")
+	local current_datetime="$TAG"
 	local event_type="ISO-${EDITION^^}"
 	local tmate_option=$([ "$TMATE" == "sim" ] && echo "true" || echo "false")
 	local data="{\"event_type\": \"$event_type\", \"client_payload\": { \"edition\": \"$EDITION\", \"manjaro_branch\": \"$MANJARO_BRANCH\", \"community_branch\": \"$COMMUNITY_BRANCH\", \"biglinux_branch\": \"$BIGLINUX_BRANCH\", \"kernel\": \"$KERNEL\", \"release_tag\": \"$current_datetime\", \"tmate\": $tmate_option}}"
@@ -172,11 +175,31 @@ trigger_workflow() {
 	checkout_and_exit 0
 }
 
+resume_and_build() {
+	# Confirmar as escolhas
+	echo -e "\n${cyan}Resumo das escolhas:${rst}"
+	echo "Manjaro Branch  : ${orange}$MANJARO_BRANCH ${rst}"
+	echo "Community Branch: ${orange}$COMMUNITY_BRANCH ${rst}"
+	echo "BigLinux Branch : ${orange}$BIGLINUX_BRANCH ${rst}"
+	echo "Kernel          : ${orange}$KERNEL ${rst}"
+	echo "Edition         : ${orange}$EDITION ${rst}"
+	echo "Release Tag     : ${orange}$TAG ${rst}"
+	echo "TMATE Debug     : ${orange}$TMATE ${rst}"
+	echo
+
+	if conf "${YELLOW}Deseja prosseguir com a construção da ISO?"; then
+		trigger_workflow
+	else
+		die "${RED}" "Construção da ISO cancelada."
+	fi
+}
+
 ## main() { Início do script principal }
 ########################################
 # Verificações iniciais
 
 # Cores e estilos
+IS_AUTO=false
 nocolor=false
 set_varcolors
 # Loop através de todos os parâmetros ($@)
@@ -190,96 +213,94 @@ for arg in "$@"; do
 	elif [[ "$arg" = @(-h|--help) ]]; then
 		sh_usage
 		exit $(($# ? 0 : 1))
+	elif [[ "$arg" = @(-a|--auto|--automatic) ]]; then
+		IS_AUTO=true
+		MANJARO_BRANCH=stable
+		COMMUNITY_BRANCH=stable
+		BIGLINUX_BRANCH=stable
+		KERNEL=lts
+		EDITION=xfce
+		TAG=$(date "+%Y-%m-%d_%H-%M")
+		TMATE=sim
 	fi
 done
 
 sh_configure_environment "$@"
 p_log "${BLUE}" "${BOLD}Construção de ISO BigCommunity (versão $VERSION)${NC}\n"
 
-while true; do
-	create_menu \
-		"Escolha uma opção de branch para o Manjaro:" \
-		"Stable" \
-		"Testing" \
-		"Unstable" \
-		"Sair"
+if $IS_AUTO; then
+	resume_and_build
+else
+	while true; do
+		create_menu \
+			"Escolha uma opção de branch para o Manjaro:" \
+			"Stable" \
+			"Testing" \
+			"Unstable" \
+			"Sair"
 
-	if [[ $MENU_RESULT == "Sair" ]]; then
-		die "${RED}" "Construção da ISO cancelada.${NC}"
-	fi
-	MANJARO_BRANCH=${MENU_RESULT,,} # Converte para minúsculas
+		if [[ $MENU_RESULT == "Sair" ]]; then
+			die "${RED}" "Construção da ISO cancelada.${NC}"
+		fi
+		MANJARO_BRANCH=${MENU_RESULT,,} # Converte para minúsculas
 
-	create_menu \
-		"Escolha uma opção de branch para o Community:" \
-		"Stable" \
-		"Testing" \
-		"Voltar"
-	if [[ $MENU_RESULT == "Voltar" ]]; then
-		continue
-	fi
+		create_menu \
+			"Escolha uma opção de branch para o Community:" \
+			"Stable" \
+			"Testing" \
+			"Voltar"
+		if [[ $MENU_RESULT == "Voltar" ]]; then
+			continue
+		fi
 
-	COMMUNITY_BRANCH=${MENU_RESULT,,}
+		COMMUNITY_BRANCH=${MENU_RESULT,,}
 
-	create_menu \
-		"Escolha uma opção para o branch BigLinux:" \
-		"Stable" \
-		"Testing" \
-		"Voltar"
-	if [[ $MENU_RESULT == "Voltar" ]]; then
-		continue
-	fi
-	BIGLINUX_BRANCH=${MENU_RESULT,,}
+		create_menu \
+			"Escolha uma opção para o branch BigLinux:" \
+			"Stable" \
+			"Testing" \
+			"Voltar"
+		if [[ $MENU_RESULT == "Voltar" ]]; then
+			continue
+		fi
+		BIGLINUX_BRANCH=${MENU_RESULT,,}
 
-	create_menu \
-		"Escolha a versão do kernel:" \
-		"LTS" \
-		"Latest" \
-		"OldLTS" \
-		"Voltar"
-	if [[ $MENU_RESULT == "Voltar" ]]; then
-		continue
-	fi
-	KERNEL=${MENU_RESULT,,}
+		create_menu \
+			"Escolha a versão do kernel:" \
+			"LTS" \
+			"Latest" \
+			"OldLTS" \
+			"Voltar"
+		if [[ $MENU_RESULT == "Voltar" ]]; then
+			continue
+		fi
+		KERNEL=${MENU_RESULT,,}
 
-	create_menu \
-		"Escolha a edição:" \
-		"Cinnamon" \
-		"Cosmic" \
-		"Deepin" \
-		"Gnome" \
-		"KDE" \
-		"XFCE" \
-		"Wmaker" \
-		"Voltar"
-	if [[ $MENU_RESULT == "Voltar" ]]; then
-		continue
-	fi
-	EDITION=${MENU_RESULT,,}
+		create_menu \
+			"Escolha a edição:" \
+			"Cinnamon" \
+			"Cosmic" \
+			"Deepin" \
+			"Gnome" \
+			"KDE" \
+			"XFCE" \
+			"Wmaker" \
+			"Voltar"
+		if [[ $MENU_RESULT == "Voltar" ]]; then
+			continue
+		fi
+		EDITION=${MENU_RESULT,,}
 
-	create_menu \
-		"Ativar sessão de debug TMATE?" \
-		"Sim" \
-		"Não" \
-		"Voltar"
-	if [[ $MENU_RESULT == "Voltar" ]]; then
-		continue
-	fi
-	TMATE=${MENU_RESULT,,}
-
-	# Confirmar as escolhas
-	echo -e "\n${cyan}Resumo das escolhas:${rst}"
-	echo "Manjaro Branch  : ${orange}$MANJARO_BRANCH ${rst}"
-	echo "Community Branch: ${orange}$COMMUNITY_BRANCH ${rst}"
-	echo "BigLinux Branch : ${orange}$BIGLINUX_BRANCH ${rst}"
-	echo "Kernel          : ${orange}$KERNEL ${rst}"
-	echo "Edition         : ${orange}$EDITION ${rst}"
-	echo "Release Tag     : ${orange}$(date "+%Y-%m-%d_%H-%M") ${rst}"
-	echo "TMATE Debug     : ${orange}$TMATE ${rst}"
-	echo
-
-	if conf "${YELLOW}Deseja prosseguir com a construção da ISO?"; then
-		trigger_workflow
-	else
-		die "${RED}" "Construção da ISO cancelada."
-	fi
-done
+		create_menu \
+			"Ativar sessão de debug TMATE?" \
+			"Sim" \
+			"Não" \
+			"Voltar"
+		if [[ $MENU_RESULT == "Voltar" ]]; then
+			continue
+		fi
+		TMATE=${MENU_RESULT,,}
+		TAG=$(date "+%Y-%m-%d_%H-%M")
+		resume_and_build
+	done
+fi
