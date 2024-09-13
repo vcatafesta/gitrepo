@@ -216,9 +216,9 @@ for arg in "$@"; do
 	elif [[ "$arg" = @(-a|--auto|--automatic) ]]; then
 		IS_AUTO=true
 		MANJARO_BRANCH=stable
-		COMMUNITY_BRANCH=stable
+		COMMUNITY_BRANCH=testing
 		BIGLINUX_BRANCH=stable
-		KERNEL=lts
+		KERNEL=latest
 		EDITION=xfce
 		TAG=$(date "+%Y-%m-%d_%H-%M")
 		TMATE=sim
