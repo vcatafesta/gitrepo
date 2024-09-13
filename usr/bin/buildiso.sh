@@ -96,15 +96,6 @@ parse_parameters() {
 			shift # past argument
 			shift # past value
 			;;
-		-a | --aur)
-			param_aur="$1"
-			value_aur="$2"
-			# Teste se o parâmetro foi fornecido e se o valor é válido
-			check_param_aur "$value_aur"
-			param_aur_was_supplied=true
-			shift # past argument
-			shift # past value
-			;;
 		*)
 			shift # unknown option
 			;;
