@@ -162,6 +162,9 @@ trigger_workflow() {
 	if [ "$TMATE" == "sim" ]; then
 		p_log "${YELLOW}" "A sessão TMATE será ativada. Fique atento às informações de conexão nos logs do GitHub Actions.${NC}"
 	fi
+	p_log "$orange" "Aguardando '2s' para a API acionar a Action e podermos pegar o 'id'."
+  sleep 2
+  p_log "$RESET" "$(get_url_actions)"
 
 	checkout_and_exit 0
 }
