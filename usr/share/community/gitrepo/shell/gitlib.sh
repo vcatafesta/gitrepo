@@ -33,7 +33,7 @@
 declare distro="$(uname -n)"
 readonly DEPENDENCIES=('git' 'tput')
 readonly organizations=("communitybig" "chililinux" "biglinux" "talesam" "vcatafesta")
-readonly branchs=("testing" "stable")
+readonly branchs=("testing" "stable" "extra")
 shopt -s extglob # Habilita o uso de padrões estendidos (extglob)
 
 # Funções auxiliares

@@ -51,7 +51,7 @@ sh_usage() {
 		    ${cyan}Opções:${reset}
 		      -o|--org|--organization ${orange}<name> ${cyan} # Configura organização de trabalho no Github ${yellow}(default: communitybig)${reset}
 		      -c|--commit          ${orange}<message> ${cyan} # Apenas fazer commit/push ${yellow}obrigátorio mensagem do commit ${reset}
-		      -b|--build            ${orange}<branch> ${cyan} # Realizar commit/push e gerar pacote ${reset} branch válidos: ${yellow}testing ${cyan}ou ${yellow}stable ${reset}
+		      -b|--build            ${orange}<branch> ${cyan} # Realizar commit/push e gerar pacote ${reset} branch válidos: ${yellow}testing, stable ${cyan}ou ${yellow}extra ${reset}
 		      -a|--aur              ${orange}<pacote> ${cyan} # Construir pacote do AUR ${yellow}obrigátorio nome do pacote para construir ${reset}
 		      -n|--nocolor                   ${cyan} # Suprime a impressão de cores ${reset}
 		      -V|--version                   ${cyan} # Imprime a versão do aplicativo ${reset}
@@ -349,6 +349,7 @@ while true; do
 			create_menu "Selecione o tipo de branch:" \
 				"testing" \
 				"stable" \
+				"extra" \
 				"Voltar"
 			if [[ $MENU_RESULT == "Voltar" ]]; then
 				continue
