@@ -211,7 +211,7 @@ for arg in "$@"; do
 		IS_AUTO=true
 		MANJARO_BRANCH=stable
 		COMMUNITY_BRANCH=testing
-		BIGLINUX_BRANCH=stable
+		BIGLINUX_BRANCH=testing
 		KERNEL=latest
 		EDITION=xfce
 		TAG=$(date "+%Y-%m-%d_%H-%M")
