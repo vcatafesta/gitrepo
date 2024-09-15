@@ -4,7 +4,7 @@
 #
 #  gitrepo.sh - Wrapper git para o BigCommunity
 #  Created: ter 10 set 2024 11:02:02 -04
-#  Altered: ter 10 set 2024 21:22:54 -04
+#  Altered: dom 15 set 2024 04:47:50 -04
 #
 #  Copyright (c) 2024-2024, Tales A. Mendonça <talesam@gmail.com>
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
@@ -33,7 +33,7 @@
 # system
 declare APP="${0##*/}"
 declare APPDESC="Wrapper para construção de ISO BigCommunity"
-declare VERSION="1.1.0" # Versão do script
+declare VERSION="1.2.1" # Versão do script
 : "${reset=$(tput sgr0)}"
 : "${red=$(tput bold)$(tput setaf 196)}"
 LIBRARY=${LIBRARY:-"/usr/share/community/gitrepo/shell"}
@@ -264,6 +264,7 @@ else
 			"LTS" \
 			"Latest" \
 			"OldLTS" \
+			"Xanmod" \
 			"Voltar"
 		if [[ $MENU_RESULT == "Voltar" ]]; then
 			continue
