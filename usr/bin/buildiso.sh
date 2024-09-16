@@ -212,7 +212,7 @@ for arg in "$@"; do
 		MANJARO_BRANCH=stable
 		COMMUNITY_BRANCH=testing
 		BIGLINUX_BRANCH=testing
-		KERNEL=latest
+		KERNEL=xanmod
 		EDITION=xfce
 		TAG=$(date "+%Y-%m-%d_%H-%M")
 		TMATE=sim
