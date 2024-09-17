@@ -781,9 +781,19 @@ clean_failures_action_jobs_on_remote() {
 		"https://api.github.com/repos/$repo/actions/runs?status=failure" |
 		jq -r '.workflow_runs[] | select(.conclusion == "failure" or .conclusion == "cancelled") | .id')
 
+	# Requisição para listar todas as execuções da workflow
+	runs=$(curl -s -X GET \
+		-H "Accept: application/vnd.github.v3+json" \
+		-H "Authorization: token $TOKEN_RELEASE" \
+		"https://api.github.com/repos/${repo}/actions/runs")
+
 	if [[ -z "$failed_jobs" ]]; then
 		p_log "${YELLOW}" "Nenhum job com falha encontrado."
 		sleep 5
+		# Imprimir o JSON bruto para depuração
+		echo "JSON bruto recebido:"
+		#echo "$runs" | jq '.' | grep status
+		echo "$runs" | jq '.' | grep -E '"(status|conclusion)"'
 		exit 0
 	fi
 
