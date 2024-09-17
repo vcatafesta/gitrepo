@@ -65,7 +65,8 @@ São válidos: Qualquer nome de pacote/string não vazia"
 
 check_valid_token() {
 	# Verificar o token
-  echo $TOKEN_RELEASE
+
+  #echo $TOKEN_RELEASE
 	p_log "${cyan}" "Verificando permissões do token GitHub..."
 	token_check=$(curl -s -H "Authorization: token $TOKEN_RELEASE" https://api.github.com/user)
 	p_log "$cyan" "Token verificado: ${yellow}$(echo "$token_check" | jq .login)"
