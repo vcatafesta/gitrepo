@@ -331,7 +331,7 @@ while true; do
 			"Realizar commit e gerar pacote" \
 			"Construir pacote do AUR" \
 			"Excluir todos os branchs locais e remoto (exceto main, e os últimos testing e stable)" \
-			"Excluir todos os Action jobs com falhas no remoto" \
+			"Excluir todos os Action jobs com falhas no remoto : $(get_organization_repo_name)" \
 			"Sair"
 	else
 		create_menu "Escolha uma ação:" \
@@ -368,8 +368,9 @@ while true; do
 	"Excluir todos os branchs locais e remoto (exceto main, e os últimos testing e stable)")
 		gclean_branch_remote_and_update_local
 		;;
-	"Excluir todos os Action jobs com falhas no remoto")
+  "Excluir todos os Action jobs com falhas no remoto : $(get_organization_repo_name)")
 		clean_failures_action_jobs_on_remote
+		#delete_failed_runs
 		;;
 	"Sair")
 		p_log "$YELLOW" "Saindo do script. Nenhuma ação foi realizada."

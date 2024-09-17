@@ -65,6 +65,7 @@ São válidos: Qualquer nome de pacote/string não vazia"
 
 check_valid_token() {
 	# Verificar o token
+  echo $TOKEN_RELEASE
 	p_log "${cyan}" "Verificando permissões do token GitHub..."
 	token_check=$(curl -s -H "Authorization: token $TOKEN_RELEASE" https://api.github.com/user)
 	p_log "$cyan" "Token verificado: ${yellow}$(echo "$token_check" | jq .login)"
@@ -103,7 +104,9 @@ gettokengithub_after_key() {
 }
 
 gettokengithub_by_key() {
-	sed -n "/^$ORGANIZATION=/s/.*=//p" "$CFILETOKEN"
+	#sed -n "/^$ORGANIZATION=/s/.*=//p" "$CFILETOKEN"
+  #sed -n "/^$ORGANIZATION=/s/^[^=]*=\(.*\)$/\1/p" "$CFILETOKEN" | head -n 1
+  sed -n "/^$ORGANIZATION=/s/.*=//p" "$CFILETOKEN" | awk 'NR==1'
 }
 
 get_token_release() {
@@ -154,7 +157,7 @@ log_message() {
 	echo "[$(date '+%Y-%m-%d %H:%M:%S')] $clean_log" >>"${LOG_FILE}"
 }
 
-# print_and_log_message
+# p_log
 p_log() {
 	local color="$1"
 	local message="$2"
@@ -636,8 +639,30 @@ get_url_actions() {
 	echo "URL da Action: $action_url"
 }
 
+# Substitua a URL do remoto pelo valor de teste
+get_organization_repo_name() {
+  local remote_url
+  local repo
+
+  remote_url=$(git remote get-url origin)
+ # Remover o prefixo 'https://github.com/' ou 'git@github.com:' e a sufixo '.git'
+  repo="${remote_url#*github.com/}"   # Remove tudo até 'github.com/'
+  repo="${repo%.git}"                 # Remove o sufixo '.git'
+  echo "$repo"
+}
+
 delete_failed_runs() {
 	local result
+	local clean
+	local REPO="$(get_organization_repo_name)"
+
+	# Confirmar a operação
+	read -p "${PURPLE}Digite --confirm para confirmar: " clean
+	if [[ "$clean" != "--confirm" ]]; then
+		p_log "${YELLOW}" "Operação cancelada. Retornando ao menu em 5s"
+		sleep 5
+		exit 1
+	fi
 
 	# Requisição para listar todas as execuções da workflow
 	runs=$(curl -s -X GET \
@@ -646,8 +671,8 @@ delete_failed_runs() {
 		"https://api.github.com/repos/${REPO}/actions/runs")
 
 	#  # Imprimir o JSON bruto para depuração
-	#  echo "JSON bruto recebido:"
-	#  echo "$runs" | jq '.'
+	#echo "JSON bruto recebido:"
+	#echo "$runs" | jq '.'
 
 	# Filtrar as execuções com conclusão de erro
 	failed_runs=$(
@@ -681,6 +706,8 @@ delete_failed_runs() {
 	else
 		echo "Nenhuma execução com erro encontrada."
 	fi
+	sleep 5
+	exit 1
 }
 
 debug_json() {
@@ -728,4 +755,49 @@ debug_json() {
 	else
 		echo "Nenhuma execução com erro encontrada."
 	fi
+}
+
+clean_failures_action_jobs_on_remote() {
+  local token="$TOKEN_RELEASE"
+  local repo
+	repo="$(get_organization_repo_name)"
+  local failed_jobs
+
+  # Confirmação da operação
+  p_log "${RED}" "Apagar todos os jobs de ação com falha do repositório remoto $repo"
+
+  # Confirmar a operação
+  read -p "${PURPLE}Digite --confirm para confirmar: " clean
+  if [[ "$clean" != "--confirm" ]]; then
+    p_log "${YELLOW}" "Operação cancelada. Retornando ao menu em 5s"
+    sleep 5
+    exit 1
+  fi
+
+  # Obter lista de jobs com falha
+  p_log "${CYAN}" "Obtendo lista de jobs com falhas..."
+  failed_jobs=$(curl -s -H "Authorization: token $token" \
+    "https://api.github.com/repos/$repo/actions/runs?status=failure" | \
+    jq -r '.workflow_runs[] | select(.conclusion == "failure") | .id')
+
+  if [[ -z "$failed_jobs" ]]; then
+    p_log "${YELLOW}" "Nenhum job com falha encontrado."
+    sleep 5
+    exit 0
+  fi
+
+  # Deletar cada job com falha
+  for run_id in $failed_jobs; do
+    p_log "${CYAN}" "Deletando job com falha: $run_id"
+    response=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE -H "Authorization: token $token" \
+      "https://api.github.com/repos/$repo/actions/runs/$run_id")
+
+    if [[ "$response" -eq 204 ]]; then
+      p_log "${GREEN}" "Job com falha $run_id deletado com sucesso."
+    else
+      p_log "${RED}" "Falha ao deletar job com falha $run_id. Código de resposta: $response"
+    fi
+  done
+  sleep 5
+  exit 0
 }
