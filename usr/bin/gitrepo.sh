@@ -307,7 +307,7 @@ menu_advanced() {
 				"Excluir todos os branchs locais e remoto (exceto main, e os últimos testing e stable)" \
 				"Excluir todos os Action jobs com falhas no remoto  : $(get_organization_repo_name)" \
 				"Excluir todos os Action jobs com sucesso no remoto : $(get_organization_repo_name)" \
- 	      "Apagar todas a tags no remoto : $(get_organization_repo_name)" \
+				"Apagar todas a tags no remoto : $(get_organization_repo_name)" \
 				"Voltar"
 		fi
 		ACTION=$MENU_RESULT
@@ -315,16 +315,16 @@ menu_advanced() {
 		"Excluir todos os branchs locais e remoto (exceto main, e os últimos testing e stable)")
 			gclean_branch_remote_and_update_local
 			;;
-		"Excluir todos os Action jobs com falhas no remoto : $(get_organization_repo_name)")
+		"Excluir todos os Action jobs com falhas no remoto  : $(get_organization_repo_name)")
 			clean_failures_action_jobs_on_remote
 			#delete_failed_runs
 			;;
- 	  "Excluir todos os Action jobs com sucesso no remoto : $(get_organization_repo_name)")
+		"Excluir todos os Action jobs com sucesso no remoto : $(get_organization_repo_name)")
 			clean_success_action_jobs_on_remote
 			;;
- 	  "Apagar todas a tags no remoto : $(get_organization_repo_name)")
-      clean_all_tags_on_remote
-      ;;
+		"Apagar todas a tags no remoto : $(get_organization_repo_name)")
+			clean_all_tags_on_remote
+			;;
 		"Voltar")
 			p_log "$YELLOW" "Saindo do script. Nenhuma ação foi realizada."
 			return
@@ -401,8 +401,8 @@ while true; do
 		Construir_pacote_do_AUR
 		break
 		;;
-  "Avançado")
-    menu_advanced
+	"Avançado")
+		menu_advanced
 		;;
 	"Sair")
 		p_log "$YELLOW" "Saindo do script. Nenhuma ação foi realizada."
