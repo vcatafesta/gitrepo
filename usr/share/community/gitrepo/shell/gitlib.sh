@@ -812,3 +812,88 @@ clean_failures_action_jobs_on_remote() {
 	sleep 5
 	exit 0
 }
+
+clean_success_action_jobs_on_remote() {
+	local token="$TOKEN_RELEASE"
+	local repo
+	repo="$(get_organization_repo_name)"
+	local failed_jobs
+
+	# Confirmação da operação
+	p_log "${RED}" "Apagar todos os jobs de ação com sucesso e falhas do repositório remoto $repo"
+
+	# Confirmar a operação
+	read -p "${PURPLE}Digite --confirm para confirmar: " clean
+	if [[ "$clean" != "--confirm" ]]; then
+		p_log "${YELLOW}" "Operação cancelada. Retornando ao menu em 5s"
+		sleep 5
+		exit 1
+	fi
+
+	# Obter lista de jobs com falha ou cancelamento
+	p_log "${CYAN}" "Obtendo lista de jobs com sucesso ou cancelados..."
+	failed_jobs=$(curl -s -H "Authorization: token $token" \
+		"https://api.github.com/repos/$repo/actions/runs?status=success" |
+		jq -r '.workflow_runs[] | select(.conclusion == "success") | .id')
+
+	# Requisição para listar todas as execuções da workflow
+	runs=$(curl -s -X GET \
+		-H "Accept: application/vnd.github.v3+json" \
+		-H "Authorization: token $TOKEN_RELEASE" \
+		"https://api.github.com/repos/${repo}/actions/runs")
+
+	if [[ -z "$failed_jobs" ]]; then
+		p_log "${YELLOW}" "Nenhum job encontrado."
+		sleep 5
+		# Imprimir o JSON bruto para depuração
+		echo "JSON bruto recebido:"
+		#echo "$runs" | jq '.' | grep status
+		echo "$runs" | jq '.' | grep -E '"(status|conclusion)"'
+		exit 0
+	fi
+
+	# Deletar cada job com falha
+	for run_id in $failed_jobs; do
+		p_log "${CYAN}" "Deletando job : $run_id"
+		response=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE -H "Authorization: token $token" \
+			"https://api.github.com/repos/$repo/actions/runs/$run_id")
+
+		if [[ "$response" -eq 204 ]]; then
+			p_log "${GREEN}" "Job $run_id deletado com sucesso."
+		else
+			p_log "${RED}" "Falha ao deletar job $run_id. Código de resposta: $response"
+		fi
+	done
+	sleep 5
+	exit 0
+}
+
+clean_all_tags_on_remote() {
+	local token="$TOKEN_RELEASE"
+	local repo
+	repo="$(get_organization_repo_name)"
+	local failed_jobs
+
+	# Confirmação da operação
+	p_log "${RED}" "Apagar todas as tag do repositório remoto $repo"
+
+	# Confirmar a operação
+	read -p "${PURPLE}Digite --confirm para confirmar: " clean
+	if [[ "$clean" != "--confirm" ]]; then
+		p_log "${YELLOW}" "Operação cancelada. Retornando ao menu em 5s"
+		sleep 5
+		exit 1
+	fi
+
+	p_log "${CYAN}" "Deletando tags..."
+  if git tag -l | xargs -n 1 git push --delete origin; then
+    git tag -l | xargs git tag -d
+    git pull
+    git push
+    p_log "${GREEN}" "Todas tags deletadas com sucesso."
+  else
+		p_log "${RED}" "Falha ao deletar tags. Não encontradas"
+  fi
+	sleep 5
+	exit 0
+}

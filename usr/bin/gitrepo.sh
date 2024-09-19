@@ -299,6 +299,43 @@ Construir_pacote_do_AUR() {
 	trigger_workflow "$aur_package_name" "aur" "true"
 }
 
+menu_advanced() {
+	while true; do
+		# Menu principal
+		if $IS_GIT_REPO; then
+			create_menu "Escolha uma ação:" \
+				"Excluir todos os branchs locais e remoto (exceto main, e os últimos testing e stable)" \
+				"Excluir todos os Action jobs com falhas no remoto  : $(get_organization_repo_name)" \
+				"Excluir todos os Action jobs com sucesso no remoto : $(get_organization_repo_name)" \
+ 	      "Apagar todas a tags no remoto : $(get_organization_repo_name)" \
+				"Voltar"
+		fi
+		ACTION=$MENU_RESULT
+		case "$ACTION" in
+		"Excluir todos os branchs locais e remoto (exceto main, e os últimos testing e stable)")
+			gclean_branch_remote_and_update_local
+			;;
+		"Excluir todos os Action jobs com falhas no remoto : $(get_organization_repo_name)")
+			clean_failures_action_jobs_on_remote
+			#delete_failed_runs
+			;;
+ 	  "Excluir todos os Action jobs com sucesso no remoto : $(get_organization_repo_name)")
+			clean_success_action_jobs_on_remote
+			;;
+ 	  "Apagar todas a tags no remoto : $(get_organization_repo_name)")
+      clean_all_tags_on_remote
+      ;;
+		"Voltar")
+			p_log "$YELLOW" "Saindo do script. Nenhuma ação foi realizada."
+			return
+			;;
+		*)
+			die "$RED" "Opção inválida selecionada."
+			;;
+		esac
+	done
+}
+
 ## main() { Início do script principal }
 ########################################
 # Verificações iniciais
@@ -330,8 +367,7 @@ while true; do
 			"Apenas fazer commit/push" \
 			"Realizar commit e gerar pacote" \
 			"Construir pacote do AUR" \
-			"Excluir todos os branchs locais e remoto (exceto main, e os últimos testing e stable)" \
-			"Excluir todos os Action jobs com falhas no remoto : $(get_organization_repo_name)" \
+			"Avançado" \
 			"Sair"
 	else
 		create_menu "Escolha uma ação:" \
@@ -365,12 +401,8 @@ while true; do
 		Construir_pacote_do_AUR
 		break
 		;;
-	"Excluir todos os branchs locais e remoto (exceto main, e os últimos testing e stable)")
-		gclean_branch_remote_and_update_local
-		;;
-  "Excluir todos os Action jobs com falhas no remoto : $(get_organization_repo_name)")
-		clean_failures_action_jobs_on_remote
-		#delete_failed_runs
+  "Avançado")
+    menu_advanced
 		;;
 	"Sair")
 		p_log "$YELLOW" "Saindo do script. Nenhuma ação foi realizada."
