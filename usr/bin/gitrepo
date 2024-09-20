@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 # shellcheck shell=bash disable=SC1091,SC2039,SC2166,SC2317,SC2155,SC2034,SC2229,SC2076,SC2199,SC2015
 #
-#  gitrepo.sh - Wrapper git para o BigCommunity
+#  gitrepo - Wrapper git para o BigCommunity
 #  Created: qui 05 set 2024 00:51:12 -04
-#  Altered: qui 19 set 2024 22:51:27 -04
+#  Altered: sex 20 set 2024 18:39:05 -04
 #
 #  Copyright (c) 2024-2024, Tales A. Mendonça <talesam@gmail.com>
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
@@ -33,7 +33,7 @@
 # system
 declare APP="${0##*/}"
 declare APPDESC="Wrapper git para o BigCommunity"
-declare VERSION="2.1.0" # Versão do script
+declare VERSION="2.1.1" # Versão do script
 : "${reset=$(tput sgr0)}"
 : "${red=$(tput bold)$(tput setaf 196)}"
 LIBRARY=${LIBRARY:-"/usr/share/community/gitrepo/shell"}
