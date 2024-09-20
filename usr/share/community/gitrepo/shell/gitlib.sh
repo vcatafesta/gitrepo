@@ -369,7 +369,7 @@ gclean_branch_remote_and_update_local() {
 	local branches_to_keep_remote
 	local branch_name
 
-	p_log "${RED}" "Apaga todos os branches remotos (exceto $mainbranch e os mais novos com prefixo testing-, stable- e aur-) e atualiza o repositório local"
+	p_log "${RED}" "Exclui os branches remotos (exceto $mainbranch e os mais novos com prefixo: testing-, stable-, aur- e extra-) e atualiza o repositório local ${reset}"
 
 	# Confirmar a operação
 	read -r -p "${PURPLE}Digite --confirm para confirmar: " clean
@@ -379,7 +379,7 @@ gclean_branch_remote_and_update_local() {
 		exit 1
 	fi
 
-	p_log "${YELLOW}" "$clean ${RED}checado. ${black}Prosseguindo com a exclusão dos branches remotos (exceto $mainbranch e os mais novos com prefixo testing-, stable- e aur-) ${RESET}"
+	p_log "${YELLOW}" "$clean ${RED}checado. ${black}Prosseguindo com a exclusão dos branches remotos e locais ${reset}"
 	# Obtém o nome do branch principal
 	mainbranch="$(get_main_branch)"
 	# Mudar para o branch principal
@@ -391,18 +391,20 @@ gclean_branch_remote_and_update_local() {
 
 	# Encontrar e ordenar os branches remotos com prefixo testing-, stable- e aur-
 	p_log "${CYAN}" "Encontrar os branches remotos com prefixo testing-, stable- e aur-"
-	remote_branches=$(git branch -r | grep -E 'origin/(testing-|stable-|aur-)' | sort)
+	remote_branches=$(git branch -r | grep -E 'origin/(testing-|stable-|aur-|extra-)' | sort)
 
 	# Obter o mais recente de cada prefixo
 	latest_testing_branch_remote=$(echo "$remote_branches" | grep 'origin/testing-' | tail -n 1)
 	latest_stable_branch_remote=$(echo "$remote_branches" | grep 'origin/stable-' | tail -n 1)
 	latest_aur_branch_remote=$(echo "$remote_branches" | grep 'origin/aur-' | tail -n 1)
+	latest_extra_branch_remote=$(echo "$remote_branches" | grep 'origin/extra-' | tail -n 1)
 
 	# Criar uma lista de branches remotos a manter
 	branches_to_keep_remote="origin/$mainbranch"
 	[[ -n "$latest_testing_branch_remote" ]] && branches_to_keep_remote+=" $latest_testing_branch_remote"
 	[[ -n "$latest_stable_branch_remote" ]] && branches_to_keep_remote+=" $latest_stable_branch_remote"
 	[[ -n "$latest_aur_branch_remote" ]] && branches_to_keep_remote+=" $latest_aur_branch_remote"
+	[[ -n "$latest_extra_branch_remote" ]] && branches_to_keep_remote+=" $latest_extra_branch_remote"
 
 	# Excluir branches remotos que não estão na lista de branches a manter
 	p_log "${CYAN}" "Excluir todos os branches remotos (exceto $branches_to_keep_remote)"

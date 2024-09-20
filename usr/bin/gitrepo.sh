@@ -304,7 +304,7 @@ menu_advanced() {
 		# Menu principal
 		if $IS_GIT_REPO; then
 			create_menu "Escolha uma ação:" \
-				"Excluir todos os branchs locais e remoto (exceto main, e os últimos testing e stable)" \
+		    "Excluir todos os branchs locais e remoto (exceto main, e os últimos testing, stable e extra)" \
 				"Excluir todos os Action jobs com falhas no remoto  : $(get_organization_repo_name)" \
 				"Excluir todos os Action jobs com sucesso no remoto : $(get_organization_repo_name)" \
 				"Apagar todas a tags no remoto : $(get_organization_repo_name)" \
@@ -312,7 +312,7 @@ menu_advanced() {
 		fi
 		ACTION=$MENU_RESULT
 		case "$ACTION" in
-		"Excluir todos os branchs locais e remoto (exceto main, e os últimos testing e stable)")
+		"Excluir todos os branchs locais e remoto (exceto main, e os últimos testing, stable e extra)")
 			gclean_branch_remote_and_update_local
 			;;
 		"Excluir todos os Action jobs com falhas no remoto  : $(get_organization_repo_name)")
