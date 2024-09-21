@@ -482,9 +482,17 @@ create_menu() {
 		for i in "${!options[@]}"; do
 			if [[ "$i" -eq $selected ]]; then
 				if [[ "${options[$i]}" =~ ^(Sair|Voltar)$ ]]; then
-					echo -e "${RED}${BOLD}${reverse}> ${options[$i]}${NC}"
+          if [[ "$ORGANIZATION" =~ ^(chililinux|vcatafesta)$ ]]; then
+  					echo -e "${RED}${BOLD}${reverse}> ${options[$i]}${NC}"
+  				else
+					  echo -e "${RED}${BOLD}> ${options[$i]}${NC}"
+				  fi
 				else
-					echo -e "${GREEN}${BOLD}${reverse}> ${options[$i]}${NC}"
+          if [[ "$ORGANIZATION" =~ ^(chililinux|vcatafesta)$ ]]; then
+  					echo -e "${GREEN}${BOLD}${reverse}> ${options[$i]}${NC}"
+  				else
+	  				echo -e "${GREEN}${BOLD}> ${options[$i]}${NC}"
+	  			fi
 				fi
 			else
 				if [[ "${options[$i]}" =~ ^(Sair|Voltar)$ ]]; then
