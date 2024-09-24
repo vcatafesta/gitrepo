@@ -1,0 +1,130 @@
+#!/usr/bin/env bash
+# -*- coding: utf-8 -*-
+# shellcheck shell=bash disable=SC1091,SC2039,SC2166
+#
+#  mkiso-manjaro
+#  Created: 2024/09/21 - 15:00
+#  Altered: 2024/09/21 - 15:00
+#
+#  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
+#  All rights reserved.
+#
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions
+#  are met:
+#  1. Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#  2. Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AS IS'' AND ANY EXPRESS OR
+#  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+#  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+#  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+#  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+#  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+#  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+#  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+#  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+##############################################################################
+#export LANGUAGE=pt_BR
+export TEXTDOMAINDIR=/usr/share/locale
+export TEXTDOMAIN=mkiso-manjaro
+# system
+declare APP="${0##*/}"
+declare APPDESC="Wrapper git para o BigCommunity"
+declare VERSION="2.1.1" # Versão do script
+declare distro="$(uname -n)"
+declare DEPENDENCIES=(tput)
+: "${reset=$(tput sgr0)}"
+: "${red=$(tput bold)$(tput setaf 196)}"
+LIBRARY=${LIBRARY:-"/usr/share/community/gitrepo/shell"}
+[[ -s "$LIBRARY/gitlib.sh" ]] && source "$LIBRARY"/gitlib.sh || {
+	echo "${red}=> ERRO FATAL: Não foi possível ler a biblioteca $LIBRARY/gitlib.sh ${reset}"
+	exit 1
+}
+source /usr/share/fetch/core.sh
+
+MostraErro() {
+	echo "erro: ${red}$1${reset} => comando: ${cyan}'$2'${reset} => result=${yellow}$3${reset}"
+}
+trap 'MostraErro "$APP[$FUNCNAME][$LINENO]" "$BASH_COMMAND" "$?"; exit 1' ERR
+
+# Função para exibir informações de ajuda
+sh_usage() {
+	cat <<-EOF
+		    ${reset}${APP} v${VERSION} - ${APPDESC}${reset}
+		    ${red}Uso: ${reset}$APP ${cyan}[opções]${reset}
+
+		        ${cyan}Opções:${reset}
+		          -o|--org|--organization ${orange}<name> ${cyan} # Configura organização de trabalho no Github ${yellow}(default: communitybig)${reset}
+		          -c|--commit          ${orange}<message> ${cyan} # Apenas fazer commit/push ${yellow}obrigátorio mensagem do commit ${reset}
+		          -b|--build            ${orange}<branch> ${cyan} # Realizar commit/push e gerar pacote ${reset} branch válidos: ${yellow}testing, stable ${reset}
+		          -a|--aur              ${orange}<pacote> ${cyan} # Construir pacote do AUR ${yellow}obrigátorio nome do pacote para construir ${reset}
+		          -n|--nocolor                   ${cyan} # Suprime a impressão de cores ${reset}
+		          -V|--version                   ${cyan} # Imprime a versão do aplicativo ${reset}
+		          -h|--help                      ${cyan} # Mostra este Help ${reset}
+	EOF
+}
+
+msg() {
+	local msg="$1"
+	echo "${cyan}running: ${yellow}${msg}${reset}"
+}
+
+build_iso() {
+  local edition="$1"
+
+  # Ajustar variáveis de ambiente
+	REPO='https://github.com/chililinux/iso-profiles.git'
+  CONFIG_PATH="$HOME/.config/manjaro-tools"
+  WORK_PATH="$HOME"
+  WORK_PATH_ISO_PROFILES="$WORK_PATH/iso-profiles"
+  PROFILE_PATH="$WORK_PATH_ISO_PROFILES/community"
+  PATH_MANJARO_TOOLS="/usr/share/manjaro-tools"
+  dist_name='chillinux'
+  iso_name='CHILI_LIVE'
+
+	msg 'Cleaning /var/lib/manjaro-tools/buildiso/*'
+	sudo rm -rf /var/lib/manjaro-tools/buildiso/*
+
+	msg 'Cleaning /var/cache/manjaro-tools/iso/*'
+	sudo rm -rf /var/cache/manjaro-tools/iso/*
+
+	msg 'Install the manjaro-tools-packages required'
+	sudo pacman -Sy --noconfirm git base-devel manjaro-chrootbuild manjaro-tools-iso-git manjaro-tools-yaml-git manjaro-tools-base-git
+
+	msg 'Create a config file e path'
+	[[ ! -d $CONFIG_PATH ]] && mkdir -p $CONFIG_PATH
+
+	msg 'Cleaning config file e path'
+	rm -rf $CONFIG_PATH/*
+	#cp -R /etc/manjaro-tools $HOME/.config
+
+	msg 'Adjusting run_dir on config file'
+	echo "run_dir=/home/$USER/iso-profiles" >$CONFIG_PATH/iso-profiles.conf
+
+	msg 'Move old iso-profiles to new directory'
+	mv -f $WORK_PATH_ISO_PROFILES $HOME/$(mktemp -u iso-profiles.XXXX)
+
+	msg 'Clone and download latest ISO profiles repo in your home'
+	#git clone https://gitlab.manjaro.org/profiles-and-settings/iso-profiles.git ~/iso-profiles
+	git clone --depth=1 $REPO $WORK_PATH_ISO_PROFILES
+
+  msg 'Configurações adicionais específicas para a construção de ISO'
+  sudo sed -i "s/^dist_name=.*/dist_name=$dist_name/" /usr/lib/manjaro-tools/util.sh
+  sudo sed -i "s/^iso_name=.*/iso_name=$iso_name/"    /usr/lib/manjaro-tools/util.sh
+
+  msg 'Ajustar configurações do kernels.cfg, grub.cfg e variable.cfg para bigcommunity em iso-profiles'
+  sudo find "$WORK_PATH_ISO_PROFILES" -name "kernels.cfg" -exec sed -i "s/misobasedir=manjaro/misobasedir=${dist_name}/g" {} +
+  sudo find "$WORK_PATH_ISO_PROFILES" -name "variable.cfg" -exec sed -i "s#/boot/grub/themes/manjaro-live/theme.txt#/boot/grub/themes/${dist_name}-live/theme.txt#g" {} +
+  sudo find "$WORK_PATH_ISO_PROFILES" -name "grub.cfg" -exec sed -i "s#/boot/grub/themes/manjaro-live/theme.txt#/boot/grub/themes/${dist_name}-live/theme.txt#g" {} +
+
+#	LC_ALL=C buildiso -q
+	msg "LC_ALL=C buildiso -p $edition"
+	LC_ALL=C buildiso -p $edition
+}
+
+build_iso 'xfce'
