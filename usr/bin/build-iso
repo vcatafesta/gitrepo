@@ -142,7 +142,19 @@ trigger_workflow() {
 	local current_datetime="$TAG"
 	local event_type="ISO-${EDITION^^}"
 	local tmate_option=$([ "$TMATE" == "sim" ] && echo "true" || echo "false")
-	local data="{\"event_type\": \"$event_type\", \"client_payload\": { \"edition\": \"$EDITION\", \"manjaro_branch\": \"$MANJARO_BRANCH\", \"community_branch\": \"$COMMUNITY_BRANCH\", \"biglinux_branch\": \"$BIGLINUX_BRANCH\", \"kernel\": \"$KERNEL\", \"release_tag\": \"$current_datetime\", \"tmate\": $tmate_option}}"
+	#local data="{\"event_type\": \"$event_type\", \"client_payload\": { \"edition\": \"$EDITION\", \"manjaro_branch\": \"$MANJARO_BRANCH\", \"community_branch\": \"$COMMUNITY_BRANCH\", \"biglinux_branch\": \"$BIGLINUX_BRANCH\", \"kernel\": \"$KERNEL\", \"release_tag\": \"$current_datetime\", \"tmate\": $tmate_option}}"
+  local data="{\"event_type\": \"$event_type\", \
+  \"client_payload\": { \
+    \"distroname\": \"$DISTRONAME\", \
+    \"iso_profiles_repo\": \"$ISO_PROFILES_REPO\", \
+    \"edition\": \"$EDITION\", \
+    \"manjaro_branch\": \"$MANJARO_BRANCH\", \
+    \"community_branch\": \"$COMMUNITY_BRANCH\", \
+    \"biglinux_branch\": \"$BIGLINUX_BRANCH\", \
+    \"kernel\": \"$KERNEL\", \
+    \"release_tag\": \"$current_datetime\", \
+    \"tmate\": $tmate_option \
+  }}"
 
 	p_log "${CYAN}" "Disparando workflow para $event_type${NC}"
 	response=$(curl -s -X POST \
@@ -163,22 +175,24 @@ trigger_workflow() {
 		p_log "${YELLOW}" "A sessão TMATE será ativada. Fique atento às informações de conexão nos logs do GitHub Actions.${NC}"
 	fi
 	p_log "$orange" "Aguardando '2s' para a API acionar a Action e podermos pegar o 'id'."
-  sleep 2
-  p_log "$RESET" "$(get_url_actions)"
+	sleep 2
+	p_log "$RESET" "$(get_url_actions)"
 
 	checkout_and_exit 0
 }
 
 resume_and_build() {
 	# Confirmar as escolhas
-	echo -e "\n${cyan}Resumo das escolhas:${rst}"
-	echo "Manjaro Branch  : ${orange}$MANJARO_BRANCH ${rst}"
-	echo "Community Branch: ${orange}$COMMUNITY_BRANCH ${rst}"
-	echo "BigLinux Branch : ${orange}$BIGLINUX_BRANCH ${rst}"
-	echo "Kernel          : ${orange}$KERNEL ${rst}"
-	echo "Edition         : ${orange}$EDITION ${rst}"
-	echo "Release Tag     : ${orange}$TAG ${rst}"
-	echo "TMATE Debug     : ${orange}$TMATE ${rst}"
+	echo -e "\n${cyan}Resumo das escolhas:${reset}"
+	echo "Distroname       : ${orange}$DISTRONAME ${reset}"
+	echo "Iso Profiles repo: ${orange}$ISO_PROFILES_REPO ${reset}"
+	echo "Manjaro Branch   : ${orange}$MANJARO_BRANCH ${reset}"
+	echo "Community Branch : ${orange}$COMMUNITY_BRANCH ${reset}"
+	echo "BigLinux Branch  : ${orange}$BIGLINUX_BRANCH ${reset}"
+	echo "Kernel           : ${orange}$KERNEL ${reset}"
+	echo "Edition          : ${orange}$EDITION ${reset}"
+	echo "Release Tag      : ${orange}$TAG ${reset}"
+	echo "TMATE Debug      : ${orange}$TMATE ${reset}"
 	echo
 
 	if conf "${YELLOW}Deseja prosseguir com a construção da ISO?"; then
@@ -186,6 +200,32 @@ resume_and_build() {
 	else
 		die "${RED}" "Construção da ISO cancelada."
 	fi
+}
+
+get_iso_profiles_repo() {
+	create_menu \
+		'Escolha uma repositório iso-profiles:' \
+		'https://github.com/talesam/iso-profiles' \
+		'https://github.com/chililinux/iso-profiles' \
+		'https://gitlab.manjaro.org/profiles-and-settings/iso-profiles.git' \
+		'Sair'
+	if [[ $MENU_RESULT == "Sair" ]]; then
+		die "${red}" "Construção da ISO cancelada.${reset}"
+	fi
+	ISO_PROFILES_REPO="${MENU_RESULT}"
+}
+
+get_distroname() {
+	create_menu \
+		"Escolha a distribuição:" \
+		"bigcommunity" \
+		"biglinux" \
+		"chililinux" \
+		"Sair"
+	if [[ $MENU_RESULT == "Sair" ]]; then
+		die "${red}" "Construção da ISO cancelada.${reset}"
+	fi
+	DISTRONAME="${MENU_RESULT}"
 }
 
 ## main() { Início do script principal }
@@ -209,13 +249,27 @@ for arg in "$@"; do
 		exit $(($# ? 0 : 1))
 	elif [[ "$arg" = @(-a|--auto|--automatic) ]]; then
 		IS_AUTO=true
-		MANJARO_BRANCH=stable
-		COMMUNITY_BRANCH=testing
-		BIGLINUX_BRANCH=testing
-		KERNEL=latest
-		EDITION=xfce
-		TAG=$(date "+%Y-%m-%d_%H-%M")
-		TMATE=sim
+    if [[ "$ORGANIZATION" =~ ^(chililinux|vcatafesta)$ ]]; then
+   		DISTRONAME=bigcommunity
+   		ISO_PROFILES_REPO='https://github.com/talesam/iso-profiles'
+   		MANJARO_BRANCH=stable
+   		COMMUNITY_BRANCH=testing
+   		BIGLINUX_BRANCH=testing
+   		KERNEL=latest
+   		EDITION=xfce
+   		TAG=$(date "+%Y-%m-%d_%H-%M")
+   		TMATE=sim
+    else
+   		DISTRONAME=chililinux
+   		ISO_PROFILES_REPO='https://github.com/chililinux/iso-profiles'
+   		MANJARO_BRANCH=stable
+   		COMMUNITY_BRANCH=testing
+   		BIGLINUX_BRANCH=testing
+   		KERNEL=latest
+   		EDITION=xfce
+   		TAG=$(date "+%Y-%m-%d_%H-%M")
+   		TMATE=sim
+    fi
 	fi
 done
 
@@ -226,6 +280,9 @@ if $IS_AUTO; then
 	resume_and_build
 else
 	while true; do
+    get_distroname
+    get_iso_profiles_repo
+
 		create_menu \
 			"Escolha uma opção de branch para o Manjaro:" \
 			"Stable" \
@@ -240,19 +297,18 @@ else
 
 		create_menu \
 			"Escolha uma opção de branch para o Community:" \
-			"Stable" \
 			"Testing" \
+			"Stable" \
 			"Voltar"
 		if [[ $MENU_RESULT == "Voltar" ]]; then
 			continue
 		fi
-
 		COMMUNITY_BRANCH=${MENU_RESULT,,}
 
 		create_menu \
 			"Escolha uma opção para o branch BigLinux:" \
-			"Stable" \
 			"Testing" \
+			"Stable" \
 			"Voltar"
 		if [[ $MENU_RESULT == "Voltar" ]]; then
 			continue
@@ -261,8 +317,8 @@ else
 
 		create_menu \
 			"Escolha a versão do kernel:" \
-			"LTS" \
 			"Latest" \
+			"LTS" \
 			"OldLTS" \
 			"Xanmod" \
 			"Voltar"
@@ -273,12 +329,12 @@ else
 
 		create_menu \
 			"Escolha a edição:" \
+			"XFCE" \
 			"Cinnamon" \
 			"Cosmic" \
 			"Deepin" \
 			"Gnome" \
 			"KDE" \
-			"XFCE" \
 			"Wmaker" \
 			"Voltar"
 		if [[ $MENU_RESULT == "Voltar" ]]; then
