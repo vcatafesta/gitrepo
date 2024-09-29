@@ -190,7 +190,17 @@ trigger_workflow() {
 	p_log "$CYAN" "Acionando o workflow de build no GitHub..."
 	if [[ -n "$aur_package" ]]; then
 		aur_url="https://aur.archlinux.org/${package_name}.git"
-		data="{\"event_type\": \"aur-$package_name\", \"client_payload\": { \"package_name\": \"${package_name}\", \"aur_url\": \"${aur_url}\", \"branch_type\": \"aur\", \"build_env\": \"aur\", \"tmate\": $tmate_option}}"
+#		data="{\"event_type\": \"aur-$package_name\", \"client_payload\": { \"package_name\": \"${package_name}\", \"aur_url\": \"${aur_url}\", \"branch_type\": \"aur\", \"build_env\": \"aur\", \"tmate\": $tmate_option}}"
+    data="{\
+      \"event_type\": \"aur-$package_name\", \
+      \"client_payload\": { \
+        \"package_name\": \"${package_name}\", \
+        \"aur_url\": \"${aur_url}\", \
+        \"branch_type\": \"aur\", \
+        \"build_env\": \"aur\", \
+        \"tmate\": $tmate_option \
+      }\
+    }"
 		event_type="aur-build"
 	else
 		repo_name=$(git config --get remote.origin.url | sed 's/.*[:/]\([^/]*\/[^.]*\).*/\1/')
@@ -198,7 +208,16 @@ trigger_workflow() {
 			die "$RED" "Deu ruim na recuperação da URL do repositório remoto do pacote: $package_name"
 		fi
 		p_log "$CYAN" "Repositório detectado: $repo_name"
-		data="{\"event_type\": \"$package_name\", \"client_payload\": { \"branch\": \"${new_branch}\", \"type\": \"${branch_type}\", \"url\": \"https://github.com/${repo_name}\"}}"
+#		data="{\"event_type\": \"$package_name\", \"client_payload\": { \"branch\": \"${new_branch}\", \"type\": \"${branch_type}\", \"url\": \"https://github.com/${repo_name}\"}}"
+    data="{\
+      \"event_type\": \"$package_name\", \
+      \"client_payload\": { \
+        \"branch\": \"${new_branch}\", \
+        \"branch_type\": \"${branch_type}\", \
+        \"url\": \"https://github.com/${repo_name}\" \
+      }\
+    }"
+
 		event_type="package-build"
 	fi
 
