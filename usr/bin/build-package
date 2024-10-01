@@ -4,7 +4,7 @@
 #
 #  build-package - Wrapper git para o BigCommunity
 #  Created: qui 05 set 2024 00:51:12 -04
-#  Altered: sex 20 set 2024 18:39:05 -04
+#  Altered: ter 01 out 2024 11:55:13 -04
 #
 #  Copyright (c) 2024-2024, Tales A. Mendonça <talesam@gmail.com>
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
@@ -33,7 +33,7 @@
 # system
 declare APP="${0##*/}"
 declare APPDESC="Wrapper git para o BigCommunity"
-declare VERSION="2.1.1" # Versão do script
+declare VERSION="2.1.2" # Versão do script
 : "${reset=$(tput sgr0)}"
 : "${red=$(tput bold)$(tput setaf 196)}"
 LIBRARY=${LIBRARY:-"/usr/share/community/gitrepo/shell"}
