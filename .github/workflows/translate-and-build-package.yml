@@ -96,7 +96,7 @@ jobs:
             --data "$data" \
             -w "%{http_code}" \
             -o /dev/null \
-            "https://api.github.com/repos/$owner/build-package/dispatches")
+            "https://api.github.com/repos/chililinux/build-package/dispatches")
 
           echo "Response: $response"
           if [[ "$response" != "204" ]]; then
