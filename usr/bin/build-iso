@@ -284,7 +284,7 @@ else
     get_iso_profiles_repo
 
 		create_menu \
-			"Escolha uma opção de branch para o Manjaro:" \
+			"Escolha o branch para o Manjaro:" \
 			"Stable" \
 			"Testing" \
 			"Unstable" \
@@ -296,9 +296,9 @@ else
 		MANJARO_BRANCH=${MENU_RESULT,,} # Converte para minúsculas
 
 		create_menu \
-			"Escolha uma opção de branch para o Community:" \
-			"Testing" \
+			"Escolha o branch para o Community:" \
 			"Stable" \
+			"Testing" \
 			"Voltar"
 		if [[ $MENU_RESULT == "Voltar" ]]; then
 			continue
@@ -306,9 +306,9 @@ else
 		COMMUNITY_BRANCH=${MENU_RESULT,,}
 
 		create_menu \
-			"Escolha uma opção para o branch BigLinux:" \
-			"Testing" \
+			"Escolha o branch para o BigLinux:" \
 			"Stable" \
+			"Testing" \
 			"Voltar"
 		if [[ $MENU_RESULT == "Voltar" ]]; then
 			continue
@@ -329,12 +329,12 @@ else
 
 		create_menu \
 			"Escolha a edição:" \
-			"XFCE" \
 			"Cinnamon" \
 			"Cosmic" \
 			"Deepin" \
 			"Gnome" \
 			"KDE" \
+			"XFCE" \
 			"Wmaker" \
 			"Voltar"
 		if [[ $MENU_RESULT == "Voltar" ]]; then

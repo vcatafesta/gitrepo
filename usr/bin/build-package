@@ -185,7 +185,7 @@ trigger_workflow() {
 	local event_type
 	local response
 	local repo_name
-	local tmate_option="true"
+	local tmate_option="false"
 
 	p_log "$CYAN" "Acionando o workflow de build no GitHub..."
 	if [[ -n "$aur_package" ]]; then
