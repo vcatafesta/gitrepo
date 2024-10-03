@@ -5,6 +5,7 @@ pkgname=gitrepo
 pkgdesc="Wrapper git para o CommunityBig"
 depends=('git')
 depends+=('ncurses') # tput
+depends+=('jq') # tput
 #makedepends=('')
 #optdepends=('')
 #conflicts=('')
