@@ -461,7 +461,7 @@ create_menu() {
 			echo -e "Repo Name     : ${CYAN}$REPO_NAME${RESET}"
 			echo -e "Repo Workflow : ${CYAN}$REPO${RESET}"
 			echo -e "Local Path    : ${CYAN}$REPO_PATH${RESET}"
-			echo -e "Branchs       : ${RED}$(git branch 2>/dev/null)${RESET}"
+			echo -e "Branchs       : \n${RED}$(git branch 2>/dev/null)${RESET}"
 			git remote -v 2>/dev/null
 			echo '---------------------------------------------------------------------------------'
 		elif $IS_AUR_PACKAGE; then
