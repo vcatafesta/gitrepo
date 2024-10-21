@@ -4,7 +4,7 @@
 #
 #  build-package - Wrapper git para o BigCommunity
 #  Created: qui 05 set 2024 00:51:12 -04
-#  Altered: ter 01 out 2024 11:55:13 -04
+#  Altered: qua 09 out 2024 21:31:59 -04
 #
 #  Copyright (c) 2024-2024, Tales A. Mendonça <talesam@gmail.com>
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
@@ -33,7 +33,7 @@
 # system
 declare APP="${0##*/}"
 declare APPDESC="Wrapper git para o BigCommunity"
-declare VERSION="2.1.2" # Versão do script
+declare VERSION="2.1.3" # Versão do script
 : "${reset=$(tput sgr0)}"
 : "${red=$(tput bold)$(tput setaf 196)}"
 LIBRARY=${LIBRARY:-"/usr/share/community/gitrepo/shell"}
@@ -194,11 +194,11 @@ trigger_workflow() {
     data="{\
       \"event_type\": \"aur-$package_name\", \
       \"client_payload\": { \
-        \"package_name\": \"${package_name}\", \
-        \"aur_url\": \"${aur_url}\", \
-        \"branch_type\": \"aur\", \
-        \"build_env\": \"aur\", \
-        \"tmate\": $tmate_option \
+      \"package_name\": \"${package_name}\", \
+      \"aur_url\": \"${aur_url}\", \
+      \"branch_type\": \"aur\", \
+      \"build_env\": \"aur\", \
+      \"tmate\": $tmate_option \
       }\
     }"
 		event_type="aur-build"
@@ -212,12 +212,11 @@ trigger_workflow() {
     data="{\
       \"event_type\": \"$package_name\", \
       \"client_payload\": { \
-        \"branch\": \"${new_branch}\", \
-        \"branch_type\": \"${branch_type}\", \
-        \"url\": \"https://github.com/${repo_name}\" \
+      \"branch\": \"${new_branch}\", \
+      \"branch_type\": \"${branch_type}\", \
+      \"url\": \"https://github.com/${repo_name}\" \
       }\
     }"
-
 		event_type="package-build"
 	fi
 
