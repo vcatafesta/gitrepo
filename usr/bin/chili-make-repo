@@ -4,7 +4,7 @@
 #
 #  chili-make-repo
 #  Created: 2024/08/21 - 19:07
-#  Altered: seg 23 set 2024 18:55:33 -04
+#  Altered: dom 27 out 2024 09:19:14 -04
 #
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -117,18 +117,12 @@ sh_config() {
   remote_USER="u537062342"
 	remote_PORT="65002"
 	remote_HOST="154.49.247.66"
-  local_PATH="/github/ChiliOS/packages/core/testing/x86_64"
-	remote_DOMAIN='repo'
-	branch='testing'
-	remote_PATH="/home/${remote_USER}/domains/chililinux.com/public_html/${remote_DOMAIN}/${branch,,}/x86_64"
 }
 
 main() {
 	remote_DOMAIN="$1"
 	branch="$2"
 	local_PATH="$3"
-
-  sh_config
 
 	if [[ ! "$remote_DOMAIN" =~ ^(repo|elven)$ ]]; then
 		echo "${red}Error: Unknown domain: $remote_DOMAIN - valid: ${yellow}'repo' ${red}or ${yellow}'elven' ${reset}"
@@ -146,8 +140,10 @@ main() {
 		db_name="${remote_prefix_db}-testing"
 	elif [ "$branch" == "stable" ]; then
 		db_name="${remote_prefix_db}-stable"
+	elif [ "$branch" == "extra" ]; then
+		db_name="${remote_prefix_db}-extra"
 	else
-		echo "${red}Error: Unknown branch type: $branch - valid: testing or stable"
+		echo "${red}Error: Unknown branch type: $branch - valid: testing, stable or extra"
 		return 1
 	fi
 
@@ -156,6 +152,8 @@ main() {
 			local_PATH="/github/ChiliOS/packages/core/testing/x86_64"
 		elif [[ "$branch" == "stable" ]]; then
 			local_PATH="/github/ChiliOS/packages/core/stable/x86_64"
+		elif [[ "$branch" == "extra" ]]; then
+			local_PATH="/github/ChiliOS/packages/core/extra/x86_64"
 		fi
 	elif [[ -z "$local_PATH" ]]; then
 		local_PATH="$PWD"
@@ -165,21 +163,21 @@ main() {
 	fi
 
 	remote_PATH="/home/${remote_USER}/domains/chililinux.com/public_html/${remote_DOMAIN}/${branch,,}/x86_64"
-	echo "subdomain : ${remote_DOMAIN}"
-	echo "db_name   : ${db_name}"
-	echo "branch    : ${branch}"
-	echo "localpath : ${local_PATH}"
+	echo "subdomain  : ${remote_DOMAIN}"
+	echo "db_name    : ${db_name}"
+	echo "branch     : ${branch}"
+	echo "localpath  : ${local_PATH}"
+	echo "remotepath : ${remote_PATH}"
 
+	mkdir -p ${local_PATH}
 	cd ${local_PATH} || return 1
 	if repo-add -n -R ${db_name}.db.tar.gz *.pkg.tar.zst; then
 		#mkdir -p /home/${remote_USER}/.ssh/
 		mkdir -p $HOME/.ssh/
-
 		#ssh-keyscan -t rsa -p ${remote_PORT} ${remote_HOST} | sudo tee -a /home/${remote_USER}/.ssh/known_hosts
 		#ssh-keyscan -t rsa -p ${remote_PORT} ${remote_HOST} >> /home/${remote_USER}/.ssh/known_hosts
-		ssh-keyscan -t rsa -p ${remote_PORT} ${remote_HOST} >>$HOME/.ssh/known_hosts
-
 		#rsync --progress -Cravzp --rsh='ssh -l u537062342 -p 65002' ${local_PATH}/ ${remote_USER}@${remote_HOST}:${remote_PATH}/
+		ssh-keyscan -t rsa -p ${remote_PORT} ${remote_HOST} >>$HOME/.ssh/known_hosts
 		rsync --progress -Cravzp -e 'ssh -p 65002' ${local_PATH}/ ${remote_USER}@${remote_HOST}:${remote_PATH}/
 	fi
 }
@@ -224,5 +222,6 @@ for arg in "$@"; do
 	fi
 done
 
+sh_config
 main "$@"
 
