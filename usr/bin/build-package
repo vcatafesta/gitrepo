@@ -214,7 +214,8 @@ trigger_workflow() {
       \"client_payload\": { \
       \"branch\": \"${new_branch}\", \
       \"branch_type\": \"${branch_type}\", \
-      \"url\": \"https://github.com/${repo_name}\" \
+      \"url\": \"https://github.com/${repo_name}\", \
+      \"tmate\": $tmate_option \
       }\
     }"
 		event_type="package-build"
