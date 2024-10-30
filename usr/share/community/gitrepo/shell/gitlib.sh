@@ -4,7 +4,7 @@
 #
 #  /usr/share/community/gitrepo/shell/gitlib.sh - lib for gitrepo.sh and buildiso.sh
 #  Created: qui 05 set 2024 00:51:12 -04
-#  Altered: ter 10 set 2024 01:12:39 -04
+#  Altered: ter 29 out 2024 21:00:23 -04
 #
 #  Copyright (c) 2024-2024, Tales A. Mendonça <talesam@gmail.com>
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
@@ -374,9 +374,9 @@ gclean_branch_remote_and_update_local() {
 	# Confirmar a operação
 	read -r -p "${PURPLE}Digite --confirm para confirmar: " clean
 	if [[ "$clean" != "--confirm" ]]; then
-		p_log "${YELLOW}" "Operação cancelada. Retornando ao menu em 5s"
-		sleep 5
-		exit 1
+		p_log "${YELLOW}" "Operação cancelada. Retornando ao menu em 2s"
+		sleep 2
+		return 1
 	fi
 
 	p_log "${YELLOW}" "$clean ${RED}checado. ${black}Prosseguindo com a exclusão dos branches remotos e locais ${reset}"
@@ -670,9 +670,9 @@ delete_failed_runs() {
 	# Confirmar a operação
 	read -p "${PURPLE}Digite --confirm para confirmar: " clean
 	if [[ "$clean" != "--confirm" ]]; then
-		p_log "${YELLOW}" "Operação cancelada. Retornando ao menu em 5s"
-		sleep 5
-		exit 1
+		p_log "${YELLOW}" "Operação cancelada. Retornando ao menu em 2s"
+		sleep 2
+		return 1
 	fi
 
 	# Requisição para listar todas as execuções da workflow
@@ -780,9 +780,9 @@ clean_failures_action_jobs_on_remote() {
 	# Confirmar a operação
 	read -p "${PURPLE}Digite --confirm para confirmar: " clean
 	if [[ "$clean" != "--confirm" ]]; then
-		p_log "${YELLOW}" "Operação cancelada. Retornando ao menu em 5s"
-		sleep 5
-		exit 1
+		p_log "${YELLOW}" "Operação cancelada. Retornando ao menu em 2s"
+		sleep 2
+		return 1
 	fi
 
 	# Obter lista de jobs com falha ou cancelamento
@@ -835,9 +835,9 @@ clean_success_action_jobs_on_remote() {
 	# Confirmar a operação
 	read -p "${PURPLE}Digite --confirm para confirmar: " clean
 	if [[ "$clean" != "--confirm" ]]; then
-		p_log "${YELLOW}" "Operação cancelada. Retornando ao menu em 5s"
-		sleep 5
-		exit 1
+		p_log "${YELLOW}" "Operação cancelada. Retornando ao menu em 2s"
+		sleep 2
+		return 1
 	fi
 
 	# Obter lista de jobs com falha ou cancelamento
@@ -890,9 +890,9 @@ clean_all_tags_on_remote() {
 	# Confirmar a operação
 	read -p "${PURPLE}Digite --confirm para confirmar: " clean
 	if [[ "$clean" != "--confirm" ]]; then
-		p_log "${YELLOW}" "Operação cancelada. Retornando ao menu em 5s"
-		sleep 5
-		exit 1
+		p_log "${YELLOW}" "Operação cancelada. Retornando ao menu em 2s"
+		sleep 2
+		return 1
 	fi
 
 	p_log "${CYAN}" "Deletando tags..."
