@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 # shellcheck shell=bash disable=SC1091,SC2039,SC2166,SC2317,SC2155,SC2034,SC2229,SC2076,SC2199,SC2015
 #
-#  build-iso - Wrapper git para o BigCommunity
+#  build-iso - Wrapper buildiso para o BigCommunity
 #  Created: ter 10 set 2024 11:02:02 -04
-#  Altered: ter 01 out 2024 23:28:12 -04
+#  Altered: qua 30 out 2024 09:51:50 -04
 #
 #  Copyright (c) 2024-2024, Tales A. Mendonça <talesam@gmail.com>
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
@@ -202,10 +202,25 @@ resume_and_build() {
 	fi
 }
 
+get_distroname() {
+	create_menu \
+		"Escolha a distribuição:" \
+		"bigcommunity" \
+		"biglinux" \
+		"chililinux" \
+		"manjaro" \
+		"Sair"
+	if [[ $MENU_RESULT == "Sair" ]]; then
+		die "${red}" "Construção da ISO cancelada.${reset}"
+	fi
+	DISTRONAME="${MENU_RESULT}"
+}
+
 get_iso_profiles_repo() {
 	create_menu \
 		'Escolha o repositório iso-profiles:' \
 		'https://github.com/talesam/iso-profiles' \
+		'https://github.com/biglinux/iso-profiles' \
 		'https://github.com/chililinux/iso-profiles' \
 		'https://gitlab.manjaro.org/profiles-and-settings/iso-profiles.git' \
 		'Sair'
@@ -213,19 +228,6 @@ get_iso_profiles_repo() {
 		die "${red}" "Construção da ISO cancelada.${reset}"
 	fi
 	ISO_PROFILES_REPO="${MENU_RESULT}"
-}
-
-get_distroname() {
-	create_menu \
-		"Escolha a distribuição:" \
-		"bigcommunity" \
-		"biglinux" \
-		"chililinux" \
-		"Sair"
-	if [[ $MENU_RESULT == "Sair" ]]; then
-		die "${red}" "Construção da ISO cancelada.${reset}"
-	fi
-	DISTRONAME="${MENU_RESULT}"
 }
 
 ## main() { Início do script principal }

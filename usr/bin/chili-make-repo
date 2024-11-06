@@ -114,11 +114,11 @@ EOF
 }
 
 sh_config() {
-  remote_USER="u537062342"
+	remote_USER="u537062342"
 	remote_PORT="65002"
 	remote_HOST="154.49.247.66"
-  FETCH_RE='-[^-]+[0-9]+[^.]*.pkg[^.]*.tar.zst$'
-  PKG_EXT='pkg.tar.zst'
+	FETCH_RE='-[^-]+[0-9]+[^.]*.pkg[^.]*.tar.zst$'
+	PKG_EXT='pkg.tar.zst'
 }
 
 main() {
@@ -184,27 +184,28 @@ main() {
 	fi
 }
 
-sh_sincronize_remote_with_local() {
-  sh_config
-	branch="testing"
+sh_synchronize_remote_with_local() {
+	sh_config
+	[[ -z "$branch" ]] && branch="testing"
 	remote_DOMAIN="repo"
 	remote_PATH="/home/${remote_USER}/domains/chililinux.com/public_html/${remote_DOMAIN}/${branch,,}/x86_64"
-  local_PATH="/github/ChiliOS/packages/core/${branch,,}/x86_64"
+	local_PATH="/github/ChiliOS/packages/core/${branch,,}/x86_64"
 
-  echo "${cyan}Sincronizando remoto com local ${reset}"
-  echo "${cyan}Puxando do remoto para local ${reset}"
-  rsync --progress --delete -Craz -e 'ssh -p 65002' ${remote_USER}@${remote_HOST}:${remote_PATH}/ ${local_PATH}/
+	echo "${cyan}Sincronizando repositório remoto com local - branch: $branch ${reset}"
+	echo "${cyan}Puxando do remoto para local ${reset}"
+	rsync --progress --delete -Craz -e 'ssh -p 65002' ${remote_USER}@${remote_HOST}:${remote_PATH}/ ${local_PATH}/
 
-  AllOldPackages=$(find "$PWD" -type f -iname "*.$PKG_EXT" | sort -Vr | awk -F "$FETCH_RE" 'lista[$1]++')
-  for old in ${AllOldPackages[@]}; do
-    echo "Removing old package: [$((++count))] $old"
-    rm -fv "${old}" "${old}.sig" "${old}.md5" "${old}.sig.md5"
-  done
+	AllOldPackages=$(find "$PWD" -type f -iname "*.$PKG_EXT" | sort -Vr | awk -F "$FETCH_RE" 'lista[$1]++')
+	for old in ${AllOldPackages[@]}; do
+		echo "Removing old package: [$((++count))] $old"
+		rm -fv "${old}" "${old}.sig" "${old}.md5" "${old}.sig.md5"
+	done
 
-  echo "${cyan}Criando Database (.db) localmente ${reset}"
-  repo-add -q -p -n -R chili-testing.db.tar.gz *.pkg.tar.zst
-  echo "${cyan}Empurrando para o remoto ${reset}"
-  rsync --progress --delete -Craz -e 'ssh -p 65002' ${local_PATH}/ ${remote_USER}@${remote_HOST}:${remote_PATH}/
+	echo "${cyan}Criando Database (.db) localmente ${reset}"
+	repo-add -q -p -n -R chili-${branch}.db.tar.gz *.pkg.tar.zst
+	echo "${cyan}Empurrando para o remoto ${reset}"
+	rsync --progress --delete -Craz -e 'ssh -p 65002' ${local_PATH}/ ${remote_USER}@${remote_HOST}:${remote_PATH}/
+  exit $(($# ? 0 : 1))
 }
 
 if test $# -lt 1; then
@@ -230,12 +231,21 @@ for arg in "$@"; do
 	elif [[ "$arg" = @(-h|--help) ]]; then
 		sh_usage
 		exit $(($# ? 0 : 1))
-	elif [[ "$arg" = @(-s|--sincronize) ]]; then
-		sh_sincronize_remote_with_local
+	elif [[ "$arg" = @(-s|--synchronize) ]]; then
+		# Captura o próximo argumento após o -s/--synchronize
+		next_arg="${2:-}"
+
+		# Verifica se o próximo argumento é válido
+		if [[ "$next_arg" =~ ^(stable|testing|extra)$ ]]; then
+      branch="$next_arg"
+			sh_synchronize_remote_with_local "$next_arg"
+			shift # Pula para o próximo argumento para não ser tratado novamente
+		else
+			echo "${red}Error: Opção inválida para --synchronize: $next_arg. Use ${yellow}'stable', 'testing' ou 'extra'.${reset}"
+			exit 1
+		fi
 	else
-    sh_config
-    main "$@"
+		sh_config
+		main "$@"
 	fi
 done
-
-
