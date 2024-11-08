@@ -138,7 +138,7 @@ parse_parameters() {
 
 	if $param_organization_was_supplied; then
 		REPO="${value_organization}/build-package" # Repositório que contém os workflows
-		ORGANIZATION="${REPO%%/*}"                 # communitybig
+		ORGANIZATION="${REPO%%/*}"                 # default=communitybig
 	fi
 
 	get_token_release # Obtem o TOKEN_RELEASE utilizando a função get_token_release
