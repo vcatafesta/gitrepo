@@ -4,7 +4,7 @@
 #
 #  /usr/share/community/gitrepo/shell/gitlib.sh - lib for gitrepo.sh and buildiso.sh
 #  Created: qui 05 set 2024 00:51:12 -04
-#  Altered: ter 29 out 2024 21:00:23 -04
+#  Altered: sex 08 nov 2024 12:55:55 -04
 #
 #  Copyright (c) 2024-2024, Tales A. Mendonça <talesam@gmail.com>
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
@@ -65,11 +65,11 @@ São válidos: Qualquer nome de pacote/string não vazia"
 
 check_valid_token() {
 	# Verificar o token
-
 	#echo $TOKEN_RELEASE
 	p_log "${cyan}" "Verificando permissões do token GitHub..."
 	token_check=$(curl -s -H "Authorization: token $TOKEN_RELEASE" https://api.github.com/user)
-	p_log "$cyan" "Token verificado: ${yellow}$(echo "$token_check" | jq .login)"
+	GITHUB_USER_NAME="$(echo "$token_check" | jq .login)"
+	p_log "$cyan" "Token verificado: ${yellow}$GITHUB_USER_NAME"
 
 	if [[ -z "$(echo "$token_check" | jq .login)" ]]; then
 		if ! conf "=>${red}Token inválido ou sem permissões necessárias. Deseja prosseguir mesmo assim?"; then
@@ -459,6 +459,7 @@ create_menu() {
 			echo '---------------------------------------------------------------------------------'
 			echo -e "Organization  : ${CYAN}$ORGANIZATION${RESET}"
 			echo -e "Repo Name     : ${CYAN}$REPO_NAME${RESET}"
+			echo -e "User Name     : ${CYAN}$GITHUB_USER_NAME${RESET}"
 			echo -e "Repo Workflow : ${CYAN}$REPO${RESET}"
 			echo -e "Local Path    : ${CYAN}$REPO_PATH${RESET}"
 			echo -e "Branchs       : \n${RED}$(git branch 2>/dev/null)${RESET}"
@@ -468,12 +469,14 @@ create_menu() {
 			echo '---------------------------------------------------------------------------------'
 			echo -e "Organization  : ${CYAN}$ORGANIZATION${RESET}"
 			echo -e "Repo Workflow : ${CYAN}$REPO${RESET}"
+			echo -e "User Name     : ${CYAN}$GITHUB_USER_NAME${RESET}"
 			echo -e "Local Path    : ${CYAN}$REPO_PATH${RESET}"
 			echo '---------------------------------------------------------------------------------'
 		elif $IS_BUILD_ISO; then
 			echo '---------------------------------------------------------------------------------'
 			echo -e "Organization  : ${CYAN}$ORGANIZATION${RESET}"
 			echo -e "Repo Workflow : ${CYAN}$REPO${RESET}"
+			echo -e "User Name     : ${CYAN}$GITHUB_USER_NAME${RESET}"
 			echo -e "Local Path    : ${CYAN}$REPO_PATH${RESET}"
 			echo '---------------------------------------------------------------------------------'
 		fi

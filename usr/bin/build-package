@@ -4,7 +4,7 @@
 #
 #  build-package - Wrapper git para o BigCommunity
 #  Created: qui 05 set 2024 00:51:12 -04
-#  Altered: ter 29 out 2024 21:00:23 -04
+#  Altered: sex 08 nov 2024 12:55:55 -04
 #
 #  Copyright (c) 2024-2024, Tales A. Mendonça <talesam@gmail.com>
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
@@ -33,7 +33,7 @@
 # system
 declare APP="${0##*/}"
 declare APPDESC="Wrapper git para o BigCommunity"
-declare VERSION="2.1.5" # Versão do script
+declare VERSION="2.1.6" # Versão do script
 : "${reset=$(tput sgr0)}"
 : "${red=$(tput bold)$(tput setaf 196)}"
 LIBRARY=${LIBRARY:-"/usr/share/community/gitrepo/shell"}
@@ -253,6 +253,7 @@ sh_configure_environment() {
 	declare -g REPO="communitybig/build-package" # Repositório que contém os workflows
 	declare -g ORGANIZATION="${REPO%%/*}"        # communitybig
 	declare -g CFILETOKEN="$HOME/.GITHUB_TOKEN"  # path do arquivo que contem os tokens do github
+	declare -g GITHUB_USER_NAME
 
 	declare -g REPO_NAME="$(get_repo_name)"      # Obtém o nome do repositório utilizando a função get_repo_name
 	declare -g REPO_PATH="$(get_repo_root_path)" # Obtém o caminho raiz do repositório utilizando a função get_repo_root_path
