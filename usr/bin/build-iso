@@ -4,7 +4,7 @@
 #
 #  build-iso - Wrapper buildiso para construção de ISO
 #  Created: ter 10 set 2024 11:02:02 -04
-#  Altered: dom 17 nov 2024 01:38:06 -04
+#  Altered: dom 17 nov 2024 12:05:14 -04
 #
 #  Copyright (c) 2024-2024, Tales A. Mendonça <talesam@gmail.com>
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
@@ -286,7 +286,7 @@ for arg in "$@"; do
    		KERNEL=latest
    		EDITION=xfce
    		TAG=$(date "+%Y-%m-%d_%H-%M")
-   		TMATE=sim
+   		TMATE=nao
     else
    		DISTRONAME=bigcommunity
    		ISO_PROFILES_REPO='https://github.com/talesam/iso-profiles'
@@ -297,7 +297,7 @@ for arg in "$@"; do
    		KERNEL=latest
    		EDITION=xfce
    		TAG=$(date "+%Y-%m-%d_%H-%M")
-   		TMATE=sim
+   		TMATE=nao
     fi
 	fi
 done
