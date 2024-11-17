@@ -191,6 +191,7 @@ sh_synchronize_remote_with_local() {
 	remote_PATH="/home/${remote_USER}/domains/chililinux.com/public_html/${remote_DOMAIN}/${branch,,}/x86_64"
 	local_PATH="/github/ChiliOS/packages/core/${branch,,}/x86_64"
 
+  pushd "$local_PATH" || exit 1
 	echo "${cyan}Sincronizando repositório remoto com local - branch: $branch ${reset}"
 	echo "${cyan}Puxando do remoto para local ${reset}"
 	rsync --progress --delete -Craz -e 'ssh -p 65002' ${remote_USER}@${remote_HOST}:${remote_PATH}/ ${local_PATH}/
@@ -205,6 +206,7 @@ sh_synchronize_remote_with_local() {
 	repo-add -q -p -n -R chili-${branch}.db.tar.gz *.pkg.tar.zst
 	echo "${cyan}Empurrando para o remoto ${reset}"
 	rsync --progress --delete -Craz -e 'ssh -p 65002' ${local_PATH}/ ${remote_USER}@${remote_HOST}:${remote_PATH}/
+	popd || exit 1
   exit $(($# ? 0 : 1))
 }
 
