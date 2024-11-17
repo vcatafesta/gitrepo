@@ -163,7 +163,7 @@ trigger_workflow() {
   manjaro) tmp_branch="$MANJARO_BRANCH";;
   esac
 	local current_datetime="$TAG"
-	local event_type="ISO-${DISTRONAME}_${tmp_branch^^}_${EDITION^^}_${current_datetime}"
+	local event_type="ISO-${DISTRONAME}_${tmp_branch^^}_${EDITION,,}_${current_datetime}"
 	local tmate_option=$([ "$TMATE" == "sim" ] && echo "true" || echo "false")
   local data="{\"event_type\": \"$event_type\", \
   \"client_payload\": { \
