@@ -155,8 +155,15 @@ sh_configure_environment() {
 
 # Função para disparar o workflow
 trigger_workflow() {
+  local tmp_branch='stable'
+  case "$DISTRONAME" in
+  bigcommunity) tmp_branch="$COMMUNITY_BRANCH";;
+  biglinux) tmp_branch="$BIGLINUX_BRANCH";;
+  chililinux) tmp_branch="$CHILILINUX_BRANCH";;
+  manjaro) tmp_branch="$MANJARO_BRANCH";;
+  esac
 	local current_datetime="$TAG"
-	local event_type="ISO-$DISTRONAME-${EDITION^^}"
+	local event_type="ISO-${DISTRONAME}_${tmp_branch^^}_${EDITION^^}_${current_datetime}"
 	local tmate_option=$([ "$TMATE" == "sim" ] && echo "true" || echo "false")
   local data="{\"event_type\": \"$event_type\", \
   \"client_payload\": { \
