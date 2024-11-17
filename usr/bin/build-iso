@@ -156,7 +156,7 @@ sh_configure_environment() {
 # Função para disparar o workflow
 trigger_workflow() {
 	local current_datetime="$TAG"
-	local event_type="ISO-${EDITION^^}"
+	local event_type="ISO-$DISTRONAME-${EDITION^^}"
 	local tmate_option=$([ "$TMATE" == "sim" ] && echo "true" || echo "false")
   local data="{\"event_type\": \"$event_type\", \
   \"client_payload\": { \
@@ -268,13 +268,14 @@ for arg in "$@"; do
 		exit $(($# ? 0 : 1))
 	elif [[ "$arg" = @(-a|--auto|--automatic) ]]; then
 		IS_AUTO=true
+    sh_configure_environment "$@"
     if [[ "$ORGANIZATION" =~ ^(chililinux|vcatafesta)$ ]]; then
    		DISTRONAME=chililinux
    		ISO_PROFILES_REPO='https://github.com/chililinux/iso-profiles'
    		MANJARO_BRANCH=stable
-   		COMMUNITY_BRANCH=testing
-   		BIGLINUX_BRANCH=testing
-   		CHILILINUX_BRANCH=testing
+   		COMMUNITY_BRANCH=
+   		BIGLINUX_BRANCH=stable
+   		CHILILINUX_BRANCH=stable
    		KERNEL=latest
    		EDITION=xfce
    		TAG=$(date "+%Y-%m-%d_%H-%M")
@@ -285,7 +286,7 @@ for arg in "$@"; do
    		MANJARO_BRANCH=stable
    		COMMUNITY_BRANCH=testing
    		BIGLINUX_BRANCH=testing
-   		CHILILINUX_BRANCH=testing
+   		CHILILINUX_BRANCH=
    		KERNEL=latest
    		EDITION=xfce
    		TAG=$(date "+%Y-%m-%d_%H-%M")
