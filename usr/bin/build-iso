@@ -376,6 +376,7 @@ else
 
 		create_menu \
 			"Escolha a edição:" \
+			"Base" \
 			"Cinnamon" \
 			"Cosmic" \
 			"Deepin" \
