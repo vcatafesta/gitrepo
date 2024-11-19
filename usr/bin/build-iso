@@ -4,7 +4,7 @@
 #
 #  build-iso - Wrapper buildiso para construção de ISO
 #  Created: ter 10 set 2024 11:02:02 -04
-#  Altered: dom 17 nov 2024 12:05:14 -04
+#  Altered: ter 19 nov 2024 01:17:19 -04
 #
 #  Copyright (c) 2024-2024, Tales A. Mendonça <talesam@gmail.com>
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
@@ -33,7 +33,7 @@
 # system
 declare APP="${0##*/}"
 declare APPDESC="Wrapper buildiso para construção de ISO"
-declare VERSION="1.2.4" # Versão do script
+declare VERSION="1.2.6" # Versão do script
 : "${reset=$(tput sgr0)}"
 : "${red=$(tput bold)$(tput setaf 196)}"
 LIBRARY=${LIBRARY:-"/usr/share/community/gitrepo/shell"}
@@ -313,6 +313,22 @@ else
     get_iso_profiles_repo
 
 		create_menu \
+			"Escolha a edição:" \
+			"Base" \
+			"Cinnamon" \
+			"Cosmic" \
+			"Deepin" \
+			"Gnome" \
+			"KDE" \
+			"XFCE" \
+			"Wmaker" \
+			"Voltar"
+		if [[ $MENU_RESULT == "Voltar" ]]; then
+			continue
+		fi
+		EDITION=${MENU_RESULT,,}
+
+		create_menu \
 			"Escolha o branch para o Manjaro:" \
 			"Stable" \
 			"Testing" \
@@ -373,22 +389,6 @@ else
 			continue
 		fi
 		KERNEL=${MENU_RESULT,,}
-
-		create_menu \
-			"Escolha a edição:" \
-			"Base" \
-			"Cinnamon" \
-			"Cosmic" \
-			"Deepin" \
-			"Gnome" \
-			"KDE" \
-			"XFCE" \
-			"Wmaker" \
-			"Voltar"
-		if [[ $MENU_RESULT == "Voltar" ]]; then
-			continue
-		fi
-		EDITION=${MENU_RESULT,,}
 
 		create_menu \
 			"Ativar sessão de debug TMATE?" \
