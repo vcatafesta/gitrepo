@@ -286,7 +286,7 @@ for arg in "$@"; do
    		KERNEL=latest
    		EDITION=xfce
    		TAG=$(date "+%Y-%m-%d_%H-%M")
-   		TMATE=nao
+   		TMATE=sim
     else
    		DISTRONAME=bigcommunity
    		ISO_PROFILES_REPO='https://github.com/talesam/iso-profiles'
