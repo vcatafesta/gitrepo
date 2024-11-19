@@ -457,29 +457,41 @@ create_menu() {
 		tput clear # Limpa a tela
 		if $IS_GIT_REPO; then
 			echo '---------------------------------------------------------------------------------'
-			echo -e "Organization  : ${CYAN}$ORGANIZATION${RESET}"
-			echo -e "Repo Name     : ${CYAN}$REPO_NAME${RESET}"
-			echo -e "User Name     : ${CYAN}$GITHUB_USER_NAME${RESET}"
-			echo -e "Repo Workflow : ${CYAN}$REPO${RESET}"
-			echo -e "Local Path    : ${CYAN}$REPO_PATH${RESET}"
-			echo -e "Branchs       : \n${RED}$(git branch 2>/dev/null)${RESET}"
+			echo -e "Organization   : ${CYAN}$ORGANIZATION${RESET}"
+			echo -e "Repo Name      : ${CYAN}$REPO_NAME${RESET}"
+			echo -e "User Name      : ${CYAN}$GITHUB_USER_NAME${RESET}"
+			echo -e "Repo Workflow  : ${CYAN}$REPO${RESET}"
+			echo -e "Local Path     : ${CYAN}$REPO_PATH${RESET}"
+			echo -e "Branchs        : \n${RED}$(git branch 2>/dev/null)${RESET}"
 			git remote -v 2>/dev/null
 			echo '---------------------------------------------------------------------------------'
 		elif $IS_AUR_PACKAGE; then
 			echo '---------------------------------------------------------------------------------'
-			echo -e "Organization  : ${CYAN}$ORGANIZATION${RESET}"
-			echo -e "Repo Workflow : ${CYAN}$REPO${RESET}"
-			echo -e "User Name     : ${CYAN}$GITHUB_USER_NAME${RESET}"
-			echo -e "Local Path    : ${CYAN}$REPO_PATH${RESET}"
+			echo -e "Organization   : ${CYAN}$ORGANIZATION${RESET}"
+			echo -e "Repo Workflow  : ${CYAN}$REPO${RESET}"
+			echo -e "User Name      : ${CYAN}$GITHUB_USER_NAME${RESET}"
+			echo -e "Local Path     : ${CYAN}$REPO_PATH${RESET}"
 			echo '---------------------------------------------------------------------------------'
 		elif $IS_BUILD_ISO; then
 			echo '---------------------------------------------------------------------------------'
-			echo -e "Organization  : ${CYAN}$ORGANIZATION${RESET}"
-			echo -e "Repo Workflow : ${CYAN}$REPO${RESET}"
-			echo -e "User Name     : ${CYAN}$GITHUB_USER_NAME${RESET}"
-			echo -e "Local Path    : ${CYAN}$REPO_PATH${RESET}"
+			echo -e "Organization   : ${CYAN}$ORGANIZATION${RESET}"
+			echo -e "Repo Workflow  : ${CYAN}$REPO${RESET}"
+			echo -e "User Name      : ${CYAN}$GITHUB_USER_NAME${RESET}"
+			echo -e "Local Path     : ${CYAN}$REPO_PATH${RESET}"
 			echo '---------------------------------------------------------------------------------'
 		fi
+
+		if $IS_BUILD_ISO_RESUME; then
+      echo -e "Distroname     : ${cyan}$DISTRONAME ${reset}"
+      echo -e "Edition        : ${cyan}$EDITION ${reset}"
+      echo -e "Iso-Profiles   : ${cyan}$ISO_PROFILES_REPO ${reset}"
+      echo -e "Br Manjaro     : ${cyan}$MANJARO_BRANCH ${reset}"
+      echo -e "Br BigLinux    : ${cyan}$BIGLINUX_BRANCH ${reset}"
+      echo -e "Br BigCommunity: ${cyan}$BIGCOMMUNITY_BRANCH ${reset}"
+      echo -e "Br ChiliLinux  : ${cyan}$CHILILINUX_BRANCH ${reset}"
+      echo -e "Kernel         : ${cyan}$KERNEL ${reset}"
+			echo '---------------------------------------------------------------------------------'
+    fi
 		echo -e "${BLUE}${BOLD}$title${NC}\n"
 
 		for i in "${!options[@]}"; do
