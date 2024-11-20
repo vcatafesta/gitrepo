@@ -43,7 +43,7 @@ LIBRARY=${LIBRARY:-"/usr/share/community/gitrepo/shell"}
 }
 declare -aG bigcommunity_edition=(base cinnamon cosmic deepin gnome kde xfce wmaker)
 declare -aG biglinux_edition=(FalaQueEuTeEscuto flisol kde smallxivastudio)
-declare -aG chililinux_edition=(base cinnamon cosmic deepin gnome kde xfce wmaker)
+declare -aG chililinux_edition=(base cinnamon cosmic deepin gnome i3 kde xfce wmaker)
 declare -aG manjaro_edition=(architect bladebook gnome gnome-next grub kde kde-dev netinstall nxd xfce)
 
 # Função para exibir informações de ajuda
@@ -247,6 +247,7 @@ get_iso_profiles_repo() {
 		'https://github.com/talesam/iso-profiles' \
 		'https://github.com/biglinux/iso-profiles' \
 		'https://github.com/chililinux/iso-profiles' \
+		'https://github.com/chililinux/manjaro-iso-profiles' \
 		'https://gitlab.manjaro.org/profiles-and-settings/iso-profiles.git' \
 		'Voltar'
 	ISO_PROFILES_REPO="${MENU_RESULT}"
