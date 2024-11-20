@@ -4,7 +4,7 @@
 #
 #  build-iso - Wrapper buildiso para construção de ISO
 #  Created: ter 10 set 2024 11:02:02 -04
-#  Altered: ter 19 nov 2024 01:17:19 -04
+#  Altered: qua 20 nov 2024 13:45:21 -04
 #
 #  Copyright (c) 2024-2024, Tales A. Mendonça <talesam@gmail.com>
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
@@ -168,7 +168,7 @@ trigger_workflow() {
 	esac
 	local current_datetime="$TAG"
 	local event_type="ISO-${DISTRONAME}_${tmp_branch^^}_${EDITION,,}_${current_datetime}"
-	local tmate_option=$([ "$TMATE" == "sim" ] && echo "true" || echo "false")
+	local tmate_option=$([ "$TMATE" == "Sim" ] && echo "true" || echo "false")
 	local data="{\"event_type\": \"$event_type\", \
   \"client_payload\": { \
     \"distroname\": \"$DISTRONAME\", \
