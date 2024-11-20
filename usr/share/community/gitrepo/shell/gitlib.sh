@@ -4,7 +4,7 @@
 #
 #  /usr/share/community/gitrepo/shell/gitlib.sh - lib for gitrepo.sh and buildiso.sh
 #  Created: qui 05 set 2024 00:51:12 -04
-#  Altered: sex 08 nov 2024 12:55:55 -04
+#  Altered: qua 20 nov 2024 14:00:22 -04
 #
 #  Copyright (c) 2024-2024, Tales A. Mendonça <talesam@gmail.com>
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
@@ -32,7 +32,7 @@
 ##############################################################################
 declare distro="$(uname -n)"
 readonly DEPENDENCIES=('git' 'tput')
-readonly organizations=("communitybig" "chililinux" "biglinux" "talesam" "vcatafesta")
+readonly organizations=("communitybig" "biglinux" "chililinux" "talesam" "vcatafesta")
 readonly branchs=("testing" "stable" "extra")
 shopt -s extglob # Habilita o uso de padrões estendidos (extglob)
 
@@ -46,11 +46,11 @@ conf() {
 check_param_org() {
 	local value_organization="$1"
 	if [[ ! " ${organizations[@]} " =~ " $value_organization " ]]; then
-		die "$RED" "Erro fatal: Valor inválido para o parâmetro ${YELLOW}'-o|--organization|--org' ${RESET};
-${INFO}São válidos: ${organizations[*]}
+		die "$RED" "Erro fatal: Valor inválido para o parâmetro ${YELLOW}'-o|--org|--organization' ${RESET};
+${INFO}São válidos: ${orange}${organizations[*]}${reset}
 ${CYAN}ex.: $APP -o communitybig
-     $APP --org talesam
-     $APP --organization vcatafesta${RESET}"
+     $APP --org biglinux
+     $APP --organization chililinux${RESET}"
 	fi
 }
 
