@@ -1189,9 +1189,11 @@ build_iso() {
 
 	#  if [[ "$DISTRONAME" == 'chililinux' ]]; then
 	if $DEBUG; then
-		LC_ALL=C sudo -u $USERNAME bash -c "buildiso -m ${SCOPE:+-f} -p $EDITION -b $MANJAROBRANCH -k linux${KERNEL_NAME} ${OFFICE:+-o};exit \$?"
+		#LC_ALL=C sudo -u $USERNAME bash -c "buildiso -m ${SCOPE:+-f} -p $EDITION -b $MANJAROBRANCH -k linux${KERNEL_NAME} ${OFFICE:+-o};exit \$?"
+		LC_ALL=C sudo -u $USERNAME bash -c "buildiso -m $EDITION -b $MANJAROBRANCH -k linux${KERNEL_NAME} ${OFFICE:+-o};exit \$?"
 	else
-		LC_ALL=C sudo -u $USERNAME bash -c "buildiso -m ${SCOPE:+-f} -p $EDITION -b $MANJAROBRANCH -k linux${KERNEL_NAME} ${OFFICE:+-o} > /dev/null 2>&1; exit \$?"
+		#LC_ALL=C sudo -u $USERNAME bash -c "buildiso -m ${SCOPE:+-f} -p $EDITION -b $MANJAROBRANCH -k linux${KERNEL_NAME} ${OFFICE:+-o} > /dev/null 2>&1; exit \$?"
+		LC_ALL=C sudo -u $USERNAME bash -c "buildiso -m -p $EDITION -b $MANJAROBRANCH -k linux${KERNEL_NAME} ${OFFICE:+-o} > /dev/null 2>&1; exit \$?"
 	fi
 	#  else
 	#    LC_ALL=C sudo -u $USERNAME bash -c "buildiso -m ${SCOPE:+-f} -p $EDITION -b $MANJAROBRANCH -k linux${KERNEL_NAME} ${OFFICE:+-o} > /dev/null 2>&1; exit \$?"
