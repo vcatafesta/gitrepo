@@ -207,6 +207,7 @@ sh_synchronize_remote_with_local() {
 		echo "${cyan}Sincronizando repositório remoto com local - branch: $branch ${reset}"
 		echo "${cyan}Puxando do remoto para local ${reset}"
 		rsync --progress --delete -Craz -e 'ssh -p 65002' ${remote_USER}@${remote_HOST}:${remote_PATH}/ ${local_PATH}/
+    rm -f chili-${branch}*
 
 		AllOldPackages=$(find "$PWD" -type f -iname "*.$PKG_EXT" | sort -Vr | awk -F "$FETCH_RE" 'lista[$1]++')
 		for old in ${AllOldPackages[@]}; do
