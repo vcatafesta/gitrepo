@@ -716,6 +716,10 @@ add_repository() {
 		'mirrors.gigenet.com'
 		'ask4.mm.fcix.net'
 	)
+
+  echo "Server = https://linorg.usp.br/manjaro/$branch/\$repo/\$arch" | sudo tee -a "$arquivo_conf" >/dev/null
+  echo "Server = https://manjaro.c3sl.ufpr.br/$branch/\$repo/\$arch"  | sudo tee -a "$arquivo_conf" >/dev/null
+
 	for server in "${servers[@]}"; do
 		msg_info "Incluindo $server no arquivo $arquivo_conf"
 		echo "Server = https://$server/manjaro/$branch/\$repo/\$arch" | sudo tee -a "$arquivo_conf" >/dev/null

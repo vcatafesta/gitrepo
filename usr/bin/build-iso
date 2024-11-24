@@ -130,6 +130,12 @@ parse_parameters() {
 	check_valid_token
 }
 
+sh_get_organization() {
+  local xvalue_organization="$1"
+  REPO="${xvalue_organization}/build-iso"     # Repositório que contém os workflows
+  ORGANIZATION="${REPO%%/*}"                  # default communitybig
+}
+
 sh_configure_environment() {
 	#debug
 	export PS4='${RED}${0##*/}${GREEN}[$FUNCNAME]${PURPLE}[$LINENO]${RESET}'
