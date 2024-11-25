@@ -4,7 +4,7 @@
 #
 #  build-iso - Wrapper buildiso para construção de ISO
 #  Created: ter 10 set 2024 11:02:02 -04
-#  Altered: qua 20 nov 2024 13:45:21 -04
+#  Altered: dom 24 nov 2024 22:27:17 -04
 #
 #  Copyright (c) 2024-2024, Tales A. Mendonça <talesam@gmail.com>
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
@@ -371,18 +371,40 @@ for arg in "$@"; do
 			KERNEL=latest
 			EDITION=xfce
 			TAG=$(date "+%Y-%m-%d_%H-%M")
-			TMATE=sim
-		else
-			DISTRONAME=bigcommunity
-			ISO_PROFILES_REPO='https://github.com/talesam/iso-profiles'
+			TMATE='Sim'
+		elif [[ "$ORGANIZATION" =~ ^(manjaro)$ ]]; then
+			DISTRONAME=manjaro
+			ISO_PROFILES_REPO='https://gitlab.manjaro.org/profiles-and-settings/iso-profiles.git'
 			MANJARO_BRANCH=stable
-			BIGCOMMUNITY_BRANCH=testing
-			BIGLINUX_BRANCH=testing
+			BIGCOMMUNITY_BRANCH=
+			BIGLINUX_BRANCH=
 			CHILILINUX_BRANCH=
 			KERNEL=latest
 			EDITION=xfce
 			TAG=$(date "+%Y-%m-%d_%H-%M")
-			TMATE=nao
+			TMATE='Sim'
+		elif [[ "$ORGANIZATION" =~ ^(biglinux)$ ]]; then
+			DISTRONAME=biglinux
+			ISO_PROFILES_REPO='https://github.com/biglinux/iso-profiles'
+			MANJARO_BRANCH=stable
+			BIGCOMMUNITY_BRANCH=
+			BIGLINUX_BRANCH=stable
+			CHILILINUX_BRANCH=
+			KERNEL=latest
+			EDITION=xfce
+			TAG=$(date "+%Y-%m-%d_%H-%M")
+			TMATE='Sim'
+		elif [[ "$ORGANIZATION" =~ ^(bigcommunity|talesam)$ ]]; then
+			DISTRONAME=bigcommunity
+			ISO_PROFILES_REPO='https://github.com/talesam/iso-profiles'
+			MANJARO_BRANCH=stable
+			BIGCOMMUNITY_BRANCH=stable
+			BIGLINUX_BRANCH=stable
+			CHILILINUX_BRANCH=
+			KERNEL=latest
+			EDITION=xfce
+			TAG=$(date "+%Y-%m-%d_%H-%M")
+			TMATE='Sim'
 		fi
 	fi
 done
