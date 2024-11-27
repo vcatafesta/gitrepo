@@ -53,7 +53,7 @@ sh_usage() {
 		    ${red}Uso: ${reset}$APP ${cyan}[opções]${reset}
 
 		    ${cyan}Opções:${reset}
-		    -o|--org|--organization ${orange}<name> ${cyan} # Configura organização de trabalho no Github ${yellow}(default: talesam)${reset}
+		    -o|--org|--organization ${orange}<name> ${cyan} # Configura organização de trabalho no Github ${yellow}(default: communitybig)${reset}
 		    -a|--auto|--automatic          ${cyan} # Modo automatico ${yellow}(default: bigcommunity) ${reset}
 		    -V|--version                   ${cyan} # Imprime a versão do aplicativo ${reset}
 		    -h|--help                      ${cyan} # Mostra este Help ${reset}
@@ -142,8 +142,8 @@ sh_configure_environment() {
 	#set -x
 	#set -e
 
-	declare -g REPO="talesam/build-iso"         # Repositório que contém os workflows
-	declare -g ORGANIZATION="${REPO%%/*}"       # talesam
+	declare -g REPO="communitybig/build-iso"    # Repositório que contém os workflows
+	declare -g ORGANIZATION="${REPO%%/*}"       # communitybig
 	declare -g CFILETOKEN="$HOME/.GITHUB_TOKEN" # path do arquivo que contem os tokens do github
 
 	declare -g REPO_NAME="$(get_repo_name)"      # Obtém o nome do repositório utilizando a função get_repo_name
@@ -250,7 +250,7 @@ get_distroname() {
 get_iso_profiles_repo() {
 	create_menu \
 		'Escolha o repositório iso-profiles:' \
-		'https://github.com/talesam/iso-profiles' \
+		'https://github.com/communitybig/iso-profiles' \
 		'https://github.com/biglinux/iso-profiles' \
 		'https://github.com/chililinux/iso-profiles' \
 		'https://github.com/chililinux/manjaro-iso-profiles' \
@@ -368,7 +368,7 @@ for arg in "$@"; do
 			BIGCOMMUNITY_BRANCH=
 			BIGLINUX_BRANCH=stable
 			CHILILINUX_BRANCH=stable
-			KERNEL=latest
+			KERNEL=lts
 			EDITION=xfce
 			TAG=$(date "+%Y-%m-%d_%H-%M")
 			TMATE='Sim'
@@ -394,9 +394,9 @@ for arg in "$@"; do
 			EDITION=xfce
 			TAG=$(date "+%Y-%m-%d_%H-%M")
 			TMATE='Sim'
-		elif [[ "$ORGANIZATION" =~ ^(bigcommunity|talesam)$ ]]; then
+		elif [[ "$ORGANIZATION" =~ ^(communitybig|bigcommunity|talesam)$ ]]; then
 			DISTRONAME=bigcommunity
-			ISO_PROFILES_REPO='https://github.com/talesam/iso-profiles'
+			ISO_PROFILES_REPO='https://github.com/communitybig/iso-profiles'
 			MANJARO_BRANCH=stable
 			BIGCOMMUNITY_BRANCH=stable
 			BIGLINUX_BRANCH=stable
