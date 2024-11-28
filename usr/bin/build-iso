@@ -456,7 +456,7 @@ main() {
 				fi
 			fi
 
-			if [[ "$DISTRONAME" =~ ^(manjaro|biglinux|bigcommunity)$ ]]; then
+			if [[ "$DISTRONAME" =~ ^(manjaro|biglinux|bigcommunity|talesam)$ ]]; then
 				CHILILINUX_BRANCH=
 			else
 				get_chilibranch
