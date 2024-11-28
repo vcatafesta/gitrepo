@@ -41,13 +41,14 @@ LIBRARY=${LIBRARY:-"/usr/share/community/gitrepo/shell"}
 	echo "${red}=> ERRO FATAL: Não foi possível ler a biblioteca $LIBRARY/gitlib.sh ${reset}"
 	exit 1
 }
-declare -aG bigcommunity_edition=(base cinnamon cosmic deepin gnome kde xfce wmaker)
+declare -aG bigcommunity_edition=(cinnamon cosmic deepin gnome kde xfce wmaker)
 declare -aG biglinux_edition=(FalaQueEuTeEscuto flisol kde smallxivastudio)
 declare -aG chililinux_edition=(base cinnamon cosmic deepin gnome i3 kde xfce wmaker)
 declare -aG manjaro_edition=(architect bladebook gnome gnome-next grub kde kde-dev netinstall nxd xfce)
+declare -aG talesam_edition=(cinnamon cosmic deepin gnome kde xfce wmaker)
 #
-declare -AG Aorganization=([bigcommunity]='communitybig' [biglinux]='biglinux' [chililinux]='chililinux' [manjaro]='communitybig')
-declare -aG aDistros=('bigcommunity' 'biglinux' 'chililinux' 'manjaro' 'Sair')
+declare -AG Aorganization=([bigcommunity]='communitybig' [biglinux]='biglinux' [chililinux]='chililinux' [manjaro]='communitybig' [talesam]='talesam')
+declare -aG aDistros=('bigcommunity' 'biglinux' 'chililinux' 'manjaro' 'talesam' 'Sair')
 declare -aG aBranchs=('stable' 'testing' 'unstable' 'voltar')
 declare -aG aKernels=('latest' 'lts' 'oldlts' 'xanmod' 'Voltar')
 declare -aG aProfiles=(
@@ -56,6 +57,7 @@ declare -aG aProfiles=(
 		'https://github.com/chililinux/iso-profiles'
 		'https://github.com/chililinux/manjaro-iso-profiles'
 		'https://gitlab.manjaro.org/profiles-and-settings/iso-profiles.git'
+		'https://github.com/talesam/iso-profiles'
 		'Voltar'
   )
 #
