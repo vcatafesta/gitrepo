@@ -4,7 +4,7 @@
 #
 #  build-iso - Wrapper buildiso para construção de ISO
 #  Created: ter 10 set 2024 11:02:02 -04
-#  Altered: qua 27 nov 2024 19:07:54 -04
+#  Altered: qua 27 nov 2024 22:52:45 -04
 #
 #  Copyright (c) 2024-2024, Tales A. Mendonça <talesam@gmail.com>
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
@@ -45,6 +45,24 @@ declare -aG bigcommunity_edition=(base cinnamon cosmic deepin gnome kde xfce wma
 declare -aG biglinux_edition=(FalaQueEuTeEscuto flisol kde smallxivastudio)
 declare -aG chililinux_edition=(base cinnamon cosmic deepin gnome i3 kde xfce wmaker)
 declare -aG manjaro_edition=(architect bladebook gnome gnome-next grub kde kde-dev netinstall nxd xfce)
+#
+declare -AG Aorganization=([bigcommunity]='communitybig' [biglinux]='biglinux' [chililinux]='chililinux' [manjaro]='communitybig')
+declare -aG aDistros=('bigcommunity' 'biglinux' 'chililinux' 'manjaro' 'Sair')
+declare -aG aBranchs=('stable' 'testing' 'unstable' 'voltar')
+declare -aG aKernels=('latest' 'lts' 'oldlts' 'xanmod' 'Voltar')
+declare -aG aProfiles=(
+		'https://github.com/communitybig/iso-profiles'
+		'https://github.com/biglinux/iso-profiles'
+		'https://github.com/chililinux/iso-profiles'
+		'https://github.com/chililinux/manjaro-iso-profiles'
+		'https://gitlab.manjaro.org/profiles-and-settings/iso-profiles.git'
+		'Voltar'
+  )
+#
+declare -g DISTRONAME='bigcommunity'
+declare -g EDITION='xfce'
+declare -g KERNEL='lts'
+declare -g TMATE='Não'
 
 # Função para exibir informações de ajuda
 sh_usage() {
@@ -74,93 +92,6 @@ sh_version() {
 		  ${red}Este programa vem com absolutamente NENHUMA garantia.
 		  ${RESET}
 	EOF
-}
-
-parse_parameters() {
-	local param_organization
-	local value_organization
-	local param_organization_was_supplied=false
-	local param_commit_was_supplied=false
-	local param_build_was_supplied=false
-	local param_aur_was_supplied=false
-
-	while [[ $# -gt 0 ]]; do
-		case $1 in
-		-n | --nocolor)
-			unset_varcolors
-			shift # past argument
-			;;
-		-o | --org | --organization)
-			param_organization="$1"
-			value_organization="$2"
-			# Teste se o parâmetro foi fornecido e se o valor é válido
-			check_param_org "$value_organization"
-			param_organization_was_supplied=true
-			shift # past value
-			;;
-		-c | --commit)
-			param_commit="$1"
-			value_commit="$2"
-			# Teste se o parâmetro foi fornecido e se o valor é válido
-			check_param_commit "$value_commit"
-			param_commit_was_supplied=true
-			shift # past argument
-			shift # past value
-			;;
-		-b | --build)
-			param_build="$1"
-			value_build="$2"
-			# Teste se o parâmetro foi fornecido e se o valor é válido
-			check_param_build "$value_build"
-			param_build_was_supplied=true
-			shift # past argument
-			shift # past value
-			;;
-		*)
-			shift # unknown option
-			;;
-		esac
-	done
-
-	if $param_organization_was_supplied; then
-		REPO="${value_organization}/build-iso" # Repositório que contém os workflows
-		ORGANIZATION="${REPO%%/*}"             # communitybig
-	fi
-	get_token_release # Obtem o TOKEN_RELEASE utilizando a função get_token_release
-	check_valid_token
-}
-
-sh_get_organization() {
-  local xvalue_organization="$1"
-  REPO="${xvalue_organization}/build-iso"     # Repositório que contém os workflows
-  ORGANIZATION="${REPO%%/*}"                  # default communitybig
-}
-
-sh_configure_environment() {
-	#debug
-	export PS4='${RED}${0##*/}${GREEN}[$FUNCNAME]${PURPLE}[$LINENO]${RESET}'
-	#set -x
-	#set -e
-
-	declare -g REPO="communitybig/build-iso"    # Repositório que contém os workflows
-	declare -g ORGANIZATION="${REPO%%/*}"       # communitybig
-	declare -g CFILETOKEN="$HOME/.GITHUB_TOKEN" # path do arquivo que contem os tokens do github
-
-	declare -g REPO_NAME="$(get_repo_name)"      # Obtém o nome do repositório utilizando a função get_repo_name
-	declare -g REPO_PATH="$(get_repo_root_path)" # Obtém o caminho raiz do repositório utilizando a função get_repo_root_path
-
-	# Define o diretório de log, armazenando os logs temporários do repositório
-	declare -g LOG_DIR="/tmp/${APP}/${REPO_NAME}"
-	declare -g LOG_FILE="${LOG_DIR}/${APP}.log"
-	[[ ! -d "$LOG_DIR" ]] && mkdir -p "$LOG_DIR"
-
-	p_log "$BLUE" "Configurando ambiente"
-	declare -g IS_GIT_REPO=false
-	declare -g IS_BUILD_ISO=true
-	declare -g IS_AUR_PACKAGE=false
-
-	checkDependencies
-	parse_parameters "$@"
 }
 
 # Função para disparar o workflow
@@ -237,258 +168,318 @@ resume_and_build() {
 }
 
 get_distroname() {
-	create_menu \
-		"Escolha a distribuição:" \
-		"bigcommunity" \
-		"biglinux" \
-		"chililinux" \
-		"manjaro" \
-		"Sair"
+  create_menu_with_array "Escolha a distribuição:" aDistros[@] "$DISTRONAME"
 	DISTRONAME="${MENU_RESULT}"
+  sh_get_organization "$DISTRONAME"
 }
 
 get_iso_profiles_repo() {
-	create_menu \
-		'Escolha o repositório iso-profiles:' \
-		'https://github.com/communitybig/iso-profiles' \
-		'https://github.com/biglinux/iso-profiles' \
-		'https://github.com/chililinux/iso-profiles' \
-		'https://github.com/chililinux/manjaro-iso-profiles' \
-		'https://gitlab.manjaro.org/profiles-and-settings/iso-profiles.git' \
-		'Voltar'
+  # Gerando a URL padrão com base no valor de $DISTRONAME
+  local default_url="https://github.com/$DISTRONAME/iso-profiles"
+	create_menu_with_array 'Escolha o repositório iso-profiles:' aProfiles[@] "$default_url"
 	ISO_PROFILES_REPO="${MENU_RESULT}"
+}
+
+# Função para obter a edição, usada com menu_create com parametros via string e por array
+get_edition_string() {
+  # Determina o array com base na distribuição
+  local editions_var="${DISTRONAME}_edition"
+  local -n editions="${editions_var}" # Referência ao array correspondente
+
+  # Adiciona a opção "Voltar" ao menu
+  #editions+=("Voltar")
+
+  # Cria o menu dinamicamente com as opções do array
+  create_menu \
+    "Escolha uma EDIÇÃO/DE para o ${yellow}${DISTRONAME}${reset}:" \
+    "${editions[@]}" \
+    'Voltar'
+
+  # Define a edição escolhida
+  EDITION="${MENU_RESULT}"
 }
 
 # Função para obter a edição
 get_edition() {
-	# Determina o array com base na distribuição
 	local editions_var="${DISTRONAME}_edition"
-	local -n editions="${editions_var}" # Referência ao array correspondente
+# local editions=(${!editions_var[@]})
 
-	# Adiciona a opção "Voltar" ao menu
-  #editions+=("Voltar")
-
-	# Cria o menu dinamicamente com as opções do array
-	create_menu \
-		"Escolha uma EDIÇÃO/DE para o ${yellow}${DISTRONAME}${reset}:" \
-		"${editions[@]}" \
-		'Voltar'
-
-	# Define a edição escolhida
+  # Usando eval para acessar o conteúdo do array dinamicamente
+  eval "local editions=(\"\${${editions_var}[@]}\")"
+	editions+=("Voltar")
+	create_menu_with_array "Escolha uma EDIÇÃO/DE para o ${yellow}${DISTRONAME}${reset}:" editions[@] "$EDITION"
 	EDITION="${MENU_RESULT}"
 }
 
 get_manjarobranch() {
-	create_menu \
-		"Escolha uma opcao para Branch do ${yellow}Manjaro${reset}:" \
-		"stable" \
-		"testing" \
-		"unstable" \
-		"Voltar"
-	MANJARO_BRANCH="${MENU_RESULT}"
+	create_menu_with_array "Escolha uma opcao para Branch do ${yellow}Manjaro${reset}:" aBranchs[@] 'stable'
+  MANJARO_BRANCH="${MENU_RESULT}"
 }
 
 get_bigbranch() {
-	create_menu \
-		"Escolha uma opcao para Branch do ${yellow}BigLinux${reset}:" \
-		"stable" \
-		"testing" \
-		"unstable" \
-		"Voltar"
-	BIGLINUX_BRANCH="${MENU_RESULT}"
+  create_menu_with_array "Escolha uma opcao para Branch do ${yellow}BigLinux${reset}:" aBranchs[@] 'stable'
+   BIGLINUX_BRANCH="${MENU_RESULT}"
 }
 
 get_communitybranch() {
-	create_menu \
-		"Escolha uma opcao para Branch do ${yellow}BigCommunity${reset}:" \
-		"stable" \
-		"testing" \
-		"unstable" \
-		"Voltar"
-	BIGCOMMUNITY_BRANCH="${MENU_RESULT}"
+	create_menu_with_array "Escolha uma opcao para Branch do ${yellow}BigCommunity${reset}:" aBranchs[@] 'stable'
+  BIGCOMMUNITY_BRANCH="${MENU_RESULT}"
 }
 
 get_chilibranch() {
-	create_menu \
-		"Escolha uma opcao para Branch do ${yellow}ChiliLinux${reset}:" \
-		"stable" \
-		"testing" \
-		"unstable" \
-		"Voltar"
-	CHILILINUX_BRANCH="${MENU_RESULT}"
+  create_menu_with_array "Escolha uma opcao para Branch do ${yellow}ChiliLinux${reset}:" aBranchs[@] 'stable'
+  CHILILINUX_BRANCH="${MENU_RESULT}"
 }
 
 get_kernel() {
-	create_menu \
-		"Escolha a versão do ${yellow}KERNEL${reset}:" \
-		"latest" \
-		"lts" \
-		"oldlts" \
-		"xanmod" \
-		"Voltar"
+	create_menu_with_array "Escolha a versão do ${yellow}KERNEL${reset}:" aKernels[@] "$KERNEL"
 	KERNEL="${MENU_RESULT}"
 }
 
 get_debug() {
-	create_menu \
-		"Ativar sessão de debug TMATE?" \
-		"Não" \
-		"Sim" \
-		"Voltar"
-	DEBUG="${MENU_RESULT}"
-	TMATE="${MENU_RESULT}"
+local -a aDebug=('Não' 'Sim' 'Voltar')
+	create_menu_with_array "Ativar sessão de debug TMATE?" aDebug[@] "$TMATE"
+  DEBUG="${MENU_RESULT}"
+  TMATE="${MENU_RESULT}"
 }
 
-## main() { Início do script principal }
-########################################
-# Verificações iniciais
+parse_parameters() {
+	local param_organization
+	local value_organization
+	local param_organization_was_supplied=false
+	local param_commit_was_supplied=false
+	local param_build_was_supplied=false
+	local param_aur_was_supplied=false
 
-# Cores e estilos
-IS_AUTO=false
-nocolor=false
-set_varcolors
-# Loop através de todos os parâmetros ($@)
-for arg in "$@"; do
-	if [[ "$arg" = @(-n|--nocolor) ]]; then
-		nocolor=true
-		[[ "$nocolor" == "true" ]] && unset_varcolors || set_varcolors
-	elif [[ "$arg" = @(-V|--version) ]]; then
-		sh_version
-		exit $(($# ? 0 : 1))
-	elif [[ "$arg" = @(-h|--help) ]]; then
-		sh_usage
-		exit $(($# ? 0 : 1))
-	elif [[ "$arg" = @(-a|--auto|--automatic) ]]; then
-		IS_AUTO=true
-		sh_configure_environment "$@"
-		if [[ "$ORGANIZATION" =~ ^(chililinux|vcatafesta)$ ]]; then
-			DISTRONAME=chililinux
-			ISO_PROFILES_REPO='https://github.com/chililinux/iso-profiles'
-			MANJARO_BRANCH=stable
-			BIGCOMMUNITY_BRANCH=
-			BIGLINUX_BRANCH=stable
-			CHILILINUX_BRANCH=stable
-			KERNEL=lts
-			EDITION=xfce
-			TAG=$(date "+%Y-%m-%d_%H-%M")
-			TMATE='Sim'
-		elif [[ "$ORGANIZATION" =~ ^(manjaro)$ ]]; then
-			DISTRONAME=manjaro
-			ISO_PROFILES_REPO='https://gitlab.manjaro.org/profiles-and-settings/iso-profiles.git'
-			MANJARO_BRANCH=stable
-			BIGCOMMUNITY_BRANCH=
-			BIGLINUX_BRANCH=
-			CHILILINUX_BRANCH=
-			KERNEL=latest
-			EDITION=xfce
-			TAG=$(date "+%Y-%m-%d_%H-%M")
-			TMATE='Sim'
-		elif [[ "$ORGANIZATION" =~ ^(biglinux)$ ]]; then
-			DISTRONAME=biglinux
-			ISO_PROFILES_REPO='https://github.com/biglinux/iso-profiles'
-			MANJARO_BRANCH=stable
-			BIGCOMMUNITY_BRANCH=
-			BIGLINUX_BRANCH=stable
-			CHILILINUX_BRANCH=
-			KERNEL=latest
-			EDITION=xfce
-			TAG=$(date "+%Y-%m-%d_%H-%M")
-			TMATE='Sim'
-		elif [[ "$ORGANIZATION" =~ ^(communitybig|bigcommunity|talesam)$ ]]; then
-			DISTRONAME=bigcommunity
-			ISO_PROFILES_REPO='https://github.com/communitybig/iso-profiles'
-			MANJARO_BRANCH=stable
-			BIGCOMMUNITY_BRANCH=stable
-			BIGLINUX_BRANCH=stable
-			CHILILINUX_BRANCH=
-			KERNEL=latest
-			EDITION=xfce
-			TAG=$(date "+%Y-%m-%d_%H-%M")
-			TMATE='Sim'
-		fi
-	fi
-done
-
-sh_configure_environment "$@"
-p_log "${BLUE}" "${BOLD}Construção de ISO BigCommunity (versão $VERSION)${NC}\n"
-
-if $IS_AUTO; then
-	resume_and_build
-else
-  IS_BUILD_ISO_RESUME=true
-  #REPO_PATH="$PWD"
-  #HOME_FOLDER="/home/$USERNAME"
-
-	while true; do
-		get_distroname
-  	# Verifica se a opção selecionada foi "Sair"
-	  if [[ $MENU_RESULT == "Sair" ]]; then
-  		die "${red}" "Construção da ISO cancelada.${reset}"
-		fi
-
-		get_edition
-   	# Verifica se a opção selecionada foi "Voltar"
-    if [[ $MENU_RESULT == "Voltar" ]]; then
- 		  continue
- 		fi
-
-		get_iso_profiles_repo
-  	# Verifica se a opção selecionada foi "Voltar"
-	  if [[ $MENU_RESULT == "Voltar" ]]; then
-  		continue
-		fi
-
-		get_manjarobranch
-  	# Verifica se a opção selecionada foi "Voltar"
-	  if [[ $MENU_RESULT == "Voltar" ]]; then
-  		continue
-		fi
-
-		if [[ "$DISTRONAME" =~ ^(manjaro)$ ]]; then
-			BIGCOMMUNITY_BRANCH=
-			BIGLINUX_BRANCH=
-			CHILILINUX_BRANCH=
-		else
-			get_bigbranch
-    	# Verifica se a opção selecionada foi "Voltar"
-	    if [[ $MENU_RESULT == "Voltar" ]]; then
-  	  	continue
-  		fi
-		fi
-
-		if [[ "$DISTRONAME" =~ ^(manjaro|biglinux|chililinux)$ ]]; then
-			BIGCOMMUNITY_BRANCH=
-		else
-			get_communitybranch
-	  	# Verifica se a opção selecionada foi "Voltar"
-  	  if [[ $MENU_RESULT == "Voltar" ]]; then
-    		continue
-		  fi
-  	fi
-
-		if [[ "$DISTRONAME" =~ ^(manjaro|biglinux|bigcommunity)$ ]]; then
-			CHILILINUX_BRANCH=
-		else
-			get_chilibranch
-	  	# Verifica se a opção selecionada foi "Voltar"
-  	  if [[ $MENU_RESULT == "Voltar" ]]; then
-    		continue
-		  fi
-  	fi
-
-		get_kernel
-  	# Verifica se a opção selecionada foi "Voltar"
-	  if [[ $MENU_RESULT == "Voltar" ]]; then
-  		continue
-		fi
-
-		get_debug
-  	# Verifica se a opção selecionada foi "Voltar"
-	  if [[ $MENU_RESULT == "Voltar" ]]; then
-  		continue
-		fi
-
-		TAG=$(date "+%Y-%m-%d_%H-%M")
-		resume_and_build
+	while [[ $# -gt 0 ]]; do
+		case $1 in
+		-n | --nocolor)
+			unset_varcolors
+			shift # past argument
+			;;
+		-o | --org | --organization)
+			param_organization="$1"
+			value_organization="$2"
+			# Teste se o parâmetro foi fornecido e se o valor é válido
+			check_param_org "$value_organization"
+			param_organization_was_supplied=true
+			shift # past value
+			;;
+		-c | --commit)
+			param_commit="$1"
+			value_commit="$2"
+			# Teste se o parâmetro foi fornecido e se o valor é válido
+			check_param_commit "$value_commit"
+			param_commit_was_supplied=true
+			shift # past argument
+			shift # past value
+			;;
+		-b | --build)
+			param_build="$1"
+			value_build="$2"
+			# Teste se o parâmetro foi fornecido e se o valor é válido
+			check_param_build "$value_build"
+			param_build_was_supplied=true
+			shift # past argument
+			shift # past value
+			;;
+		*)
+			shift # unknown option
+			;;
+		esac
 	done
-fi
+
+	if $param_organization_was_supplied; then
+    sh_get_organization "$xvalue_organization"
+	fi
+	get_token_release # Obtem o TOKEN_RELEASE utilizando a função get_token_release
+	check_valid_token
+}
+
+sh_get_organization() {
+	local xvalue_organization="$1"
+	REPO="${Aorganization[$xvalue_organization]}/build-iso" # Repositório que contém os workflows
+	ORGANIZATION="${REPO%%/*}"              # default communitybig
+}
+
+sh_configure_environment() {
+	#debug
+	export PS4='${RED}${0##*/}${GREEN}[$FUNCNAME]${PURPLE}[$LINENO]${RESET}'
+	#set -x
+	#set -e
+
+  sh_get_organization "$DISTRONAME"
+
+	#declare -g REPO="communitybig/build-iso"    # Repositório que contém os workflows
+	#declare -g ORGANIZATION="${REPO%%/*}"       # communitybig
+	declare -g CFILETOKEN="$HOME/.GITHUB_TOKEN" # path do arquivo que contem os tokens do github
+
+	declare -g REPO_NAME="$(get_repo_name)"      # Obtém o nome do repositório utilizando a função get_repo_name
+	declare -g REPO_PATH="$(get_repo_root_path)" # Obtém o caminho raiz do repositório utilizando a função get_repo_root_path
+
+	# Define o diretório de log, armazenando os logs temporários do repositório
+	declare -g LOG_DIR="/tmp/${APP}/${REPO_NAME}"
+	declare -g LOG_FILE="${LOG_DIR}/${APP}.log"
+	[[ ! -d "$LOG_DIR" ]] && mkdir -p "$LOG_DIR"
+
+	p_log "$BLUE" "Configurando ambiente"
+	declare -g IS_GIT_REPO=false
+	declare -g IS_BUILD_ISO=true
+	declare -g IS_AUR_PACKAGE=false
+
+	checkDependencies
+	parse_parameters "$@"
+}
+
+main() {
+	IS_AUTO=false
+	nocolor=false
+	set_varcolors
+	# Loop através de todos os parâmetros ($@)
+	for arg in "$@"; do
+		if [[ "$arg" = @(-n|--nocolor) ]]; then
+			nocolor=true
+			[[ "$nocolor" == "true" ]] && unset_varcolors || set_varcolors
+		elif [[ "$arg" = @(-V|--version) ]]; then
+			sh_version
+			exit $(($# ? 0 : 1))
+		elif [[ "$arg" = @(-h|--help) ]]; then
+			sh_usage
+			exit $(($# ? 0 : 1))
+		elif [[ "$arg" = @(-a|--auto|--automatic) ]]; then
+			IS_AUTO=true
+			sh_configure_environment "$@"
+			if [[ "$ORGANIZATION" =~ ^(chililinux|vcatafesta)$ ]]; then
+				DISTRONAME=chililinux
+				ISO_PROFILES_REPO='https://github.com/chililinux/iso-profiles'
+				MANJARO_BRANCH=stable
+				BIGCOMMUNITY_BRANCH=
+				BIGLINUX_BRANCH=stable
+				CHILILINUX_BRANCH=stable
+				KERNEL=lts
+				EDITION=xfce
+				TAG=$(date "+%Y-%m-%d_%H-%M")
+				TMATE='Sim'
+			elif [[ "$ORGANIZATION" =~ ^(manjaro)$ ]]; then
+				DISTRONAME=manjaro
+				ISO_PROFILES_REPO='https://gitlab.manjaro.org/profiles-and-settings/iso-profiles.git'
+				MANJARO_BRANCH=stable
+				BIGCOMMUNITY_BRANCH=
+				BIGLINUX_BRANCH=
+				CHILILINUX_BRANCH=
+				KERNEL=latest
+				EDITION=xfce
+				TAG=$(date "+%Y-%m-%d_%H-%M")
+				TMATE='Sim'
+			elif [[ "$ORGANIZATION" =~ ^(biglinux)$ ]]; then
+				DISTRONAME=biglinux
+				ISO_PROFILES_REPO='https://github.com/biglinux/iso-profiles'
+				MANJARO_BRANCH=stable
+				BIGCOMMUNITY_BRANCH=
+				BIGLINUX_BRANCH=stable
+				CHILILINUX_BRANCH=
+				KERNEL=latest
+				EDITION=xfce
+				TAG=$(date "+%Y-%m-%d_%H-%M")
+				TMATE='Sim'
+			elif [[ "$ORGANIZATION" =~ ^(communitybig|bigcommunity|talesam)$ ]]; then
+				DISTRONAME=bigcommunity
+				ISO_PROFILES_REPO='https://github.com/communitybig/iso-profiles'
+				MANJARO_BRANCH=stable
+				BIGCOMMUNITY_BRANCH=stable
+				BIGLINUX_BRANCH=stable
+				CHILILINUX_BRANCH=
+				KERNEL=latest
+				EDITION=xfce
+				TAG=$(date "+%Y-%m-%d_%H-%M")
+				TMATE='Sim'
+			fi
+		fi
+	done
+
+	sh_configure_environment "$@"
+	p_log "${BLUE}" "${BOLD}Construção de ISO BigCommunity (versão $VERSION)${NC}\n"
+
+	if $IS_AUTO; then
+		resume_and_build
+	else
+		IS_BUILD_ISO_RESUME=true
+		#REPO_PATH="$PWD"
+		#HOME_FOLDER="/home/$USERNAME"
+
+		while true; do
+			get_distroname
+			# Verifica se a opção selecionada foi "Sair"
+			if [[ $MENU_RESULT == "Sair" ]]; then
+				die "${red}" "Construção da ISO cancelada.${reset}"
+			fi
+
+			get_edition
+			# Verifica se a opção selecionada foi "Voltar"
+			if [[ $MENU_RESULT == "Voltar" ]]; then
+				continue
+			fi
+
+			get_iso_profiles_repo
+			# Verifica se a opção selecionada foi "Voltar"
+			if [[ $MENU_RESULT == "Voltar" ]]; then
+				continue
+			fi
+
+			get_manjarobranch
+			# Verifica se a opção selecionada foi "Voltar"
+			if [[ $MENU_RESULT == "Voltar" ]]; then
+				continue
+			fi
+
+			if [[ "$DISTRONAME" =~ ^(manjaro)$ ]]; then
+				BIGCOMMUNITY_BRANCH=
+				BIGLINUX_BRANCH=
+				CHILILINUX_BRANCH=
+			else
+				get_bigbranch
+				# Verifica se a opção selecionada foi "Voltar"
+				if [[ $MENU_RESULT == "Voltar" ]]; then
+					continue
+				fi
+			fi
+
+			if [[ "$DISTRONAME" =~ ^(manjaro|biglinux|chililinux)$ ]]; then
+				BIGCOMMUNITY_BRANCH=
+			else
+				get_communitybranch
+				# Verifica se a opção selecionada foi "Voltar"
+				if [[ $MENU_RESULT == "Voltar" ]]; then
+					continue
+				fi
+			fi
+
+			if [[ "$DISTRONAME" =~ ^(manjaro|biglinux|bigcommunity)$ ]]; then
+				CHILILINUX_BRANCH=
+			else
+				get_chilibranch
+				# Verifica se a opção selecionada foi "Voltar"
+				if [[ $MENU_RESULT == "Voltar" ]]; then
+					continue
+				fi
+			fi
+
+			get_kernel
+			# Verifica se a opção selecionada foi "Voltar"
+			if [[ $MENU_RESULT == "Voltar" ]]; then
+				continue
+			fi
+
+			get_debug
+			# Verifica se a opção selecionada foi "Voltar"
+			if [[ $MENU_RESULT == "Voltar" ]]; then
+				continue
+			fi
+
+			TAG=$(date "+%Y-%m-%d_%H-%M")
+			resume_and_build
+		done
+	fi
+}
+
+main "$@"

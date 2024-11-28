@@ -4,7 +4,7 @@
 #
 #  /usr/share/community/gitrepo/shell/gitlib.sh - lib for gitrepo.sh and buildiso.sh
 #  Created: qui 05 set 2024 00:51:12 -04
-#  Altered: qua 20 nov 2024 14:00:22 -04
+#  Altered: qua 27 nov 2024 22:52:45 -04
 #
 #  Copyright (c) 2024-2024, Tales A. Mendonça <talesam@gmail.com>
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
@@ -68,7 +68,7 @@ check_valid_token() {
 	#echo $TOKEN_RELEASE
 	p_log "${cyan}" "Verificando permissões do token GitHub..."
 	token_check=$(curl -s -H "Authorization: token $TOKEN_RELEASE" https://api.github.com/user)
-	GITHUB_USER_NAME="$(echo "$token_check" | jq .login)"
+	GITHUB_USER_NAME="$(echo "$token_check" | jq -r .login)"
 	p_log "$cyan" "Token verificado: ${yellow}$GITHUB_USER_NAME"
 
 	if [[ -z "$(echo "$token_check" | jq .login)" ]]; then
@@ -443,9 +443,114 @@ get_git_last_commit_url() {
 }
 
 ###############################################################################################################################################
+create_menu_with_array() {
+  local title=$1
+  local -a options=("${!2}") # Recebe o array de opções
+  local default=${3:-}       # Opção padrão, se fornecida
+  local selected=0
+  local key
+
+
+  # Define a opção padrão como selecionada inicialmente
+  if [[ -n "$default" ]]; then
+    for i in "${!options[@]}"; do
+      if [[ "${options[$i]}" == "$default" ]]; then
+        selected=$i
+        break
+      fi
+    done
+  fi
+
+	tput civis # Esconde o cursor
+
+	while true; do
+		tput clear # Limpa a tela
+		if $IS_GIT_REPO; then
+			echo '---------------------------------------------------------------------------------'
+			echo -e "Organization   : ${CYAN}$ORGANIZATION${RESET}"
+			echo -e "Repo Name      : ${CYAN}$REPO_NAME${RESET}"
+			echo -e "User Name      : ${CYAN}$GITHUB_USER_NAME${RESET}"
+			echo -e "Repo Workflow  : ${CYAN}$REPO${RESET}"
+			echo -e "Local Path     : ${CYAN}$REPO_PATH${RESET}"
+			echo -e "Branchs        : \n${RED}$(git branch 2>/dev/null)${RESET}"
+			git remote -v 2>/dev/null
+			echo '---------------------------------------------------------------------------------'
+		elif $IS_AUR_PACKAGE; then
+			echo '---------------------------------------------------------------------------------'
+			echo -e "Organization   : ${CYAN}$ORGANIZATION${RESET}"
+			echo -e "Repo Workflow  : ${CYAN}$REPO${RESET}"
+			echo -e "User Name      : ${CYAN}$GITHUB_USER_NAME${RESET}"
+			echo -e "Local Path     : ${CYAN}$REPO_PATH${RESET}"
+			echo '---------------------------------------------------------------------------------'
+		elif $IS_BUILD_ISO; then
+			echo '---------------------------------------------------------------------------------'
+			echo -e "Organization   : ${CYAN}$ORGANIZATION${RESET}"
+			echo -e "Repo Workflow  : ${CYAN}$REPO${RESET}"
+			echo -e "User Name      : ${CYAN}$GITHUB_USER_NAME${RESET}"
+			echo -e "Local Path     : ${CYAN}$REPO_PATH${RESET}"
+			echo '---------------------------------------------------------------------------------'
+		fi
+
+		if $IS_BUILD_ISO_RESUME; then
+      echo -e "Distroname     : ${cyan}$DISTRONAME ${reset}"
+      echo -e "Edition        : ${cyan}$EDITION ${reset}"
+      echo -e "Iso-Profiles   : ${cyan}$ISO_PROFILES_REPO ${reset}"
+      echo -e "Br Manjaro     : ${cyan}$MANJARO_BRANCH ${reset}"
+      echo -e "Br BigLinux    : ${cyan}$BIGLINUX_BRANCH ${reset}"
+      echo -e "Br BigCommunity: ${cyan}$BIGCOMMUNITY_BRANCH ${reset}"
+      echo -e "Br ChiliLinux  : ${cyan}$CHILILINUX_BRANCH ${reset}"
+      echo -e "Kernel         : ${cyan}$KERNEL ${reset}"
+			echo '---------------------------------------------------------------------------------'
+    fi
+		echo -e "${BLUE}${BOLD}$title${NC}\n"
+
+		for i in "${!options[@]}"; do
+			if [[ "$i" -eq $selected ]]; then
+				if [[ "${options[$i]}" =~ ^(Sair|Voltar)$ ]]; then
+          if [[ "$ORGANIZATION" =~ ^(chililinux|vcatafesta)$ ]]; then
+  					echo -e "${RED}${BOLD}${reverse}> ${options[$i]}${NC}"
+  				else
+					  echo -e "${RED}${BOLD}> ${options[$i]}${NC}"
+				  fi
+				else
+          if [[ "$ORGANIZATION" =~ ^(chililinux|vcatafesta)$ ]]; then
+  					echo -e "${GREEN}${BOLD}${reverse}> ${options[$i]}${NC}"
+  				else
+	  				echo -e "${GREEN}${BOLD}> ${options[$i]}${NC}"
+	  			fi
+				fi
+			else
+				if [[ "${options[$i]}" =~ ^(Sair|Voltar)$ ]]; then
+					echo -e "${RED}  ${options[$i]}${NC}"
+				else
+					echo "  ${options[$i]}"
+				fi
+			fi
+		done
+
+		read -rsn1 key
+		case "$key" in
+		A)
+			((selected--))
+			[ $selected -lt 0 ] && selected=$((${#options[@]} - 1))
+			;;
+		B)
+			((selected++))
+			[ $selected -eq ${#options[@]} ] && selected=0
+			;;
+		'') break ;;
+		esac
+	done
+
+	tput cnorm # Mostra o cursor novamente
+	echo -e "\nVocê selecionou: ${GREEN}${BOLD}${options[$selected]}${NC}"
+	MENU_RESULT=${options[$selected]}
+	#	return $((selected+1))
+}
+
 create_menu() {
 	local title=$1
-	shift
+  shift # Avança apenas o título
 	#	local options=("$@" "Sair")
 	local options=("$@")
 	local selected=0
