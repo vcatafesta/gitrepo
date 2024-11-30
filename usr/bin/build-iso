@@ -132,7 +132,7 @@ trigger_workflow() {
 		"https://api.github.com/repos/${REPO}/dispatches")
 
 	if [ "$response" != "204" ]; then
-		die "{RED}" "Erro ao acionar o workflow. Código de resposta: $response${NC}"
+		die "${red}" "Erro ao acionar o workflow. Código de resposta: $response${reset}"
 	fi
 
 	p_log "${GREEN}" "Workflow de build da ISO $event_type acionado com sucesso.${NC}"
