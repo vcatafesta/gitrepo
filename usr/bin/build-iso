@@ -4,7 +4,7 @@
 #
 #  build-iso - Wrapper buildiso para construção de ISO
 #  Created: ter 10 set 2024 11:02:02 -04
-#  Altered: qua 27 nov 2024 22:52:45 -04
+#  Altered: sáb 30 nov 2024 18:40:12 -04
 #
 #  Copyright (c) 2024-2024, Tales A. Mendonça <talesam@gmail.com>
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
@@ -46,9 +46,10 @@ declare -aG biglinux_edition=(FalaQueEuTeEscuto flisol kde smallxivastudio)
 declare -aG chililinux_edition=(base cinnamon cosmic deepin gnome i3 kde xfce wmaker)
 declare -aG manjaro_edition=(architect bladebook gnome gnome-next grub kde kde-dev netinstall nxd xfce)
 declare -aG talesam_edition=(cinnamon cosmic deepin gnome kde xfce wmaker)
+declare -aG vcatafesta_edition=(base cinnamon cosmic deepin gnome i3 kde xfce wmaker)
 #
-declare -AG Aorganization=([communitybig]='communitybig' [biglinux]='biglinux' [chililinux]='chililinux' [manjaro]='communitybig' [talesam]='talesam')
-declare -aG aOrganization=('communitybig' 'biglinux' 'chililinux' 'talesam' 'Sair')
+declare -AG Aorganization=([communitybig]='communitybig' [biglinux]='biglinux' [chililinux]='chililinux' [manjaro]='communitybig' [talesam]='talesam' [vcatafesta]='vcatafesta')
+declare -aG aOrganization=('communitybig' 'biglinux' 'chililinux' 'talesam' 'vcatafesta' 'Sair')
 declare -aG aDistros=('communitybig' 'biglinux' 'chililinux' 'manjaro' 'Voltar')
 declare -aG aBranchs=('stable' 'testing' 'unstable' 'voltar')
 declare -aG aKernels=('latest' 'lts' 'oldlts' 'xanmod' 'Voltar')
@@ -59,6 +60,7 @@ declare -aG aProfiles=(
 		'https://github.com/chililinux/manjaro-iso-profiles'
 		'https://gitlab.manjaro.org/profiles-and-settings/iso-profiles.git'
 		'https://github.com/talesam/iso-profiles'
+		'https://github.com/vcatafesta/iso-profiles'
 		'Voltar'
   )
 #
@@ -276,6 +278,10 @@ parse_parameters() {
 
 	while [[ $# -gt 0 ]]; do
 		case $1 in
+		-a | --auto | --automatic)
+			IS_AUTO=true
+			shift # past argument
+			;;
 		-n | --nocolor)
 			unset_varcolors
 			shift # past argument
@@ -313,7 +319,7 @@ parse_parameters() {
 	done
 
 	if $param_organization_was_supplied; then
-    sh_set_organization "$xvalue_organization"
+    sh_set_organization "$value_organization"
 	fi
 	get_token_release # Obtem o TOKEN_RELEASE utilizando a função get_token_release
 	check_valid_token
@@ -325,7 +331,7 @@ sh_configure_environment() {
 	#set -x
 	#set -e
 
-  sh_set_organization "$ORGANIZATION"
+  #sh_set_organization "$ORGANIZATION"
 
 	#declare -g REPO="communitybig/build-iso"    # Repositório que contém os workflows
 	#declare -g ORGANIZATION="${REPO%%/*}"       # communitybig
