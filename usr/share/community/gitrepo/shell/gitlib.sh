@@ -1028,3 +1028,11 @@ clean_all_tags_on_remote() {
 	sleep 5
 	exit 0
 }
+
+replicate() {
+  local char=${1:-'#'}
+  local nsize=${2:-$(tput cols)}
+  local line
+  printf -v line "%*s" "$nsize" && echo "${line// /$char}"
+}
+export -f replicate
