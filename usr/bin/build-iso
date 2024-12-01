@@ -42,7 +42,7 @@ LIBRARY=${LIBRARY:-"/usr/share/community/gitrepo/shell"}
 	exit 1
 }
 declare -aG communitybig_edition=(cinnamon cosmic deepin gnome kde xfce wmaker)
-declare -aG biglinux_edition=(FalaQueEuTeEscuto flisol kde smallxivastudio)
+declare -aG biglinux_edition=(base FalaQueEuTeEscuto flisol kde small xivastudio)
 declare -aG chililinux_edition=(base cinnamon cosmic deepin gnome i3 kde xfce wmaker)
 declare -aG manjaro_edition=(architect bladebook gnome gnome-next grub kde kde-dev netinstall nxd xfce)
 declare -aG talesam_edition=(cinnamon cosmic deepin gnome kde xfce wmaker)
@@ -63,6 +63,12 @@ declare -aG aProfiles=(
 		'https://github.com/vcatafesta/iso-profiles'
 		'Voltar'
   )
+declare -aG communitybig_build_list=(communitybig)
+declare -aG biglinux_build_list=(biglinux biglinux-make-iso-profiles)
+declare -aG chililinux_build_list=(chililinux)
+declare -aG manjaro_build_list=(community manjaro oem)
+declare -aG talesam_build_list=(communitybig)
+declare -aG vcatafesta_build_list=(chililinux)
 #
 declare -g ORGANIZATION='communitybig'
 declare -g DISTRONAME='communitybig'
@@ -224,7 +230,6 @@ get_edition_string() {
   EDITION="${MENU_RESULT}"
 }
 
-# Função para obter a edição
 get_edition() {
 	local editions_var="${DISTRONAME}_edition"
 # local editions=(${!editions_var[@]})
@@ -234,6 +239,16 @@ get_edition() {
 	editions+=("Voltar")
 	create_menu_with_array "Escolha uma EDIÇÃO/DE para o ${yellow}${DISTRONAME}${reset}:" editions[@] "$EDITION"
 	EDITION="${MENU_RESULT}"
+}
+
+get_build_list() {
+	local build_list_var="${DISTRONAME}_build_list"
+
+  # Usando eval para acessar o conteúdo do array dinamicamente
+  eval "local build_list=(\"\${${build_list_var}[@]}\")"
+	build_list+=("Voltar")
+	create_menu_with_array "Escolha uma BUILD_LIST para o ${yellow}${DISTRONAME}${reset}:" build_list[@] "$DISTRONAME"
+	BUILD_LIST="${MENU_RESULT}"
 }
 
 get_manjarobranch() {
@@ -461,6 +476,12 @@ main() {
 			fi
 
 			get_iso_profiles_repo
+			# Verifica se a opção selecionada foi "Voltar"
+			if [[ $MENU_RESULT == "Voltar" ]]; then
+				continue
+			fi
+
+			get_build_list
 			# Verifica se a opção selecionada foi "Voltar"
 			if [[ $MENU_RESULT == "Voltar" ]]; then
 				continue

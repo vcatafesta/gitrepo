@@ -451,7 +451,6 @@ create_menu_with_array() {
   local selected=0
   local key
 
-
   # Define a opção padrão como selecionada inicialmente
   if [[ -n "$default" ]]; then
     for i in "${!options[@]}"; do
