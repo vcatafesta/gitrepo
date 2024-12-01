@@ -137,8 +137,8 @@ parse_parameters() {
 	done
 
 	if $param_organization_was_supplied; then
-		REPO="${value_organization}/build-package" # Repositório que contém os workflows
-		ORGANIZATION="${REPO%%/*}"                 # default=communitybig
+		REPO_WORKFLOW="${value_organization}/build-package" # Repositório que contém os workflows
+		ORGANIZATION="${REPO_WORKFLOW%%/*}"                 # default=communitybig
 	fi
 
 	get_token_release # Obtem o TOKEN_RELEASE utilizando a função get_token_release
@@ -235,7 +235,7 @@ trigger_workflow() {
 		--data "$data" \
 		-w "%{http_code}" \
 		-o /dev/null \
-		"https://api.github.com/repos/${REPO}/dispatches")
+		"https://api.github.com/repos/${REPO_WORKFLOW}/dispatches")
 
 	if [[ "$response" != "204" ]]; then
 		die "$RED" "Erro '$response' ao acionar o workflow. Código de resposta: $response"
@@ -254,9 +254,9 @@ sh_configure_environment() {
 	#set -x
 	#set -e
 
-	declare -g REPO="communitybig/build-package" # Repositório que contém os workflows
-	declare -g ORGANIZATION="${REPO%%/*}"        # communitybig
-	declare -g CFILETOKEN="$HOME/.GITHUB_TOKEN"  # path do arquivo que contem os tokens do github
+	declare -g REPO_WORKFLOW="communitybig/build-package" # Repositório que contém os workflows
+	declare -g ORGANIZATION="${REPO_WORKFLOW%%/*}"        # communitybig
+	declare -g CFILETOKEN="$HOME/.GITHUB_TOKEN"           # path do arquivo que contem os tokens do github
 	declare -g GITHUB_USER_NAME
 
 	declare -g REPO_NAME="$(get_repo_name)"      # Obtém o nome do repositório utilizando a função get_repo_name

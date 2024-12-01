@@ -470,7 +470,7 @@ create_menu_with_array() {
 			echo -e "Organization   : ${CYAN}$ORGANIZATION${RESET}"
 			echo -e "Repo Name      : ${CYAN}$REPO_NAME${RESET}"
 			echo -e "User Name      : ${CYAN}$GITHUB_USER_NAME${RESET}"
-			echo -e "Repo Workflow  : ${CYAN}$REPO${RESET}"
+			echo -e "Repo Workflow  : ${CYAN}$REPO_WORKFLOW${RESET}"
 			echo -e "Local Path     : ${CYAN}$REPO_PATH${RESET}"
 			echo -e "Branchs        : \n${RED}$(git branch 2>/dev/null)${RESET}"
 			git remote -v 2>/dev/null
@@ -478,14 +478,14 @@ create_menu_with_array() {
 		elif $IS_AUR_PACKAGE; then
 			echo '---------------------------------------------------------------------------------'
 			echo -e "Organization   : ${CYAN}$ORGANIZATION${RESET}"
-			echo -e "Repo Workflow  : ${CYAN}$REPO${RESET}"
+			echo -e "Repo Workflow  : ${CYAN}$REPO_WORKFLOW${RESET}"
 			echo -e "User Name      : ${CYAN}$GITHUB_USER_NAME${RESET}"
 			echo -e "Local Path     : ${CYAN}$REPO_PATH${RESET}"
 			echo '---------------------------------------------------------------------------------'
 		elif $IS_BUILD_ISO; then
 			echo '---------------------------------------------------------------------------------'
 			echo -e "Organization   : ${CYAN}$ORGANIZATION${RESET}"
-			echo -e "Repo Workflow  : ${CYAN}$REPO${RESET}"
+			echo -e "Repo Workflow  : ${CYAN}$REPO_WORKFLOW${RESET}"
 			echo -e "User Name      : ${CYAN}$GITHUB_USER_NAME${RESET}"
 			echo -e "Local Path     : ${CYAN}$REPO_PATH${RESET}"
 			echo '---------------------------------------------------------------------------------'
@@ -565,7 +565,7 @@ create_menu() {
 			echo -e "Organization   : ${CYAN}$ORGANIZATION${RESET}"
 			echo -e "Repo Name      : ${CYAN}$REPO_NAME${RESET}"
 			echo -e "User Name      : ${CYAN}$GITHUB_USER_NAME${RESET}"
-			echo -e "Repo Workflow  : ${CYAN}$REPO${RESET}"
+			echo -e "Repo Workflow  : ${CYAN}$REPO_WORKFLOW${RESET}"
 			echo -e "Local Path     : ${CYAN}$REPO_PATH${RESET}"
 			echo -e "Branchs        : \n${RED}$(git branch 2>/dev/null)${RESET}"
 			git remote -v 2>/dev/null
@@ -573,14 +573,14 @@ create_menu() {
 		elif $IS_AUR_PACKAGE; then
 			echo '---------------------------------------------------------------------------------'
 			echo -e "Organization   : ${CYAN}$ORGANIZATION${RESET}"
-			echo -e "Repo Workflow  : ${CYAN}$REPO${RESET}"
+			echo -e "Repo Workflow  : ${CYAN}$REPO_WORKFLOW${RESET}"
 			echo -e "User Name      : ${CYAN}$GITHUB_USER_NAME${RESET}"
 			echo -e "Local Path     : ${CYAN}$REPO_PATH${RESET}"
 			echo '---------------------------------------------------------------------------------'
 		elif $IS_BUILD_ISO; then
 			echo '---------------------------------------------------------------------------------'
 			echo -e "Organization   : ${CYAN}$ORGANIZATION${RESET}"
-			echo -e "Repo Workflow  : ${CYAN}$REPO${RESET}"
+			echo -e "Repo Workflow  : ${CYAN}$REPO_WOKFLOW${RESET}"
 			echo -e "User Name      : ${CYAN}$GITHUB_USER_NAME${RESET}"
 			echo -e "Local Path     : ${CYAN}$REPO_PATH${RESET}"
 			echo '---------------------------------------------------------------------------------'
@@ -756,7 +756,7 @@ get_url_actions() {
 	runs=$(curl -s -X GET \
 		-H "Accept: application/vnd.github.v3+json" \
 		-H "Authorization: token $TOKEN_RELEASE" \
-		"https://api.github.com/repos/${REPO}/actions/runs")
+		"https://api.github.com/repos/${REPO_WORKFLOW}/actions/runs")
 
 	# Obter o ID da execução mais recente
 	run_id=$(echo "$runs" | jq '.workflow_runs | sort_by(.id) | last | .id')
@@ -767,7 +767,7 @@ get_url_actions() {
 	fi
 
 	# Construir a URL da action
-	action_url="https://github.com/${REPO}/actions/runs/$run_id"
+	action_url="https://github.com/${REPO_WORKFLOW}/actions/runs/$run_id"
 	echo "URL da Action: $action_url"
 }
 
@@ -786,7 +786,7 @@ get_organization_repo_name() {
 delete_failed_runs() {
 	local result
 	local clean
-	local REPO="$(get_organization_repo_name)"
+	local REPO_WORKFLOW="$(get_organization_repo_name)"
 
 	# Confirmar a operação
 	read -p "${PURPLE}Digite --confirm para confirmar: " clean
@@ -800,7 +800,7 @@ delete_failed_runs() {
 	runs=$(curl -s -X GET \
 		-H "Accept: application/vnd.github.v3+json" \
 		-H "Authorization: token $TOKEN_RELEASE" \
-		"https://api.github.com/repos/${REPO}/actions/runs")
+		"https://api.github.com/repos/${REPO_WORKFLOW}/actions/runs")
 
 	#  # Imprimir o JSON bruto para depuração
 	#echo "JSON bruto recebido:"
@@ -825,7 +825,7 @@ delete_failed_runs() {
 			response=$(curl -s -X DELETE \
 				-H "Accept: application/vnd.github.v3+json" \
 				-H "Authorization: token $TOKEN_RELEASE" \
-				"https://api.github.com/repos/${REPO}/actions/runs/$run_id")
+				"https://api.github.com/repos/${REPO_WORKFLOW}/actions/runs/$run_id")
 
 			result="$?"
 			# Verifique a resposta para confirmar a exclusão
@@ -849,7 +849,7 @@ debug_json() {
 	runs=$(curl -s -X GET \
 		-H "Accept: application/vnd.github.v3+json" \
 		-H "Authorization: token $TOKEN_RELEASE" \
-		"https://api.github.com/repos/${REPO}/actions/runs")
+		"https://api.github.com/repos/${REPO_WORKFLOW}/actions/runs")
 
 	# Imprimir o JSON bruto para depuração
 	echo "JSON bruto recebido:"
@@ -874,7 +874,7 @@ debug_json() {
 			response=$(curl -s -X DELETE \
 				-H "Accept: application/vnd.github.v3+json" \
 				-H "Authorization: token $TOKEN_RELEASE" \
-				"https://api.github.com/repos/${REPO}/actions/runs/$run_id")
+				"https://api.github.com/repos/${REPO_WORKFLOW}/actions/runs/$run_id")
 
 			result="$?"
 			# Verifique a resposta para confirmar a exclusão

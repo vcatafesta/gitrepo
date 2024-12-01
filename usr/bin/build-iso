@@ -139,7 +139,7 @@ trigger_workflow() {
 		--data "$data" \
 		-w "%{http_code}" \
 		-o /dev/null \
-		"https://api.github.com/repos/${REPO}/dispatches")
+		"https://api.github.com/repos/${REPO_WORKFLOW}/dispatches")
 
 	if [ "$response" != "204" ]; then
 		die "${red}" "Erro ao acionar o workflow. Código de resposta: $response${reset}"
@@ -164,7 +164,7 @@ resume_and_build() {
 	echo -e "${cyan}Resumo das escolhas:${reset}"
 	echo "${black}$(replicate '=')${reset}"
 	echo "Organization     : ${orange}$ORGANIZATION ${reset}"
-	echo "Repo Workflow    : ${orange}$REPO ${reset}"
+	echo "Repo Workflow    : ${orange}$REPO_WORKFLOW ${reset}"
 	echo "User Name        : ${orange}$GITHUB_USER_NAME ${reset}"
 	echo "Distroname       : ${orange}$DISTRONAME ${reset}"
 	echo "Edition          : ${orange}$EDITION ${reset}"
@@ -187,8 +187,8 @@ resume_and_build() {
 
 sh_set_organization() {
   local xvalue_organization="$1"
-  REPO="${Aorganization[$xvalue_organization]}/build-iso" # Repositório que contém os workflows
-  ORGANIZATION="${REPO%%/*}"                              # default communitybig
+  REPO_WORKFLOW="${Aorganization[$xvalue_organization]}/build-iso"  # Repositório que contém os workflows
+  ORGANIZATION="${REPO%%/*}"                                        # default communitybig
 }
 
 get_organization() {
@@ -348,12 +348,12 @@ sh_configure_environment() {
 
   #sh_set_organization "$ORGANIZATION"
 
-	#declare -g REPO="communitybig/build-iso"    # Repositório que contém os workflows
-	#declare -g ORGANIZATION="${REPO%%/*}"       # communitybig
-	declare -g CFILETOKEN="$HOME/.GITHUB_TOKEN" # path do arquivo que contem os tokens do github
+	#declare -g REPO_WORKFLOW="communitybig/build-iso"  # Repositório que contém os workflows
+	#declare -g ORGANIZATION="${REPO_WORKFLOW%%/*}"     # communitybig
+	declare -g CFILETOKEN="$HOME/.GITHUB_TOKEN"         # path do arquivo que contem os tokens do github
 
-	declare -g REPO_NAME="$(get_repo_name)"      # Obtém o nome do repositório utilizando a função get_repo_name
-	declare -g REPO_PATH="$(get_repo_root_path)" # Obtém o caminho raiz do repositório utilizando a função get_repo_root_path
+	declare -g REPO_NAME="$(get_repo_name)"             # Obtém o nome do repositório utilizando a função get_repo_name
+	declare -g REPO_PATH="$(get_repo_root_path)"        # Obtém o caminho raiz do repositório utilizando a função get_repo_root_path
 
 	# Define o diretório de log, armazenando os logs temporários do repositório
 	declare -g LOG_DIR="/tmp/${APP}/${REPO_NAME}"
