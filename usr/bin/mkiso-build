@@ -7,7 +7,7 @@
 #  ao fluxo padrão de construção de ISOs.
 #
 #  Created: ter 24 set 2024 04:26:12 -04
-#  Altered: qua 20 nov 2024 09:49:25 -04
+#  Altered: sáb 30 nov 2024 15:43:52 -04
 #
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -38,19 +38,24 @@ declare VERSION="1.1.6" # Versão do script
 export TERM=${TERM:-xterm}
 export TERM=${TERM:-xterm-256color}
 declare IS_AUTO=false
-declare -aG bigcommunity_edition=(base cinnamon cosmic deepin gnome kde xfce wmaker)
+declare -aG communitybig_edition=(cinnamon cosmic deepin gnome kde xfce wmaker)
 declare -aG biglinux_edition=(FalaQueEuTeEscuto flisol kde smallxivastudio)
 declare -aG chililinux_edition=(base cinnamon cosmic deepin gnome i3 kde xfce wmaker)
 declare -aG manjaro_edition=(architect bladebook gnome gnome-next grub i3 kde kde-dev netinstall nxd xfce)
+declare -aG talesam_edition=(cinnamon cosmic deepin gnome kde xfce wmaker)
+declare -aG aDistros=('communitybig' 'biglinux' 'chililinux' 'manjaro' 'talesam' 'Sair')
+declare -aG aProfiles=(
+    'https://github.com/communitybig/iso-profiles'
+    'https://github.com/biglinux/iso-profiles'
+    'https://github.com/chililinux/iso-profiles'
+    'https://github.com/chililinux/manjaro-iso-profiles'
+    'https://gitlab.manjaro.org/profiles-and-settings/iso-profiles.git'
+    'https://github.com/talesam/iso-profiles'
+    'Voltar'
+  )
 
 get_distroname() {
-	create_menu \
-		"Escolha nome da distribuição:" \
-		"bigcommunity" \
-		"biglinux" \
-		"chililinux" \
-		"manjaro" \
-		"Sair"
+	create_menu "Escolha nome da distribuição:" "${aDistros[@]}"
 	if [[ $MENU_RESULT == "Sair" ]]; then
 		die "${red}" "Construção da ISO cancelada.${reset}"
 	fi
@@ -58,59 +63,34 @@ get_distroname() {
 }
 
 get_iso_profiles_repo() {
-	create_menu \
-		'Escolha uma repositório iso-profiles:' \
-		'https://github.com/talesam/iso-profiles' \
-		'https://github.com/biglinux/iso-profiles' \
-		'https://github.com/chililinux/iso-profiles' \
-		'https://github.com/chililinux/manjaro-iso-profiles' \
-		'https://gitlab.manjaro.org/profiles-and-settings/iso-profiles.git' \
-		'Sair'
+	create_menu 'Escolha uma repositório iso-profiles:' "${aProfiles[@]}"
 	if [[ $MENU_RESULT == "Sair" ]]; then
 		die "${red}" "Construção da ISO cancelada.${reset}"
 	fi
 	REPO="${MENU_RESULT}"
 }
 
-#get_edition() {
-#	create_menu \
-#		"Escolha uma EDICÃO/DE para a ${DISTRONAME}:" \
-#		"base" \
-#		"cinnamon" \
-#		"cosmic" \
-#		"deepin" \
-#		"gnome" \
-#		"kde" \
-#		"xfce" \
-#		"wmaker" \
-#		"Sair"
-#	if [[ $MENU_RESULT == "Sair" ]]; then
-#		die "${red}" "Construção da ISO cancelada.${reset}"
-#	fi
-#	EDITION="${MENU_RESULT}"
-#}
-
 # Função para obter a edição
 get_edition() {
-  # Determina o array com base na distribuição
-  local editions_var="${DISTRONAME}_edition"
-  local -n editions="${editions_var}"  # Referência ao array correspondente
+	# Determina o array com base na distribuição
+	local editions_var="${DISTRONAME}_edition"
+	local -n editions="${editions_var}" # Referência ao array correspondente
 
-  # Adiciona a opção "Sair" ao menu
-  editions+=("Sair")
+	# Adiciona a opção "Sair" ao menu
+	editions+=("Sair")
 
-  # Cria o menu dinamicamente com as opções do array
-  create_menu \
-    "Escolha uma EDIÇÃO/DE para a ${DISTRONAME}:" \
-    "${editions[@]}"
+	# Cria o menu dinamicamente com as opções do array
+	create_menu \
+		"Escolha uma EDIÇÃO/DE para a ${DISTRONAME}:" \
+		"${editions[@]}"
 
-  # Verifica se a opção selecionada foi "Sair"
-  if [[ $MENU_RESULT == "Sair" ]]; then
-    die "${red}" "Construção da ISO cancelada.${reset}"
-  fi
+	# Verifica se a opção selecionada foi "Sair"
+	if [[ $MENU_RESULT == "Sair" ]]; then
+		die "${red}" "Construção da ISO cancelada.${reset}"
+	fi
 
-  # Define a edição escolhida
-  EDITION="${MENU_RESULT}"
+	# Define a edição escolhida
+	EDITION="${MENU_RESULT}"
 }
 
 get_manjarobranch() {
@@ -141,7 +121,7 @@ get_bigbranch() {
 
 get_communitybranch() {
 	create_menu \
-		"Escolha uma opcao para Branch do BigCommunity:" \
+		"Escolha uma opcao para Branch do CommunityBig:" \
 		"stable" \
 		"testing" \
 		"unstable" \
@@ -215,6 +195,16 @@ get_debug() {
 	DEBUG="${MENU_RESULT}"
 }
 
+get_distroname_isoprofiles() {
+  # Extraindo a organização
+  if [[ $REPO =~ https?://[^/]+/([^/]+)/.* ]]; then
+    DISTRONAME_ISOPROFILES="${BASH_REMATCH[1]}"
+  else
+    DISTRONAME_ISOPROFILES="${DISTRONAME}"
+  fi
+  echo "$DISTRONAME_ISOPROFILES"
+}
+
 configure_vars() {
 	# Declare variáveis de ambiente
 	# somente ativar quando rodar manualmente, no github não é necessário
@@ -225,8 +215,7 @@ configure_vars() {
 	get_distroname
 	get_edition
 	get_iso_profiles_repo
-
-	DISTRONAME_ISOPROFILES="${DISTRONAME}"
+	DISTRONAME_ISOPROFILES="$(get_distroname_isoprofiles)"
 	WORK_PATH="$HOME_FOLDER/__w/build-iso/build-iso"
 	WORK_PATH_ISO_PROFILES="$HOME_FOLDER/__w/build-iso/build-iso/iso-profiles"
 	PROFILE_PATH="$HOME_FOLDER/__w/build-iso/build-iso/iso-profiles/${DISTRONAME_ISOPROFILES}"
@@ -252,7 +241,7 @@ configure_vars() {
 		get_communitybranch
 	fi
 
-	if [[ "$DISTRONAME" =~ ^(manjaro|biglinux|bigcommunity)$ ]]; then
+	if [[ "$DISTRONAME" =~ ^(manjaro|biglinux|communitybig|talesam)$ ]]; then
 		CHILIBRANCH=
 	else
 		get_chilibranch
@@ -392,7 +381,7 @@ sh_version() {
 ${bold}${cyan}${0##*/} v${VERSION}${reset}
 ${APPDESC}
 ${bold}${black}Copyright (c) 2024-2024, ${reset}Vilmar Catafesta <vcatafesta@gmail.com>${black}
-${bold}${black}Copyright (C) 2024-2024, ${reset}BigCommunity Team${black}
+${bold}${black}Copyright (C) 2024-2024, ${reset}CommunityBig Team${black}
 
   Este é um software livre: você é livre para alterá-lo e redistribuí-lo.
   O $APP é disponibilizado para você sob a ${yellow}Licença MIT${black}, e
@@ -674,25 +663,25 @@ add_repository() {
 	arquivo_conf="$1"
 
 	if [[ "$DISTRONAME" != "manjaro" ]]; then
-    # Lista de chaves a serem verificadas
-  	for key in biglinux-keyring community-keyring chili-keyring; do
-      msg "Verificando e adicionando repositório '$key' ao arquivo $arquivo_conf, se necessário."
-      # Verifica e adiciona a chave ao SyncFirst, caso não exista
-  		if ! grep -q "$key" "$arquivo_conf"; then
-	  		sudo sed -i '/SyncFirst/s/$/ "$key"/' "$arquivo_conf"
-  		fi
-  	done
+		# Lista de chaves a serem verificadas
+		for key in biglinux-keyring community-keyring chili-keyring; do
+			msg "Verificando e adicionando repositório '$key' ao arquivo $arquivo_conf, se necessário."
+			# Verifica e adiciona a chave ao SyncFirst, caso não exista
+			if ! grep -q "$key" "$arquivo_conf"; then
+				sudo sed -i '/SyncFirst/s/$/ "$key"/' "$arquivo_conf"
+			fi
+		done
 
-    msg "Verificando se o repositório 'biglinux-update-stable' está presente no arquivo $arquivo_conf."
-    # Verifica e insere o repositório antes da seção [core], se necessário
-	  if ! grep -q 'biglinux-update-stable' "$arquivo_conf"; then
-  		msg_info 'Inserindo o repositório [biglinux-update-stable] antes da seção [core]'
-		  sudo sed -i "/\[core\]/i \
+		msg "Verificando se o repositório 'biglinux-update-stable' está presente no arquivo $arquivo_conf."
+		# Verifica e insere o repositório antes da seção [core], se necessário
+		if ! grep -q 'biglinux-update-stable' "$arquivo_conf"; then
+			msg_info 'Inserindo o repositório [biglinux-update-stable] antes da seção [core]'
+			sudo sed -i "/\[core\]/i \
 		    [biglinux-update-stable]\
   		  \nSigLevel = PackageRequired\
 	  	  \nServer = https://repo.biglinux.com.br/update-stable/\$arch\n" "$arquivo_conf"
-  	fi
-  fi
+		fi
+	fi
 
 	msg "Configurando repositórios do Manjaro"
 	branch="$MANJAROBRANCH"
@@ -717,8 +706,9 @@ add_repository() {
 		'ask4.mm.fcix.net'
 	)
 
-  echo "Server = https://linorg.usp.br/manjaro/$branch/\$repo/\$arch" | sudo tee -a "$arquivo_conf" >/dev/null
-  echo "Server = https://manjaro.c3sl.ufpr.br/$branch/\$repo/\$arch"  | sudo tee -a "$arquivo_conf" >/dev/null
+	echo "Server = https://manjaro.c3sl.ufpr.br/$branch/\$repo/\$arch"       | sudo tee -a "$arquivo_conf" >/dev/null
+  echo "Server = https://mirror.ufam.edu.br/manjaro/$branch/\$repo/\$arch" | sudo tee -a "$arquivo_conf" >/dev/null
+	echo "Server = https://linorg.usp.br/manjaro/$branch/\$repo/\$arch"      | sudo tee -a "$arquivo_conf" >/dev/null
 
 	for server in "${servers[@]}"; do
 		msg_info "Incluindo $server no arquivo $arquivo_conf"
@@ -726,8 +716,8 @@ add_repository() {
 	done
 	echo '' | sudo tee -a "$arquivo_conf" >/dev/null
 
-	if [[ "$DISTRONAME" == "bigcommunity" ]]; then
-		msg 'Configurando repositórios do BigCommunity'
+	if [[ "$DISTRONAME" == "communitybig" ]]; then
+		msg 'Configurando repositórios do CommunityBig'
 		case "$COMMUNITYBRANCH" in
 		"stable")
 			add_biglinux-update-stable | sudo tee -a "$arquivo_conf" >/dev/null
@@ -779,9 +769,9 @@ configure_repositories_and_build_environment() {
 	msg 'Aplicando as configurações'
 
 	if [[ "$DISTRONAME" != "manjaro" ]]; then
-  	add_repository "$PATH_MANJARO_TOOLS/pacman-default.conf"
-  	add_repository "$PATH_MANJARO_TOOLS/pacman-multilib.conf"
-  fi
+		add_repository "$PATH_MANJARO_TOOLS/pacman-default.conf"
+		add_repository "$PATH_MANJARO_TOOLS/pacman-multilib.conf"
+	fi
 
 	msg 'Alterando o path da remoção do cache de pacotes para remover /usr/share/man'
 	msg_info "sudo sed -i 's/path=\$1\/var\/lib\/pacman\/sync/path=\$1\/usr\/share\/man/g' /usr/lib/manjaro-tools/util-iso-image.sh"
@@ -930,6 +920,135 @@ setup_manjaro_tools() {
 }
 export -f setup_manjaro_tools
 
+configure_dwarfs() {
+	msg "Configurando DwarFS como sistema de arquivos da ISO..."
+
+	# Backup dos arquivos originais
+  sudo sed -i 's/make_sfs\s\+\"\${sfs_dir}\"/make_dwarfs "${sfs_dir}"/g' /usr/lib/manjaro-tools/util-iso.sh
+
+	# Substituir funções no util-iso-image.sh
+	sudo tee -a /usr/lib/manjaro-tools/util-iso.sh >/dev/null <<'EOF'
+
+# Função para criar imagem DwarFS
+build_dwarfs_image() {
+  local src="$1"
+  local destname="$2"
+  local dest="$3"
+  local comp_args=()
+
+  # Configuração dos argumentos
+  comp_args+=(-i "$src")
+  comp_args+=(-o "$dest/$destname")
+  comp_args+=(--compress-level=9)
+  comp_args+=(--block-size-bits=22)
+  #comp_args+=(--max-block-size=1M)
+  comp_args+=(--num-workers=$(nproc))
+
+  # Logs para depuração
+  msg2 "Creating DwarFS image, this may take some time..."
+  msg2 "Source: $src"
+  msg2 "Destination: $dest/$destname"
+  msg2 "Compression Level: 9"
+  msg2 "Block Size Bits: 22"
+  msg2 "Workers: $(nproc)"
+  msg2 "DwarFS ALL parameters: ${comp_args[*]}"
+
+  # Execução
+  mkdwarfs "${comp_args[@]}"
+}
+
+# $1: file
+make_checksum_dwarfs(){
+  msg2 "Creating md5sum ..."
+  cd $1
+  md5sum $2.dwarfs > $2.md5
+  cd ${OLDPWD}
+}
+
+# $1: image path
+make_dwarfs() {
+  local src="$1"
+  if [[ ! -e "${src}" ]]; then
+    error "The path %s does not exist" "${src}"
+    return 1
+  fi
+  local timer=$(get_timer) dest=${iso_root}/${iso_name}/${target_arch}
+  local name=${1##*/}
+  #local sfs="${dest}/${name}.dwarfs"
+  local sfs="${dest}/${name}.sfs"
+  mkdir -p ${dest}
+  msg "Generating DwarFS image for %s" "${src}"
+    if [[ -f "${sfs}" ]]; then
+        local has_changed_dir=$(find ${src} -newer ${sfs})
+        msg2 "Possible changes for %s ..." "${src}"  >> ${tmp_dir}/buildiso.debug
+        msg2 "%s" "${has_changed_dir}" >> ${tmp_dir}/buildiso.debug
+        if [[ -n "${has_changed_dir}" ]]; then
+            msg2 "DwarFS image %s is not up to date, rebuilding..." "${sfs}"
+            rm "${sfs}"
+        else
+            msg2 "DwarFS image %s is up to date, skipping." "${sfs}"
+            return
+        fi
+    fi
+
+    if ${persist}; then
+        local size=32G
+        local mnt="${mnt_dir}/${name}"
+        msg2 "Creating ext4 image of %s ..." "${size}"
+        truncate -s ${size} "${src}.img"
+        local ext4_args=()
+        ${verbose} && ext4_args+=(-q)
+        ext4_args+=(-O ^has_journal,^resize_inode -E lazy_itable_init=0 -m 0)
+        mkfs.ext4 ${ext4_args[@]} -F "${src}.img" &>/dev/null
+        tune2fs -c 0 -i 0 "${src}.img" &> /dev/null
+        mount_img "${work_dir}/${name}.img" "${mnt}"
+        msg2 "Copying %s ..." "${src}/"
+        cp -aT "${src}/" "${mnt}/"
+        umount_img "${mnt}"
+    fi
+
+    msg2 "Creating DwarFS image, this may take some time..."
+    local used_kernel=${kernel:5:1} mksfs_args=()
+    if ${persist}; then
+      mksfs_args+=(${work_dir}/${name}.img)
+    else
+      mksfs_args+=(${src})
+    fi
+    mksfs_args+=(${sfs} -noappend)
+    local highcomp
+    [[ "${iso_compression}" == "xz" ]] && highcomp="-b 1024K -Xbcj x86"
+    [[ "${iso_compression}" == "zstd" ]] && highcomp="-b 1024K -Xcompression-level 6" #compression level max 22 (default 15)
+    mksfs_args+=(-comp ${iso_compression} ${highcomp})
+    msg2 "SquashFS parameters: ${mksfs_args[*]}"
+
+    if ${verbose}; then
+      #mksquashfs "${mksfs_args[@]}" >/dev/null
+      build_dwarfs_image "$src" "$sfs" >/dev/null
+    else
+      #mksquashfs "${mksfs_args[@]}"
+      build_dwarfs_image "$src" "$sfs"
+    fi
+    #make_checksum_dwarfs "${dest}" "${name}"
+    make_checksum "${dest}" "${name}"
+    ${persist} && rm "${src}.img"
+
+    if [[ -n ${gpgkey} ]]; then
+      make_sig "${dest}" "${name}"
+    fi
+    show_elapsed_time "${FUNCNAME}" "${timer_start}"
+}
+EOF
+
+	# Configurar mkinitcpio
+	#sudo sed -i 's/MODULES=()/MODULES=(dwarfs)/' /etc/mkinitcpio.conf
+	#if ! grep -q "dwarfs" /etc/mkinitcpio.conf; then
+	#	sudo sed -i 's/HOOKS=(base udev/HOOKS=(base udev dwarfs/' /etc/mkinitcpio.conf
+	#fi
+	#sudo mkinitcpio -P
+	msg "Configuração do DwarFS concluída"
+}
+export -f configure_dwarfs
+
 configure_mesa() {
 	msg 'configurando mesa'
 	if [[ "$KERNEL" =~ ^(latest|xanmod)$ ]]; then
@@ -1051,7 +1170,7 @@ configure_repos() {
 	mkdir -p "$config_dir"
 
 	# Community repositories
-	if [[ "$DISTRONAME" == "bigcommunity" ]]; then
+	if [[ "$DISTRONAME" == "communitybig" ]]; then
 		if [[ "$community_branch" == "testing" ]]; then
 			add_community-testing | sudo tee -a "$config_file" >/dev/null
 			add_community-stable | sudo tee -a "$config_file" >/dev/null
@@ -1139,7 +1258,7 @@ configure_iso_name() {
 	sed -i "s/label=.*/label=${VOL_ID}/" "$PROFILE_PATH_EDITION"/profile.conf
 	sudo sed -i "s/iso_label=.*/iso_label=${VOL_ID}/" "/usr/lib/manjaro-tools/util-iso.sh"
 
-	if [[ "$DISTRONAME" == 'bigcommunity' ]]; then
+	if [[ "$DISTRONAME" == 'communitybig' ]]; then
 		case "$MANJAROBRANCH/$COMMUNITYBRANCH" in
 		stable/stable) ISO_BASENAME="${DISTRONAME}_STABLE_${EDITION}_${RELEASE_TAG%%_*}_k${KERNEL}.iso" ;;
 		stable/testing | testing/*) ISO_BASENAME="${DISTRONAME}_BETA_${EDITION}_${RELEASE_TAG%%_*}_k${KERNEL}.iso" ;;
@@ -1193,11 +1312,9 @@ build_iso() {
 
 	#  if [[ "$DISTRONAME" == 'chililinux' ]]; then
 	if $DEBUG; then
-		#LC_ALL=C sudo -u $USERNAME bash -c "buildiso -m ${SCOPE:+-f} -p $EDITION -b $MANJAROBRANCH -k linux${KERNEL_NAME} ${OFFICE:+-o};exit \$?"
-		LC_ALL=C sudo -u $USERNAME bash -c "buildiso -m $EDITION -b $MANJAROBRANCH -k linux${KERNEL_NAME} ${OFFICE:+-o};exit \$?"
+		LC_ALL=C sudo -u $USERNAME bash -c "buildiso ${SCOPE:+-f} -p $EDITION -b $MANJAROBRANCH -k linux${KERNEL_NAME} ${OFFICE:+-o};exit \$?"
 	else
-		#LC_ALL=C sudo -u $USERNAME bash -c "buildiso -m ${SCOPE:+-f} -p $EDITION -b $MANJAROBRANCH -k linux${KERNEL_NAME} ${OFFICE:+-o} > /dev/null 2>&1; exit \$?"
-		LC_ALL=C sudo -u $USERNAME bash -c "buildiso -m -p $EDITION -b $MANJAROBRANCH -k linux${KERNEL_NAME} ${OFFICE:+-o} > /dev/null 2>&1; exit \$?"
+		LC_ALL=C sudo -u $USERNAME bash -c "buildiso ${SCOPE:+-f} -p $EDITION -b $MANJAROBRANCH -k linux${KERNEL_NAME} ${OFFICE:+-o} > /dev/null 2>&1; exit \$?"
 	fi
 	#  else
 	#    LC_ALL=C sudo -u $USERNAME bash -c "buildiso -m ${SCOPE:+-f} -p $EDITION -b $MANJAROBRANCH -k linux${KERNEL_NAME} ${OFFICE:+-o} > /dev/null 2>&1; exit \$?"
@@ -1288,7 +1405,8 @@ make_iso() {
 	configure_repositories_and_build_environment
 	# Community Pre Config Build ISO
 	setup_manjaro_tools
-	configure_mesa
+  #configure_dwarfs # substituto ao squashfs
+	#configure_mesa
 	# Starting kernel configuration
 	configure_kernel
 
