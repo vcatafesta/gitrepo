@@ -4,7 +4,7 @@
 #
 #  /usr/share/community/gitrepo/shell/gitlib.sh - lib for gitrepo.sh and buildiso.sh
 #  Created: qui 05 set 2024 00:51:12 -04
-#  Altered: qua 27 nov 2024 22:52:45 -04
+#  Altered: sáb 30 nov 2024 21:10:29 -04
 #
 #  Copyright (c) 2024-2024, Tales A. Mendonça <talesam@gmail.com>
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
@@ -112,8 +112,9 @@ gettokengithub_by_key() {
 
 get_token_release() {
 	declare -g TOKEN_RELEASE
-	if [[ ! -e "$CFILETOKEN" ]]; then
-		die "$RED" "Erro: Não foi possível ler o arquivo $CFILETOKEN"
+	if [[ ! -r "$CFILETOKEN" ]]; then
+    #die "$RED" "Erro: Não foi possível ler o arquivo $CFILETOKEN"
+    print_message_and_exit
 	fi
 
 	#	TOKEN_RELEASE="$(gettokengithub_by_line)"
