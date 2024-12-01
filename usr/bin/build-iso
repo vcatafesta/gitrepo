@@ -144,8 +144,8 @@ trigger_workflow() {
 	if [ "$TMATE" == "sim" ]; then
 		p_log "${YELLOW}" "A sessão TMATE será ativada. Fique atento às informações de conexão nos logs do GitHub Actions.${NC}"
 	fi
-	p_log "$orange" "Aguardando '2s' para a API acionar a Action e podermos pegar o 'id'."
-	sleep 2
+	p_log "$orange" "Aguardando '3s' para a API acionar a Action e podermos pegar o 'id'."
+	sleep 3
 	p_log "$RESET" "$(get_url_actions)"
 
 	checkout_and_exit 0
@@ -372,9 +372,20 @@ main() {
 		elif [[ "$arg" = @(-a|--auto|--automatic) ]]; then
 			IS_AUTO=true
 			sh_configure_environment "$@"
-			if [[ "$ORGANIZATION" =~ ^(chililinux|vcatafesta)$ ]]; then
+			if [[ "$ORGANIZATION" =~ ^(chililinux)$ ]]; then
 				DISTRONAME=chililinux
 				ISO_PROFILES_REPO='https://github.com/chililinux/iso-profiles'
+				MANJARO_BRANCH=stable
+				BIGCOMMUNITY_BRANCH=
+				BIGLINUX_BRANCH=stable
+				CHILILINUX_BRANCH=stable
+				KERNEL=lts
+				EDITION=xfce
+				TAG=$(date "+%Y-%m-%d_%H-%M")
+				TMATE='Sim'
+			elif [[ "$ORGANIZATION" =~ ^(vcatafesta)$ ]]; then
+				DISTRONAME=chililinux
+				ISO_PROFILES_REPO='https://github.com/vcatafesta/iso-profiles'
 				MANJARO_BRANCH=stable
 				BIGCOMMUNITY_BRANCH=
 				BIGLINUX_BRANCH=stable
