@@ -154,9 +154,9 @@ trigger_workflow() {
 resume_and_build() {
 	# Confirmar as escolhas
 	clear
-	echo "${red}$(replicate '=')${reset}"
+	echo "${black}$(replicate '=')${reset}"
 	echo -e "${cyan}Resumo das escolhas:${reset}"
-	echo "${red}$(replicate '=')${reset}"
+	echo "${black}$(replicate '=')${reset}"
 	echo "Organization     : ${orange}$ORGANIZATION ${reset}"
 	echo "Repo Workflow    : ${orange}$REPO ${reset}"
 	echo "User Name        : ${orange}$GITHUB_USER_NAME ${reset}"
@@ -170,7 +170,7 @@ resume_and_build() {
 	echo "Kernel           : ${orange}$KERNEL ${reset}"
 	echo "Release Tag      : ${orange}$TAG ${reset}"
 	echo "TMATE Debug      : ${orange}$TMATE ${reset}"
-	echo "${red}$(replicate '=')${reset}"
+	echo "${black}$(replicate '=')${reset}"
 
 	if conf "${YELLOW}Deseja prosseguir com a construção da ISO?"; then
 		trigger_workflow
