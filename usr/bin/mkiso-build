@@ -68,7 +68,7 @@ declare -aG vcatafesta_build_list=(chililinux)
 declare -g IS_GIT_REPO=false
 declare -g IS_BUILD_ISO=true
 declare -g ORGANIZATION='<local>'
-declare -g REPO='<local>'
+declare -g REPO_WORKFLOW='<local>'
 declare -g DISTRONAME='chililinux'
 declare -g EDITION='xfce'
 declare -g KERNEL='lts'
@@ -451,7 +451,7 @@ create_menu_with_array() {
 			msg_info "Organization   : ${green}$ORGANIZATION${RESET}"
 			msg_info "Repo Name      : ${green}$REPO_NAME${RESET}"
 			msg_info "User Name      : ${green}$GITHUB_USER_NAME${RESET}"
-			msg_info "Repo Workflow  : ${green}$REPO${RESET}"
+			msg_info "Repo Workflow  : ${green}$REPO_WORKFLOW${RESET}"
 			msg_info "Local Path     : ${green}$REPO_PATH${RESET}"
 			msg_info "Branchs        : \n${RED}$(git branch 2>/dev/null)${RESET}"
 			git remote -v 2>/dev/null
@@ -459,14 +459,14 @@ create_menu_with_array() {
 		elif $IS_AUR_PACKAGE; then
 			echo '---------------------------------------------------------------------------------'
 			msg_info "Organization   : ${green}$ORGANIZATION${RESET}"
-			msg_info "Repo Workflow  : ${green}$REPO${RESET}"
+			msg_info "Repo Workflow  : ${green}$REPO_WORKFLOW${RESET}"
 			msg_info "User Name      : ${green}$GITHUB_USER_NAME${RESET}"
 			msg_info "Local Path     : ${green}$REPO_PATH${RESET}"
 			echo '---------------------------------------------------------------------------------'
 		elif $IS_BUILD_ISO; then
 			echo '---------------------------------------------------------------------------------'
 			msg_info "Organization   : ${green}$ORGANIZATION${RESET}"
-			msg_info "Repo Workflow  : ${green}$REPO${RESET}"
+			msg_info "Repo Workflow  : ${green}$REPO_WORKFLOW${RESET}"
 			msg_info "User Name      : ${green}$GITHUB_USER_NAME${RESET}"
 			msg_info "Local Path     : ${green}$REPO_PATH${RESET}"
 			echo '---------------------------------------------------------------------------------'
@@ -546,7 +546,7 @@ create_menu() {
 		msg_info "HOME_FOLDER   : ${green}$HOME_FOLDER${reset}"
 		msg_info "DISTRONAME    : ${green}$DISTRONAME${reset}"
 		msg_info "EDITION       : ${green}$EDITION${reset}"
-		msg_info "REPO WORKFLOW : ${green}$REPO${reset}"
+		msg_info "REPO WORKFLOW : ${green}$REPO_WORKFLOW${reset}"
 		msg_info "DEBUG         : ${green}$DEBUG${reset}"
 		replicate '-'
 		echo -e "${BLUE}${BOLD}$title${NC}\n"
@@ -614,7 +614,7 @@ checkout_iso-profiles_and_clean_directories() {
 		#fi
 	fi
 
-	msg "Fazendo checkout do repositório: $REPO"
+	msg "Fazendo checkout do repositório: $ISO_PROFILES_REPO"
 	if ! git clone --depth 1 "$ISO_PROFILES_REPO" "$WORK_PATH_ISO_PROFILES" &>/dev/null; then
 		msg "ERRO: Falha ao clonar o repositorio $ISO_PROFILES_REPO em $WORK_PATH_ISO_PROFILES"
 		exit 1
@@ -979,8 +979,8 @@ setup_manjaro_tools() {
 	msg 'Ajustar configurações do kernels.cfg, grub.cfg e variable.cfg em iso-profiles'
 	find "$WORK_PATH_ISO_PROFILES" -name "kernels.cfg" -exec sed -i "s/misobasedir=[^ ]*/misobasedir=${DISTRONAME,,}/g" {} + || true
 	find "$WORK_PATH_ISO_PROFILES" -name "kernels.cfg" -exec sed -i "s/misolabel=[^ ]*/misolabel=${VOL_ID}/g" {} + || true
-	#find "$WORK_PATH_ISO_PROFILES" -name "variable.cfg" -exec sed -i "s#/boot/grub/themes/[^/]*/theme.txt#/boot/grub/themes/${DISTRONAME,,}-live/theme.txt#g" {} + || true
-	#find "$WORK_PATH_ISO_PROFILES" -name "grub.cfg" -exec sed -i "s#/boot/grub/themes/[^/]*/theme.txt#/boot/grub/themes/${DISTRONAME,,}-live/theme.txt#g" {} + || true
+	find "$WORK_PATH_ISO_PROFILES" -name "variable.cfg" -exec sed -i "s#/boot/grub/themes/[^/]*/theme.txt#/boot/grub/themes/${DISTRONAME,,}-live/theme.txt#g" {} + || true
+	find "$WORK_PATH_ISO_PROFILES" -name "grub.cfg" -exec sed -i "s#/boot/grub/themes/[^/]*/theme.txt#/boot/grub/themes/${DISTRONAME,,}-live/theme.txt#g" {} + || true
 
 	# Apply Custom Profile Modifications
 	# Apply edition-specific removals
@@ -1398,7 +1398,7 @@ configure_iso_name() {
 		unstable) ISO_BASENAME="${DISTRONAME}_DEVELOPMENT_${EDITION}_${RELEASE_TAG%%_*}_k${KERNEL}.iso" ;;
 		esac
 	elif [[ "$DISTRONAME" == 'chililinux' ]]; then
-		case "$MANJARO_BRANCH/$COMMUNITYBIG_BRANCH" in
+		case "$MANJARO_BRANCH/$BIGLINUX_BRANCH" in
 		stable/stable) ISO_BASENAME="${DISTRONAME}_STABLE_${EDITION}_${RELEASE_TAG%%_*}_k${KERNEL}.iso" ;;
 		stable/testing | testing/*) ISO_BASENAME="${DISTRONAME}_BETA_${EDITION}_${RELEASE_TAG%%_*}_k${KERNEL}.iso" ;;
 		unstable/*) ISO_BASENAME="${DISTRONAME}_DEVELOPMENT_${EDITION}_${RELEASE_TAG%%_*}_k${KERNEL}.iso" ;;
@@ -1445,9 +1445,9 @@ build_iso() {
 
 	LC_ALL=C sudo -u $USERNAME bash -c "buildiso -q -v"
 	if $DEBUG; then
-		LC_ALL=C sudo -u $USERNAME bash -c "buildiso -m ${SCOPE:+-f} -p $EDITION -b $MANJARO_BRANCH -k linux${KERNEL_NAME} ${OFFICE:+-o};exit \$?"
+		LC_ALL=C sudo -u $USERNAME bash -c "buildiso -d zstd ${SCOPE:+-f} -p $EDITION -b $MANJARO_BRANCH -k linux${KERNEL_NAME} ${OFFICE:+-o};exit \$?"
 	else
-		LC_ALL=C sudo -u $USERNAME bash -c "buildiso -m ${SCOPE:+-f} -p $EDITION -b $MANJARO_BRANCH -k linux${KERNEL_NAME} ${OFFICE:+-o} > /dev/null 2>&1; exit \$?"
+		LC_ALL=C sudo -u $USERNAME bash -c "buildiso -d zstd ${SCOPE:+-f} -p $EDITION -b $MANJARO_BRANCH -k linux${KERNEL_NAME} ${OFFICE:+-o} > /dev/null 2>&1; exit \$?"
 	fi
 	BUILD_EXIT_CODE=$?
 
