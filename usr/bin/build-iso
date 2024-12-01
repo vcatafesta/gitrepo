@@ -4,7 +4,7 @@
 #
 #  build-iso - Wrapper buildiso para construção de ISO
 #  Created: ter 10 set 2024 11:02:02 -04
-#  Altered: sáb 30 nov 2024 18:40:12 -04
+#  Altered: dom 01 dez 2024 10:12:36 -04
 #
 #  Copyright (c) 2024-2024, Tales A. Mendonça <talesam@gmail.com>
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
@@ -110,7 +110,7 @@ sh_version() {
 trigger_workflow() {
 	local tmp_branch='stable'
 	case "$DISTRONAME" in
-	communitybig) tmp_branch="$BIGCOMMUNITY_BRANCH" ;;
+	communitybig) tmp_branch="$COMMUNITYBIG_BRANCH" ;;
 	biglinux) tmp_branch="$BIGLINUX_BRANCH" ;;
 	chililinux) tmp_branch="$CHILILINUX_BRANCH" ;;
 	manjaro) tmp_branch="$MANJARO_BRANCH" ;;
@@ -124,7 +124,7 @@ trigger_workflow() {
     \"iso_profiles_repo\": \"$ISO_PROFILES_REPO\", \
     \"edition\": \"$EDITION\", \
     \"manjaro_branch\": \"$MANJARO_BRANCH\", \
-    \"community_branch\": \"$BIGCOMMUNITY_BRANCH\", \
+    \"community_branch\": \"$COMMUNITYBIG_BRANCH\", \
     \"biglinux_branch\": \"$BIGLINUX_BRANCH\", \
     \"chililinux_branch\": \"$CHILILINUX_BRANCH\", \
     \"kernel\": \"$KERNEL\", \
@@ -170,7 +170,7 @@ resume_and_build() {
 	echo "Edition          : ${orange}$EDITION ${reset}"
 	echo "Iso Profiles repo: ${orange}$ISO_PROFILES_REPO ${reset}"
 	echo "Manjaro Branch   : ${orange}$MANJARO_BRANCH ${reset}"
-	echo "Community Branch : ${orange}$BIGCOMMUNITY_BRANCH ${reset}"
+	echo "Community Branch : ${orange}$COMMUNITYBIG_BRANCH ${reset}"
 	echo "BigLinux Branch  : ${orange}$BIGLINUX_BRANCH ${reset}"
 	echo "ChiliLinux Branch: ${orange}$CHILILINUX_BRANCH ${reset}"
 	echo "Kernel           : ${orange}$KERNEL ${reset}"
@@ -251,22 +251,22 @@ get_build_list() {
 	BUILD_LIST="${MENU_RESULT}"
 }
 
-get_manjarobranch() {
+get_manjaro_branch() {
 	create_menu_with_array "Escolha uma opcao para Branch do ${yellow}Manjaro${reset}:" aBranchs[@] 'stable'
   MANJARO_BRANCH="${MENU_RESULT}"
 }
 
-get_bigbranch() {
+get_biglinux_branch() {
   create_menu_with_array "Escolha uma opcao para Branch do ${yellow}BigLinux${reset}:" aBranchs[@] 'stable'
-   BIGLINUX_BRANCH="${MENU_RESULT}"
+  BIGLINUX_BRANCH="${MENU_RESULT}"
 }
 
-get_communitybranch() {
+get_communitybig_branch() {
 	create_menu_with_array "Escolha uma opcao para Branch do ${yellow}CommunityBig${reset}:" aBranchs[@] 'stable'
-  BIGCOMMUNITY_BRANCH="${MENU_RESULT}"
+  COMMUNITYBIG_BRANCH="${MENU_RESULT}"
 }
 
-get_chilibranch() {
+get_chililinux_branch() {
   create_menu_with_array "Escolha uma opcao para Branch do ${yellow}ChiliLinux${reset}:" aBranchs[@] 'stable'
   CHILILINUX_BRANCH="${MENU_RESULT}"
 }
@@ -277,7 +277,7 @@ get_kernel() {
 }
 
 get_debug() {
-local -a aDebug=('Não' 'Sim' 'Voltar')
+  local -a aDebug=('Não' 'Sim' 'Voltar')
 	create_menu_with_array "Ativar sessão de debug TMATE?" aDebug[@] "$TMATE"
   DEBUG="${MENU_RESULT}"
   TMATE="${MENU_RESULT}"
@@ -391,7 +391,7 @@ main() {
 				DISTRONAME=chililinux
 				ISO_PROFILES_REPO='https://github.com/chililinux/iso-profiles'
 				MANJARO_BRANCH=stable
-				BIGCOMMUNITY_BRANCH=
+				COMMUNITYBIG_BRANCH=
 				BIGLINUX_BRANCH=stable
 				CHILILINUX_BRANCH=stable
 				KERNEL=lts
@@ -402,7 +402,7 @@ main() {
 				DISTRONAME=chililinux
 				ISO_PROFILES_REPO='https://github.com/vcatafesta/iso-profiles'
 				MANJARO_BRANCH=stable
-				BIGCOMMUNITY_BRANCH=
+				COMMUNITYBIG_BRANCH=
 				BIGLINUX_BRANCH=stable
 				CHILILINUX_BRANCH=stable
 				KERNEL=lts
@@ -413,7 +413,7 @@ main() {
 				DISTRONAME=manjaro
 				ISO_PROFILES_REPO='https://gitlab.manjaro.org/profiles-and-settings/iso-profiles.git'
 				MANJARO_BRANCH=stable
-				BIGCOMMUNITY_BRANCH=
+				COMMUNITYBIG_BRANCH=
 				BIGLINUX_BRANCH=
 				CHILILINUX_BRANCH=
 				KERNEL=latest
@@ -424,7 +424,7 @@ main() {
 				DISTRONAME=biglinux
 				ISO_PROFILES_REPO='https://github.com/biglinux/iso-profiles'
 				MANJARO_BRANCH=stable
-				BIGCOMMUNITY_BRANCH=
+				COMMUNITYBIG_BRANCH=
 				BIGLINUX_BRANCH=stable
 				CHILILINUX_BRANCH=
 				KERNEL=latest
@@ -432,10 +432,10 @@ main() {
 				TAG=$(date "+%Y-%m-%d_%H-%M")
 				TMATE='Sim'
 			elif [[ "$ORGANIZATION" =~ ^(communitybig|talesam)$ ]]; then
-				DISTRONAME=bigcommunity
+				DISTRONAME=communitybig
 				ISO_PROFILES_REPO='https://github.com/communitybig/iso-profiles'
 				MANJARO_BRANCH=stable
-				BIGCOMMUNITY_BRANCH=stable
+				COMMUNITYBIG_BRANCH=stable
 				BIGLINUX_BRANCH=stable
 				CHILILINUX_BRANCH=
 				KERNEL=latest
@@ -447,7 +447,7 @@ main() {
 	done
 
 	sh_configure_environment "$@"
-	p_log "${BLUE}" "${BOLD}Construção de ISO BigCommunity (versão $VERSION)${NC}\n"
+	p_log "${BLUE}" "${BOLD}Construção de ISO CommunityBig (versão $VERSION)${NC}\n"
 
 	if $IS_AUTO; then
 		resume_and_build
@@ -487,18 +487,18 @@ main() {
 				continue
 			fi
 
-			get_manjarobranch
+			get_manjaro_branch
 			# Verifica se a opção selecionada foi "Voltar"
 			if [[ $MENU_RESULT == "Voltar" ]]; then
 				continue
 			fi
 
 			if [[ "$DISTRONAME" =~ ^(manjaro)$ ]]; then
-				BIGCOMMUNITY_BRANCH=
+				COMMUNITYBIG_BRANCH=
 				BIGLINUX_BRANCH=
 				CHILILINUX_BRANCH=
 			else
-				get_bigbranch
+				get_biglinux_branch
 				# Verifica se a opção selecionada foi "Voltar"
 				if [[ $MENU_RESULT == "Voltar" ]]; then
 					continue
@@ -506,9 +506,9 @@ main() {
 			fi
 
 			if [[ "$DISTRONAME" =~ ^(manjaro|biglinux|chililinux)$ ]]; then
-				BIGCOMMUNITY_BRANCH=
+				COMMUNITYBIG_BRANCH=
 			else
-				get_communitybranch
+				get_communitybig_branch
 				# Verifica se a opção selecionada foi "Voltar"
 				if [[ $MENU_RESULT == "Voltar" ]]; then
 					continue
@@ -518,7 +518,7 @@ main() {
 			if [[ "$DISTRONAME" =~ ^(manjaro|biglinux|communitybig)$ ]]; then
 				CHILILINUX_BRANCH=
 			else
-				get_chilibranch
+				get_chililinux_branch
 				# Verifica se a opção selecionada foi "Voltar"
 				if [[ $MENU_RESULT == "Voltar" ]]; then
 					continue

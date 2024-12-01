@@ -4,7 +4,7 @@
 #
 #  /usr/share/community/gitrepo/shell/gitlib.sh - lib for gitrepo.sh and buildiso.sh
 #  Created: qui 05 set 2024 00:51:12 -04
-#  Altered: sáb 30 nov 2024 21:10:29 -04
+#  Altered: dom 01 dez 2024 10:12:36 -04
 #
 #  Copyright (c) 2024-2024, Tales A. Mendonça <talesam@gmail.com>
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
@@ -497,7 +497,7 @@ create_menu_with_array() {
       echo -e "Iso-Profiles   : ${cyan}$ISO_PROFILES_REPO ${reset}"
       echo -e "Br Manjaro     : ${cyan}$MANJARO_BRANCH ${reset}"
       echo -e "Br BigLinux    : ${cyan}$BIGLINUX_BRANCH ${reset}"
-      echo -e "Br BigCommunity: ${cyan}$BIGCOMMUNITY_BRANCH ${reset}"
+      echo -e "Br BigCommunity: ${cyan}$COMMUNITYBIG_BRANCH ${reset}"
       echo -e "Br ChiliLinux  : ${cyan}$CHILILINUX_BRANCH ${reset}"
       echo -e "Kernel         : ${cyan}$KERNEL ${reset}"
 			echo '---------------------------------------------------------------------------------'
@@ -592,7 +592,7 @@ create_menu() {
       echo -e "Iso-Profiles   : ${cyan}$ISO_PROFILES_REPO ${reset}"
       echo -e "Br Manjaro     : ${cyan}$MANJARO_BRANCH ${reset}"
       echo -e "Br BigLinux    : ${cyan}$BIGLINUX_BRANCH ${reset}"
-      echo -e "Br BigCommunity: ${cyan}$BIGCOMMUNITY_BRANCH ${reset}"
+      echo -e "Br BigCommunity: ${cyan}$COMMUNITYBIG_BRANCH ${reset}"
       echo -e "Br ChiliLinux  : ${cyan}$CHILILINUX_BRANCH ${reset}"
       echo -e "Kernel         : ${cyan}$KERNEL ${reset}"
 			echo '---------------------------------------------------------------------------------'
