@@ -39,20 +39,30 @@ export TERM=${TERM:-xterm}
 export TERM=${TERM:-xterm-256color}
 declare IS_AUTO=false
 declare -aG communitybig_edition=(cinnamon cosmic deepin gnome kde xfce wmaker)
-declare -aG biglinux_edition=(FalaQueEuTeEscuto flisol kde smallxivastudio)
+declare -aG biglinux_edition=(base FalaQueEuTeEscuto flisol kde small xivastudio)
 declare -aG chililinux_edition=(base cinnamon cosmic deepin gnome i3 kde xfce wmaker)
 declare -aG manjaro_edition=(architect bladebook gnome gnome-next grub i3 kde kde-dev netinstall nxd xfce)
 declare -aG talesam_edition=(cinnamon cosmic deepin gnome kde xfce wmaker)
-declare -aG aDistros=('communitybig' 'biglinux' 'chililinux' 'manjaro' 'talesam' 'Sair')
+declare -aG vcatafesta_edition=(base cinnamon cosmic deepin gnome kde xfce wmaker)
+declare -aG aDistros=(communitybig biglinux chililinux manjaro Sair)
 declare -aG aProfiles=(
-    'https://github.com/communitybig/iso-profiles'
-    'https://github.com/biglinux/iso-profiles'
-    'https://github.com/chililinux/iso-profiles'
-    'https://github.com/chililinux/manjaro-iso-profiles'
-    'https://gitlab.manjaro.org/profiles-and-settings/iso-profiles.git'
-    'https://github.com/talesam/iso-profiles'
-    'Voltar'
-  )
+	'https://github.com/communitybig/iso-profiles'
+	'https://github.com/biglinux/iso-profiles'
+	'https://github.com/chililinux/iso-profiles'
+	'https://github.com/chililinux/manjaro-iso-profiles'
+	'https://gitlab.manjaro.org/profiles-and-settings/iso-profiles.git'
+	'https://github.com/talesam/iso-profiles'
+	'https://github.com/vcatafesta/iso-profiles'
+	'Voltar'
+)
+declare -aG communitybig_build_list=(communitybig)
+declare -aG biglinux_build_list=(biglinux biglinux-make-iso-profiles)
+declare -aG chililinux_build_list=(chililinux)
+declare -aG manjaro_build_list=(community manjaro oem)
+declare -aG talesam_build_list=(communitybig)
+declare -aG vcatafesta_build_list=(chililinux)
+declare -g IS_GIT_REPO=false
+declare -g IS_BUILD_ISO=true
 
 get_distroname() {
 	create_menu "Escolha nome da distribuição:" "${aDistros[@]}"
@@ -65,7 +75,7 @@ get_distroname() {
 get_iso_profiles_repo() {
 	create_menu 'Escolha uma repositório iso-profiles:' "${aProfiles[@]}"
 	if [[ $MENU_RESULT == "Sair" ]]; then
-		die "${red}" "Construção da ISO cancelada.${reset}"
+		die "${red}" "Construção da ISO cancelada. ${reset}"
 	fi
 	REPO="${MENU_RESULT}"
 }
@@ -91,6 +101,22 @@ get_edition() {
 
 	# Define a edição escolhida
 	EDITION="${MENU_RESULT}"
+}
+
+get_build_list() {
+  local build_list_var="${DISTRONAME}_build_list"
+
+  # Usando eval para acessar o conteúdo do array dinamicamente
+  eval "local build_list=(\"\${${build_list_var}[@]}\")"
+  build_list+=("Sair")
+  create_menu_with_array "Escolha uma BUILD_LIST para o ${yellow}${DISTRONAME}${reset}:" build_list[@] "$DISTRONAME"
+
+	# Verifica se a opção selecionada foi "Sair"
+	if [[ $MENU_RESULT == "Sair" ]]; then
+		die "${red}" "Construção da ISO cancelada.${reset}"
+	fi
+
+  BUILD_LIST="${MENU_RESULT}"
 }
 
 get_manjarobranch() {
@@ -196,13 +222,17 @@ get_debug() {
 }
 
 get_distroname_isoprofiles() {
-  # Extraindo a organização
-  if [[ $REPO =~ https?://[^/]+/([^/]+)/.* ]]; then
-    DISTRONAME_ISOPROFILES="${BASH_REMATCH[1]}"
-  else
-    DISTRONAME_ISOPROFILES="${DISTRONAME}"
-  fi
-  echo "$DISTRONAME_ISOPROFILES"
+	# Extraindo a organização
+	if [[ $REPO == 'https://gitlab.manjaro.org/profiles-and-settings/iso-profiles.git' ]]; then
+		DISTRONAME_ISOPROFILES="${DISTRONAME}"
+	else
+		if [[ $REPO =~ https?://[^/]+/([^/]+)/.* ]]; then
+			DISTRONAME_ISOPROFILES="${BASH_REMATCH[1]}"
+		else
+			DISTRONAME_ISOPROFILES="${DISTRONAME}"
+		fi
+	fi
+	echo "$DISTRONAME_ISOPROFILES"
 }
 
 configure_vars() {
@@ -210,11 +240,13 @@ configure_vars() {
 	# somente ativar quando rodar manualmente, no github não é necessário
 	REPO_PATH="$PWD"
 	USERNAME="$USER"
+	GITHUB_USER_NAME="$USERNAME"
 	HOME_FOLDER="/home/$USERNAME"
 
 	get_distroname
 	get_edition
 	get_iso_profiles_repo
+  get_build_list
 	DISTRONAME_ISOPROFILES="$(get_distroname_isoprofiles)"
 	WORK_PATH="$HOME_FOLDER/__w/build-iso/build-iso"
 	WORK_PATH_ISO_PROFILES="$HOME_FOLDER/__w/build-iso/build-iso/iso-profiles"
@@ -258,52 +290,83 @@ configure_vars() {
 export -f configure_vars
 
 set_varcolors() {
-	# Definir a variável de controle para restaurar a formatação original
-	reset=$(tput sgr0)
+	# does the terminal support true-color?
+	if [[ -n "$(command -v "tput")" ]]; then
+		#tput setaf 127 | cat -v  #capturar saida
+		: "${RED=$(tput bold)$(tput setaf 196)}"
+		: "${GREEN=$(tput bold)$(tput setaf 2)}"
+		: "${YELLOW=$(tput bold)$(tput setaf 3)}"
+		: "${BLUE=$(tput setaf 4)}"
+		: "${PURPLE=$(tput setaf 125)}"
+		: "${CYAN=$(tput setaf 6)}"
+		: "${NC=$(tput sgr0)}"
+		: "${RESET=$(tput sgr0)}"
+		: "${BOLD=$(tput bold)}"
+		: "${black=$(tput bold)$(tput setaf 0)}"
+		: "${reverse=$(tput rev)}"
+		: "${branca=${black}$(tput setab 7)}"
 
-	# Definir os estilos de texto como variáveis
-	bold=$(tput bold)
-	underline=$(tput smul)   # Início do sublinhado
-	nounderline=$(tput rmul) # Fim do sublinhado
-	reverse=$(tput rev)      # Inverte as cores de fundo e texto
+		: "${reset=$(tput sgr0)}"
+		: "${rst=$(tput sgr0)}"
+		: "${bold=$(tput bold)}"
+		: "${underline=$(tput smul)}"
+		: "${nounderline=$(tput rmul)}"
+		: "${reverse=$(tput rev)}"
 
-	# Definir as cores ANSI como variáveis
-	black=$(tput bold)$(tput setaf 0)
-	red=$(tput bold)$(tput setaf 196)
-	green=$(tput bold)$(tput setaf 2)
-	yellow=$(tput bold)$(tput setaf 3)
-	blue=$(tput setaf 4)
-	pink=$(tput setaf 5)
-	magenta=$(tput setaf 5)
-	cyan=$(tput setaf 6)
-	white=$(tput setaf 7)
-	gray=$(tput setaf 8)
-	orange=$(tput setaf 202)
-	purple=$(tput setaf 125)
-	violet=$(tput setaf 61)
-	light_red=$(tput setaf 9)
-	light_green=$(tput setaf 10)
-	light_yellow=$(tput setaf 11)
-	light_blue=$(tput setaf 12)
-	light_magenta=$(tput setaf 13)
-	light_cyan=$(tput setaf 14)
-	bright_white=$(tput setaf 15)
-	: "${COL_NC='\e[0m'}" # No Color
-	: "${COL_LIGHT_GREEN='\e[1;32m'}"
-	: "${COL_LIGHT_RED='\e[1;31m'}"
-	: "${DONE="${COL_LIGHT_GREEN} done!${COL_NC}"}"
-	: "${OVER="\\r\\033[K"}"
-	: "${DOTPREFIX="  ${black}::${reset} "}"
-	: "${TICK="${white}[${green}✓${rst}${white}]${rst}"}"
-	: "${CROSS="${white}[${red}✗${rst}${white}]${rst}"}"
-	: "${INFO="${white}[${gray}i${rst}${white}]${rst}"}"
+		: "${black=$(tput bold)$(tput setaf 0)}"
+		: "${red=$(tput bold)$(tput setaf 196)}"
+		: "${green=$(tput bold)$(tput setaf 2)}"
+		: "${yellow=$(tput bold)$(tput setaf 3)}"
+		: "${blue=$(tput setaf 27)}"
+		: "${magenta=$(tput setaf 5)}"
+		: "${cyan=$(tput setaf 6)}"
+		: "${white=$(tput setaf 7)}"
+		: "${gray=$(tput setaf 8)}"
+		: "${light_red=$(tput setaf 9)}"
+		: "${light_green=$(tput setaf 10)}"
+		: "${light_yellow=$(tput setaf 11)}"
+		: "${light_blue=$(tput setaf 12)}"
+		: "${light_magenta=$(tput setaf 13)}"
+		: "${light_cyan=$(tput setaf 14)}"
+		: "${light_white=$(tput setaf 15)}"
+		: "${orange=$(tput setaf 202)}"
+		: "${purple=$(tput setaf 125)}"
+		: "${violet=$(tput setaf 61)}"
+
+		# Definir cores de fundo
+		: "${preto=$(tput setab 0)}"
+		: "${vermelho=$(tput setab 196)}"
+		: "${verde=$(tput setab 2)}"
+		: "${amarelo=$(tput setab 3)}"
+		: "${azul=$(tput setab 20)}"
+		: "${roxo=$(tput setab 5)}"
+		: "${ciano=$(tput setab 6)}"
+		: "${branca="${black}$(tput setab 7)"}"
+		: "${cinza=$(tput setab 8)}"
+		: "${laranja=$(tput setab 202)}"
+		: "${roxa=$(tput setab 125)}"
+		: "${violeta=$(tput setab 61)}"
+
+		: "${COL_NC='\e[0m'}" # No Color
+		: "${COL_LIGHT_GREEN='\e[1;32m'}"
+		: "${COL_LIGHT_RED='\e[1;31m'}"
+		: "${DONE="${COL_LIGHT_GREEN} done!${COL_NC}"}"
+		: "${OVER="\\r\\033[K"}"
+		: "${DOTPREFIX="  ${black}::${reset} "}"
+		: "${TICK="${white}[${green}✓${rst}${white}]${rst}"}"
+		: "${CROSS="${white}[${red}✗${rst}${white}]${rst}"}"
+		: "${INFO="${white}[${gray}i${rst}${white}]${rst}"}"
+	else
+		unset_varcolors
+	fi
 }
 
 unset_varcolors() {
-	unset reset
-	unset bold underline nounderline revers
-	unset black red green yellow blue pink cyan white gray orange purple violet
-	unset light_red light_green light_blue light_magent light_cyan bright_white
+	unset RED GREEN YELLOW BLUE PURPLE CYAN NC RESET BOLD
+	unset reset rst bold underline nounderline reverse
+	unset black red green yellow blue magenta cyan white gray orange purple violet
+	unset light_red light_green light_yellow light_blue light_magenta light_cyan light_white
+	unset preto vermelho verde amarelo azul roxo ciano branca cinza laranja roxa violeta
 	: "${COL_NC='\e[0m'}" # No Color
 	: "${COL_LIGHT_GREEN='\e[1;32m'}"
 	: "${COL_LIGHT_RED='\e[1;31m'}"
@@ -355,17 +418,17 @@ switch_to_root() {
 
 msg() {
 	local msg="$1"
-	echo "mkiso=>${cyan}running: ${yellow}${msg}${reset}"
+	echo -e "mkiso=>${cyan}running: ${yellow}${msg}${reset}"
 }
 
 msg_info() {
 	local msg="$1"
-	echo "mkiso=>${yellow}info   : ${cyan}${msg}${reset}"
+	echo -e "mkiso=>${yellow}info   : ${cyan}${msg}${reset}"
 }
 
 msg_warning() {
 	local msg="$1"
-	echo "mkiso=>${red}warning: ${orange}${msg}${reset}"
+	echo -e "mkiso=>${red}warning: ${orange}${msg}${reset}"
 }
 
 replicate() {
@@ -408,6 +471,110 @@ sh_usage() {
 EOF_USAGE
 }
 
+create_menu_with_array() {
+	local title=$1
+	local -a options=("${!2}") # Recebe o array de opções
+	local default=${3:-}       # Opção padrão, se fornecida
+	local selected=0
+	local key
+
+	# Define a opção padrão como selecionada inicialmente
+	if [[ -n "$default" ]]; then
+		for i in "${!options[@]}"; do
+			if [[ "${options[$i]}" == "$default" ]]; then
+				selected=$i
+				break
+			fi
+		done
+	fi
+
+	tput civis # Esconde o cursor
+
+	while true; do
+		tput clear # Limpa a tela
+		if $IS_GIT_REPO; then
+			echo '---------------------------------------------------------------------------------'
+			msg_info "Organization   : ${green}$ORGANIZATION${RESET}"
+			msg_info "Repo Name      : ${green}$REPO_NAME${RESET}"
+			msg_info "User Name      : ${green}$GITHUB_USER_NAME${RESET}"
+			msg_info "Repo Workflow  : ${green}$REPO${RESET}"
+			msg_info "Local Path     : ${green}$REPO_PATH${RESET}"
+			msg_info "Branchs        : \n${RED}$(git branch 2>/dev/null)${RESET}"
+			git remote -v 2>/dev/null
+			echo '---------------------------------------------------------------------------------'
+		elif $IS_AUR_PACKAGE; then
+			echo '---------------------------------------------------------------------------------'
+			msg_info "Organization   : ${green}$ORGANIZATION${RESET}"
+			msg_info "Repo Workflow  : ${green}$REPO${RESET}"
+			msg_info "User Name      : ${green}$GITHUB_USER_NAME${RESET}"
+			msg_info "Local Path     : ${green}$REPO_PATH${RESET}"
+			echo '---------------------------------------------------------------------------------'
+		elif $IS_BUILD_ISO; then
+			echo '---------------------------------------------------------------------------------'
+			msg_info "Organization   : ${green}$ORGANIZATION${RESET}"
+			msg_info "Repo Workflow  : ${green}$REPO${RESET}"
+			msg_info "User Name      : ${green}$GITHUB_USER_NAME${RESET}"
+			msg_info "Local Path     : ${green}$REPO_PATH${RESET}"
+			echo '---------------------------------------------------------------------------------'
+		fi
+
+		if $IS_BUILD_ISO_RESUME; then
+			msg_info "Distroname     : ${green}$DISTRONAME${reset}"
+			msg_info "Edition        : ${green}$EDITION${reset}"
+			msg_info "Iso-Profiles   : ${green}$ISO_PROFILES_REPO${reset}"
+			msg_info "Br Manjaro     : ${green}$MANJARO_BRANCH${reset}"
+			msg_info "Br BigLinux    : ${green}$BIGLINUX_BRANCH${reset}"
+			msg_info "Br BigCommunity: ${green}$BIGCOMMUNITY_BRANCH${reset}"
+			msg_info "Br ChiliLinux  : ${green}$CHILILINUX_BRANCH${reset}"
+			msg_info "Kernel         : ${green}$KERNEL${reset}"
+			echo '---------------------------------------------------------------------------------'
+		fi
+		echo -e "${BLUE}${BOLD}$title${NC}\n"
+
+		for i in "${!options[@]}"; do
+			if [[ "$i" -eq $selected ]]; then
+				if [[ "${options[$i]}" =~ ^(Sair|Voltar)$ ]]; then
+					if [[ "$ORGANIZATION" =~ ^(chililinux|vcatafesta)$ ]]; then
+						echo -e "${RED}${BOLD}${reverse}> ${options[$i]}${NC}"
+					else
+						echo -e "${RED}${BOLD}> ${options[$i]}${NC}"
+					fi
+				else
+					if [[ "$ORGANIZATION" =~ ^(chililinux|vcatafesta)$ ]]; then
+						echo -e "${GREEN}${BOLD}${reverse}> ${options[$i]}${NC}"
+					else
+						echo -e "${GREEN}${BOLD}> ${options[$i]}${NC}"
+					fi
+				fi
+			else
+				if [[ "${options[$i]}" =~ ^(Sair|Voltar)$ ]]; then
+					echo -e "${RED}  ${options[$i]}${NC}"
+				else
+					echo "  ${options[$i]}"
+				fi
+			fi
+		done
+
+		read -rsn1 key
+		case "$key" in
+		A)
+			((selected--))
+			[ $selected -lt 0 ] && selected=$((${#options[@]} - 1))
+			;;
+		B)
+			((selected++))
+			[ $selected -eq ${#options[@]} ] && selected=0
+			;;
+		'') break ;;
+		esac
+	done
+
+	tput cnorm # Mostra o cursor novamente
+	echo -e "\nVocê selecionou: ${GREEN}${BOLD}${options[$selected]}${NC}"
+	MENU_RESULT=${options[$selected]}
+	#	return $((selected+1))
+}
+
 create_menu() {
 	local title=$1
 	shift
@@ -421,14 +588,14 @@ create_menu() {
 	while true; do
 		tput clear # Limpa a tela
 		replicate '-'
-		msg_info "USERNAME      : ${cyan}$USERNAME ${reset}"
-		msg_info "HOME_FOLDER   : ${cyan}$HOME_FOLDER ${reset}"
-		msg_info "DISTRONAME    : ${cyan}$DISTRONAME ${reset}"
-		msg_info "EDITION       : ${cyan}$EDITION ${reset}"
-		msg_info "REPO          : ${cyan}$REPO ${reset}"
-		msg_info "DEBUG         : ${cyan}$DEBUG ${reset}"
+		msg_info "USERNAME      : ${green}$USERNAME${reset}"
+		msg_info "HOME_FOLDER   : ${green}$HOME_FOLDER${reset}"
+		msg_info "DISTRONAME    : ${green}$DISTRONAME${reset}"
+		msg_info "EDITION       : ${green}$EDITION${reset}"
+		msg_info "REPO          : ${green}$REPO${reset}"
+		msg_info "DEBUG         : ${green}$DEBUG${reset}"
 		replicate '-'
-		echo -e "${blue}${bold}$title${reset}\n"
+		echo -e "${BLUE}${BOLD}$title${NC}\n"
 
 		for i in "${!options[@]}"; do
 			if [[ "$i" -eq $selected ]]; then
@@ -488,9 +655,9 @@ checkout_iso-profiles_and_clean_directories() {
 
 	if [[ -d "$WORK_PATH_ISO_PROFILES" ]]; then
 		msg 'Mova perfis iso-profiles antigos para novo diretório'
-		if ! mv -f $WORK_PATH_ISO_PROFILES $HOME_FOLDER/iso-profiles."$(date "+%Y%m%d_%H:%M:%S")"; then
-			rm -rf $WORK_PATH_ISO_PROFILES || true
-		fi
+		#if ! mv -f $WORK_PATH_ISO_PROFILES $HOME_FOLDER/iso-profiles."$(date "+%Y%m%d_%H:%M:%S")"; then
+		rm -rf $WORK_PATH_ISO_PROFILES || true
+		#fi
 	fi
 
 	msg "Fazendo checkout do repositório: $REPO"
@@ -706,9 +873,9 @@ add_repository() {
 		'ask4.mm.fcix.net'
 	)
 
-	echo "Server = https://manjaro.c3sl.ufpr.br/$branch/\$repo/\$arch"       | sudo tee -a "$arquivo_conf" >/dev/null
-  echo "Server = https://mirror.ufam.edu.br/manjaro/$branch/\$repo/\$arch" | sudo tee -a "$arquivo_conf" >/dev/null
-	echo "Server = https://linorg.usp.br/manjaro/$branch/\$repo/\$arch"      | sudo tee -a "$arquivo_conf" >/dev/null
+	echo "Server = https://manjaro.c3sl.ufpr.br/$branch/\$repo/\$arch" | sudo tee -a "$arquivo_conf" >/dev/null
+	echo "Server = https://mirror.ufam.edu.br/manjaro/$branch/\$repo/\$arch" | sudo tee -a "$arquivo_conf" >/dev/null
+	echo "Server = https://linorg.usp.br/manjaro/$branch/\$repo/\$arch" | sudo tee -a "$arquivo_conf" >/dev/null
 
 	for server in "${servers[@]}"; do
 		msg_info "Incluindo $server no arquivo $arquivo_conf"
@@ -716,47 +883,47 @@ add_repository() {
 	done
 	echo '' | sudo tee -a "$arquivo_conf" >/dev/null
 
-	if [[ "$DISTRONAME" == "communitybig" ]]; then
-		msg 'Configurando repositórios do CommunityBig'
-		case "$COMMUNITYBRANCH" in
-		"stable")
-			add_biglinux-update-stable | sudo tee -a "$arquivo_conf" >/dev/null
-			add_community-stable | sudo tee -a "$arquivo_conf" >/dev/null
-			add_community-testing | sudo tee -a "$arquivo_conf" >/dev/null
-			add_community-extra | sudo tee -a "$arquivo_conf" >/dev/null
-			;;
-		"testing")
-			add_community-testing | sudo tee -a "$arquivo_conf" >/dev/null
-			add_community-stable | sudo tee -a "$arquivo_conf" >/dev/null
-			add_community-extra | sudo tee -a "$arquivo_conf" >/dev/null
-			;;
-		esac
-	fi
+	#	if [[ "$DISTRONAME" == "communitybig" ]]; then
+	msg 'Configurando repositórios do CommunityBig'
+	case "$COMMUNITYBRANCH" in
+	* | stable)
+		add_biglinux-update-stable | sudo tee -a "$arquivo_conf" >/dev/null
+		add_community-stable | sudo tee -a "$arquivo_conf" >/dev/null
+		add_community-testing | sudo tee -a "$arquivo_conf" >/dev/null
+		add_community-extra | sudo tee -a "$arquivo_conf" >/dev/null
+		;;
+	testing)
+		add_community-testing | sudo tee -a "$arquivo_conf" >/dev/null
+		add_community-stable | sudo tee -a "$arquivo_conf" >/dev/null
+		add_community-extra | sudo tee -a "$arquivo_conf" >/dev/null
+		;;
+	esac
+	#	fi
 
-	if [[ "$DISTRONAME" == "chililinux" ]]; then
-		msg 'Configurando repositórios do ChiliLinux'
-		case "$CHILIBRANCH" in
-		"stable")
-			add_biglinux-update-stable | sudo tee -a "$arquivo_conf" >/dev/null
-			add_chili-stable | sudo tee -a "$arquivo_conf" >/dev/null
-			add_chili-testing | sudo tee -a "$arquivo_conf" >/dev/null
-			add_chili-extra | sudo tee -a "$arquivo_conf" >/dev/null
-			;;
-		"testing")
-			add_chili-testing | sudo tee -a "$arquivo_conf" >/dev/null
-			add_chili-stable | sudo tee -a "$arquivo_conf" >/dev/null
-			add_chili-extra | sudo tee -a "$arquivo_conf" >/dev/null
-			;;
-		esac
-	fi
+	#	if [[ "$DISTRONAME" == "chililinux" ]]; then
+	msg 'Configurando repositórios do ChiliLinux'
+	case "$CHILIBRANCH" in
+	* | stable)
+		add_biglinux-update-stable | sudo tee -a "$arquivo_conf" >/dev/null
+		add_chili-stable | sudo tee -a "$arquivo_conf" >/dev/null
+		add_chili-testing | sudo tee -a "$arquivo_conf" >/dev/null
+		add_chili-extra | sudo tee -a "$arquivo_conf" >/dev/null
+		;;
+	testing)
+		add_chili-testing | sudo tee -a "$arquivo_conf" >/dev/null
+		add_chili-stable | sudo tee -a "$arquivo_conf" >/dev/null
+		add_chili-extra | sudo tee -a "$arquivo_conf" >/dev/null
+		;;
+	esac
+	#	fi
 
 	msg 'Configurando repositórios do BigLinux'
 	case "$BIGBRANCH" in
-	"stable")
+	* | stable)
 		add_biglinux-stable | sudo tee -a "$arquivo_conf" >/dev/null
 		add_biglinux-testing | sudo tee -a "$arquivo_conf" >/dev/null
 		;;
-	"testing")
+	testing)
 		add_biglinux-testing | sudo tee -a "$arquivo_conf" >/dev/null
 		add_biglinux-stable | sudo tee -a "$arquivo_conf" >/dev/null
 		;;
@@ -858,8 +1025,8 @@ setup_manjaro_tools() {
 	msg 'Ajustar configurações do kernels.cfg, grub.cfg e variable.cfg em iso-profiles'
 	find "$WORK_PATH_ISO_PROFILES" -name "kernels.cfg" -exec sed -i "s/misobasedir=[^ ]*/misobasedir=${DISTRONAME,,}/g" {} + || true
 	find "$WORK_PATH_ISO_PROFILES" -name "kernels.cfg" -exec sed -i "s/misolabel=[^ ]*/misolabel=${VOL_ID}/g" {} + || true
-	find "$WORK_PATH_ISO_PROFILES" -name "variable.cfg" -exec sed -i "s#/boot/grub/themes/[^/]*/theme.txt#/boot/grub/themes/${DISTRONAME,,}-live/theme.txt#g" {} + || true
-	find "$WORK_PATH_ISO_PROFILES" -name "grub.cfg" -exec sed -i "s#/boot/grub/themes/[^/]*/theme.txt#/boot/grub/themes/${DISTRONAME,,}-live/theme.txt#g" {} + || true
+	#find "$WORK_PATH_ISO_PROFILES" -name "variable.cfg" -exec sed -i "s#/boot/grub/themes/[^/]*/theme.txt#/boot/grub/themes/${DISTRONAME,,}-live/theme.txt#g" {} + || true
+	#find "$WORK_PATH_ISO_PROFILES" -name "grub.cfg" -exec sed -i "s#/boot/grub/themes/[^/]*/theme.txt#/boot/grub/themes/${DISTRONAME,,}-live/theme.txt#g" {} + || true
 
 	# Apply Custom Profile Modifications
 	# Apply edition-specific removals
@@ -924,7 +1091,7 @@ configure_dwarfs() {
 	msg "Configurando DwarFS como sistema de arquivos da ISO..."
 
 	# Backup dos arquivos originais
-  sudo sed -i 's/make_sfs\s\+\"\${sfs_dir}\"/make_dwarfs "${sfs_dir}"/g' /usr/lib/manjaro-tools/util-iso.sh
+	sudo sed -i 's/make_sfs\s\+\"\${sfs_dir}\"/make_dwarfs "${sfs_dir}"/g' /usr/lib/manjaro-tools/util-iso.sh
 
 	# Substituir funções no util-iso-image.sh
 	sudo tee -a /usr/lib/manjaro-tools/util-iso.sh >/dev/null <<'EOF'
@@ -1270,6 +1437,18 @@ configure_iso_name() {
 		stable/testing | testing/*) ISO_BASENAME="${DISTRONAME}_BETA_${EDITION}_${RELEASE_TAG%%_*}_k${KERNEL}.iso" ;;
 		unstable/*) ISO_BASENAME="${DISTRONAME}_DEVELOPMENT_${EDITION}_${RELEASE_TAG%%_*}_k${KERNEL}.iso" ;;
 		esac
+	elif [[ "$DISTRONAME" == 'manjaro' ]]; then
+		case "$MANJAROBRANCH" in
+		stable) ISO_BASENAME="${DISTRONAME}_STABLE_${EDITION}_${RELEASE_TAG%%_*}_k${KERNEL}.iso" ;;
+		testing) ISO_BASENAME="${DISTRONAME}_BETA_${EDITION}_${RELEASE_TAG%%_*}_k${KERNEL}.iso" ;;
+		unstable) ISO_BASENAME="${DISTRONAME}_DEVELOPMENT_${EDITION}_${RELEASE_TAG%%_*}_k${KERNEL}.iso" ;;
+		esac
+	elif [[ "$DISTRONAME" == 'chililinux' ]]; then
+		case "$MANJAROBRANCH/$COMMUNITYBRANCH" in
+		stable/stable) ISO_BASENAME="${DISTRONAME}_STABLE_${EDITION}_${RELEASE_TAG%%_*}_k${KERNEL}.iso" ;;
+		stable/testing | testing/*) ISO_BASENAME="${DISTRONAME}_BETA_${EDITION}_${RELEASE_TAG%%_*}_k${KERNEL}.iso" ;;
+		unstable/*) ISO_BASENAME="${DISTRONAME}_DEVELOPMENT_${EDITION}_${RELEASE_TAG%%_*}_k${KERNEL}.iso" ;;
+		esac
 	else
 		case "$MANJAROBRANCH/$BIGBRANCH" in
 		stable/stable) ISO_BASENAME="${DISTRONAME}_STABLE_${EDITION}_${RELEASE_TAG%%_*}_k${KERNEL}.iso" ;;
@@ -1283,7 +1462,7 @@ export -f configure_iso_name
 
 build_iso() {
 	echo "########################## RESUMO #################################"
-	echo "BUILD COMMAND            : buildiso -m ${SCOPE:+-f} -p $EDITION -b $MANJAROBRANCH -k ${KERNEL_NAME} ${OFFICE:+-o}"
+	echo "BUILD COMMAND            : buildiso ${SCOPE:+-f} -p $EDITION -b $MANJAROBRANCH -k ${KERNEL_NAME} ${OFFICE:+-o}"
 	echo "PROFILE_PATH             : $PROFILE_PATH"
 	echo "PROFILE_PATH_EDITION     : $PROFILE_PATH_EDITION"
 	echo "DISTRONAME               : $DISTRONAME"
@@ -1308,17 +1487,14 @@ build_iso() {
 
 	verificar_iso_profiles_conf
 	msg "Executar buildiso e capturar o código de saída"
-	msg_info 'LC_ALL=C sudo -u $USERNAME bash -c "buildiso -m ${SCOPE:+-f} -p $EDITION -b $MANJAROBRANCH -k linux${KERNEL_NAME} ${OFFICE:+-o};exit \$?"'
+	msg_info 'LC_ALL=C sudo -u $USERNAME bash -c "buildiso ${SCOPE:+-f} -p $EDITION -b $MANJAROBRANCH -k linux${KERNEL_NAME} ${OFFICE:+-o};exit \$?"'
 
-	#  if [[ "$DISTRONAME" == 'chililinux' ]]; then
+	LC_ALL=C sudo -u $USERNAME bash -c "buildiso -q -v"
 	if $DEBUG; then
-		LC_ALL=C sudo -u $USERNAME bash -c "buildiso ${SCOPE:+-f} -p $EDITION -b $MANJAROBRANCH -k linux${KERNEL_NAME} ${OFFICE:+-o};exit \$?"
+		LC_ALL=C sudo -u $USERNAME bash -c "buildiso -m ${SCOPE:+-f} -p $EDITION -b $MANJAROBRANCH -k linux${KERNEL_NAME} ${OFFICE:+-o};exit \$?"
 	else
-		LC_ALL=C sudo -u $USERNAME bash -c "buildiso ${SCOPE:+-f} -p $EDITION -b $MANJAROBRANCH -k linux${KERNEL_NAME} ${OFFICE:+-o} > /dev/null 2>&1; exit \$?"
+		LC_ALL=C sudo -u $USERNAME bash -c "buildiso -m ${SCOPE:+-f} -p $EDITION -b $MANJAROBRANCH -k linux${KERNEL_NAME} ${OFFICE:+-o} > /dev/null 2>&1; exit \$?"
 	fi
-	#  else
-	#    LC_ALL=C sudo -u $USERNAME bash -c "buildiso -m ${SCOPE:+-f} -p $EDITION -b $MANJAROBRANCH -k linux${KERNEL_NAME} ${OFFICE:+-o} > /dev/null 2>&1; exit \$?"
-	#	fi
 	BUILD_EXIT_CODE=$?
 
 	msg 'Testando se buildiso falhou, e caso sair com o código de erro'
@@ -1405,7 +1581,7 @@ make_iso() {
 	configure_repositories_and_build_environment
 	# Community Pre Config Build ISO
 	setup_manjaro_tools
-  #configure_dwarfs # substituto ao squashfs
+	#configure_dwarfs # substituto ao squashfs
 	#configure_mesa
 	# Starting kernel configuration
 	configure_kernel
