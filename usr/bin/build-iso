@@ -188,7 +188,7 @@ resume_and_build() {
 sh_set_organization() {
   local xvalue_organization="$1"
   REPO_WORKFLOW="${Aorganization[$xvalue_organization]}/build-iso"  # Repositório que contém os workflows
-  ORGANIZATION="${REPO%%/*}"                                        # default communitybig
+  ORGANIZATION="${REPO_WORKFLOW%%/*}"                                        # default communitybig
 }
 
 get_organization() {
