@@ -65,14 +65,6 @@ declare -aG manjaro_build_list=(community manjaro oem)
 declare -aG talesam_build_list=(communitybig)
 declare -aG vcatafesta_build_list=(chililinux)
 #
-declare -g IS_GIT_REPO=false
-declare -g IS_BUILD_ISO=true
-declare -g ORGANIZATION='<local>'
-declare -g REPO_WORKFLOW='<local>'
-declare -g DISTRONAME='chililinux'
-declare -g EDITION='xfce'
-declare -g KERNEL='lts'
-declare -g TMATE='Sim'
 
 get_distroname() {
 	create_menu_with_array "Escolha nome da ${yellow}DISTRIBUIÇÃO:" aDistros[@] "$DISTRONAME"
@@ -194,6 +186,14 @@ get_distroname_isoprofiles() {
 configure_vars() {
 	# Declare variáveis de ambiente
 	# somente ativar quando rodar manualmente, no github não é necessário
+  declare -g IS_GIT_REPO=false
+  declare -g IS_BUILD_ISO=true
+  declare -g ORGANIZATION='<local>'
+  declare -g REPO_WORKFLOW='<local>'
+  declare -g DISTRONAME='chililinux'
+  declare -g EDITION='xfce'
+  declare -g KERNEL='lts'
+  declare -g TMATE='Sim'
 	REPO_PATH="$PWD"
 	USERNAME="$USER"
 	GITHUB_USER_NAME="$USERNAME"
