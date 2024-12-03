@@ -140,7 +140,6 @@ trigger_workflow() {
     \"biglinux_branch\": \"$BIGLINUX_BRANCH\", \
     \"chililinux_branch\": \"$CHILILINUX_BRANCH\", \
     \"kernel\": \"$KERNEL\", \
-    \"release_tag\": \"$current_datetime\", \
     \"tmate\": $tmate_option \
   }}"
 
@@ -152,6 +151,10 @@ trigger_workflow() {
 		-w "%{http_code}" \
 		-o /dev/null \
 		"https://api.github.com/repos/${REPO_WORKFLOW}/dispatches")
+
+	if [ "$response" == "422" ]; then
+		die "${red}" "Erro $response ao acionar o workflow. Não pode ter mais de 10 entradas no evento ${reset}"
+	fi
 
 	if [ "$response" != "204" ]; then
 		die "${red}" "Erro ao acionar o workflow. Código de resposta: $response${reset}"
