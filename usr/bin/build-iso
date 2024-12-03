@@ -41,16 +41,16 @@ LIBRARY=${LIBRARY:-"/usr/share/community/gitrepo/shell"}
 	echo "${red}=> ERRO FATAL: Não foi possível ler a biblioteca $LIBRARY/gitlib.sh ${reset}"
 	exit 1
 }
-declare -aG communitybig_edition=(cinnamon cosmic deepin gnome kde xfce wmaker)
+declare -aG bigcommunity_edition=(cinnamon cosmic deepin gnome kde xfce wmaker)
 declare -aG biglinux_edition=(base FalaQueEuTeEscuto flisol kde small xivastudio)
 declare -aG chililinux_edition=(base cinnamon cosmic deepin gnome i3 kde xfce wmaker)
 declare -aG manjaro_edition=(architect bladebook gnome gnome-next grub kde kde-dev netinstall nxd xfce)
 declare -aG talesam_edition=(cinnamon cosmic deepin gnome kde xfce wmaker)
 declare -aG vcatafesta_edition=(base cinnamon cosmic deepin gnome i3 kde xfce wmaker)
 #
-declare -AG Aorganization=([communitybig]='communitybig' [biglinux]='biglinux' [chililinux]='chililinux' [manjaro]='communitybig' [talesam]='talesam' [vcatafesta]='vcatafesta')
-declare -aG aOrganization=('communitybig' 'biglinux' 'chililinux' 'talesam' 'vcatafesta' 'Sair')
-declare -aG aDistros=('communitybig' 'biglinux' 'chililinux' 'manjaro' 'Voltar')
+declare -AG Aorganization=([bigcommunity]='communitybig' [biglinux]='biglinux' [chililinux]='chililinux' [manjaro]='communitybig' [talesam]='talesam' [vcatafesta]='vcatafesta')
+declare -aG aOrganization=('bigcommunity' 'biglinux' 'chililinux' 'talesam' 'vcatafesta' 'Sair')
+declare -aG aDistros=('bigcommunity' 'biglinux' 'chililinux' 'manjaro' 'Voltar')
 declare -aG aBranchs=('stable' 'testing' 'unstable' 'voltar')
 declare -aG aKernels=('latest' 'lts' 'oldlts' 'xanmod' 'Voltar')
 declare -aG aProfiles=(
@@ -62,16 +62,27 @@ declare -aG aProfiles=(
 		'https://github.com/talesam/iso-profiles'
 		'https://github.com/vcatafesta/iso-profiles'
 		'Voltar'
-  )
-declare -aG communitybig_build_list=(communitybig)
+)
+declare -AG ApiProfiles=(
+  # GitHub Repositories
+  [https://github.com/communitybig/iso-profiles]='https://api.github.com/repos/communitybig/iso-profiles/contents/'
+  [https://github.com/biglinux/iso-profiles]='https://api.github.com/repos/biglinux/iso-profiles/contents/'
+  [https://github.com/chililinux/iso-profiles]='https://api.github.com/repos/chililinux/iso-profiles/contents/'
+  [https://github.com/chililinux/manjaro-iso-profiles]='https://api.github.com/repos/chililinux/manjaro-iso-profiles/contents/'
+  [https://github.com/talesam/iso-profiles]='https://api.github.com/repos/talesam/iso-profiles/contents/'
+  [https://github.com/vcatafesta/iso-profiles]='https://api.github.com/repos/vcatafesta/iso-profiles/contents/'
+  # GitLab Repositories
+  [https://gitlab.manjaro.org/profiles-and-settings/iso-profiles.git]='https://gitlab.manjaro.org/api/v4/projects/profiles-and-settings%2Fiso-profiles/repository/tree'
+)
+declare -aG bigcommunity_build_list=(bigcommunity)
 declare -aG biglinux_build_list=(biglinux biglinux-make-iso-profiles)
 declare -aG chililinux_build_list=(chililinux)
 declare -aG manjaro_build_list=(community manjaro oem)
-declare -aG talesam_build_list=(communitybig)
+declare -aG talesam_build_list=(bigcommunity)
 declare -aG vcatafesta_build_list=(chililinux)
 #
 declare -g ORGANIZATION='communitybig'
-declare -g DISTRONAME='communitybig'
+declare -g DISTRONAME='bigcommunity'
 declare -g EDITION='xfce'
 declare -g KERNEL='lts'
 declare -g TMATE='Não'
@@ -94,7 +105,7 @@ sh_version() {
 	cat <<-EOF
 		${BOLD}${CYAN}${0##*/} v${VERSION}${RESET}
 		${APPDESC}
-		${BOLD}${black}Copyright (C) 2024-2024 ${reset}CommunityBig Team${black}
+		${BOLD}${black}Copyright (C) 2024-2024 ${reset}BigCommunity Team${black}
 
 		  Este é um software livre: você é livre para alterá-lo e redistribuí-lo.
 		  O $APP é disponibilizado para você sob a ${yellow}Licença MIT${black}, e
@@ -110,7 +121,7 @@ sh_version() {
 trigger_workflow() {
 	local tmp_branch='stable'
 	case "$DISTRONAME" in
-	communitybig) tmp_branch="$COMMUNITYBIG_BRANCH" ;;
+	bigcommunity) tmp_branch="$BIGCOMMUNITY_BRANCH" ;;
 	biglinux) tmp_branch="$BIGLINUX_BRANCH" ;;
 	chililinux) tmp_branch="$CHILILINUX_BRANCH" ;;
 	manjaro) tmp_branch="$MANJARO_BRANCH" ;;
@@ -124,7 +135,7 @@ trigger_workflow() {
     \"iso_profiles_repo\": \"$ISO_PROFILES_REPO\", \
     \"edition\": \"$EDITION\", \
     \"manjaro_branch\": \"$MANJARO_BRANCH\", \
-    \"community_branch\": \"$COMMUNITYBIG_BRANCH\", \
+    \"community_branch\": \"$BIGCOMMUNITY_BRANCH\", \
     \"biglinux_branch\": \"$BIGLINUX_BRANCH\", \
     \"chililinux_branch\": \"$CHILILINUX_BRANCH\", \
     \"kernel\": \"$KERNEL\", \
@@ -167,10 +178,11 @@ resume_and_build() {
 	echo "Repo Workflow    : ${orange}$REPO_WORKFLOW ${reset}"
 	echo "User Name        : ${orange}$GITHUB_USER_NAME ${reset}"
 	echo "Distroname       : ${orange}$DISTRONAME ${reset}"
-	echo "Edition          : ${orange}$EDITION ${reset}"
 	echo "Iso Profiles repo: ${orange}$ISO_PROFILES_REPO ${reset}"
+	echo "Build dir        : ${orange}$BUILD_DIR ${reset}"
+	echo "Edition          : ${orange}$EDITION ${reset}"
 	echo "Manjaro Branch   : ${orange}$MANJARO_BRANCH ${reset}"
-	echo "Community Branch : ${orange}$COMMUNITYBIG_BRANCH ${reset}"
+	echo "Community Branch : ${orange}$BIGCOMMUNITY_BRANCH ${reset}"
 	echo "BigLinux Branch  : ${orange}$BIGLINUX_BRANCH ${reset}"
 	echo "ChiliLinux Branch: ${orange}$CHILILINUX_BRANCH ${reset}"
 	echo "Kernel           : ${orange}$KERNEL ${reset}"
@@ -188,18 +200,18 @@ resume_and_build() {
 sh_set_organization() {
   local xvalue_organization="$1"
   REPO_WORKFLOW="${Aorganization[$xvalue_organization]}/build-iso"  # Repositório que contém os workflows
-  ORGANIZATION="${REPO_WORKFLOW%%/*}"                                        # default communitybig
+  ORGANIZATION="${REPO_WORKFLOW%%/*}"                               # default communitybig
 }
 
 get_organization() {
-  create_menu_with_array "Escolha a organization no GITHUB:" aOrganization[@] "$ORGANIZATION"
+  create_menu_with_array "Escolha a ${yellow}organization${reset} no GITHUB:" aOrganization[@] "$ORGANIZATION"
 	ORGANIZATION="${MENU_RESULT}"
 	DISTRONAME="${MENU_RESULT}"
   sh_set_organization "$ORGANIZATION"
 }
 
 get_distroname() {
-  create_menu_with_array "Escolha a distribuição:" aDistros[@] "$DISTRONAME"
+  create_menu_with_array "Escolha a ${yellow}distribuição${reset}:" aDistros[@] "$DISTRONAME"
 	DISTRONAME="${MENU_RESULT}"
   #sh_set_organization "$DISTRONAME"
 }
@@ -209,6 +221,107 @@ get_iso_profiles_repo() {
   local default_url="https://github.com/$DISTRONAME/iso-profiles"
 	create_menu_with_array 'Escolha o repositório iso-profiles:' aProfiles[@] "$default_url"
 	ISO_PROFILES_REPO="${MENU_RESULT}"
+}
+
+get_build_list() {
+  local repo="$1"
+  local api_url="${ApiProfiles[$repo]}"
+
+  # Verifica se o repositório existe no array
+  if [[ -z "$api_url" ]]; then
+    die "${red}" "Erro: Repositório não encontrado no array: $repo ${reset}"
+  fi
+
+  # Faz a requisição e inspeciona a resposta para entender o formato
+	p_log "${cyan}" "Fazendo requisição na API $api_url ${reset}"
+  local response=$(curl -sL "$api_url")
+  sleep 1
+
+  # Verifica se a resposta está vazia ou se ocorreu um erro 404
+  if [[ -z "$response" || "$response" == *"404 Not Found"* ]]; then
+    die "${red}" "Erro: Repositório não encontrado ou erro ao acessar a URL: $repo ${reset}"
+  fi
+
+  # Se o repositório for do GitHub, a estrutura de resposta é diferente
+  if [[ "$api_url" == *"github"* ]]; then
+    # Processa a resposta para GitHub
+    mapfile -t build_list < <(
+      echo "$response" | \
+      jq -r '.[] | select(.type == "dir") | .name' | \
+      grep -vE '^(shared|grub|temp_repo|.github)$'
+    )
+  else
+    # Processa a resposta para GitLab
+    mapfile -t build_list < <(
+      echo "$response" | \
+      jq -r '.[] | select(.type == "tree") | .name' | \
+      grep -vE '^(shared|grub|temp_repo|.github)$'
+    )
+  fi
+
+  # Retorna o array
+  #echo "${build_list[@]}"
+	build_list+=("Voltar")
+	create_menu_with_array "Escolha uma ${yellow}BUILD_LIST${reset} para o ${yellow}${DISTRONAME}${reset}:" build_list[@] "$DISTRONAME"
+	BUILD_DIR="${MENU_RESULT}"
+}
+
+get_edition() {
+  local repo="$1"
+  local dir="$2"
+  local api_url="${ApiProfiles[$repo]}"
+  local response
+
+  # Verifica se o repositório existe no array
+  if [[ -z "$api_url" ]]; then
+    die "${red}" "Erro: Repositório não encontrado no array: $repo ${reset}"
+  fi
+
+  # Se for GitHub, faz a requisição
+  if [[ "$api_url" == *"github"* ]]; then
+    # Faz a requisição para o GitHub
+    p_log "${CYAN}" "Fazendo requisição na API $api_url {NC}"
+    response=$(curl -sL "${api_url}${dir}")
+    sleep 1
+
+    # Verifica se a resposta está vazia ou se ocorreu erro
+    if [[ -z "$response" || "$response" == *"404 Not Found"* ]]; then
+      die "${red}" "Erro: Problema ao acessar o diretório: $dir ${reset}"
+    fi
+
+    # Processamento para GitHub
+    mapfile -t subdirs < <(
+      echo "$response" | \
+      jq -r '.[] | select(.type == "dir") | .name'
+    )
+  elif [[ "$api_url" == *"gitlab"* ]]; then
+    # Faz a requisição para o GitLab com o parâmetro 'path'
+    p_log "${CYAN}" "Fazendo requisição na API $api_url {NC}"
+    response=$(curl -sL "${api_url}?path=${dir}")
+    sleep 1
+
+    # Verifica se a resposta está vazia ou se ocorreu erro
+    if [[ -z "$response" || "$response" == *"404 Not Found"* ]]; then
+      die "${red}" "Erro: Problema ao acessar o repositório: $repo ${reset}"
+    fi
+
+    # Processamento para GitLab
+    # Filtra os diretórios e pega o nome de cada um, excluindo os indesejados
+    mapfile -t subdirs < <(
+      echo "$response" | \
+      jq -r '.[] | select(.type == "tree") | .name' | \
+      grep -vE '^(shared|grub|temp_repo|.github)$'
+    )
+  else
+    die "${red}" "Erro: Repositório desconhecido ${reset}"
+  fi
+
+  # Adiciona a opção "Voltar"
+  subdirs+=("Voltar")
+
+  # Cria o menu com as edições encontradas
+  create_menu_with_array "Escolha uma ${yellow}EDIÇÃO/DE${reset} para o ${yellow}${DISTRONAME}${reset}:" subdirs[@] "$EDITION"
+  EDITION="${MENU_RESULT}"
 }
 
 # Função para obter a edição, usada com menu_create com parametros via string e por array
@@ -222,7 +335,7 @@ get_edition_string() {
 
   # Cria o menu dinamicamente com as opções do array
   create_menu \
-    "Escolha uma EDIÇÃO/DE para o ${yellow}${DISTRONAME}${reset}:" \
+    "Escolha uma ${yellow}EDIÇÃO/DE${reset} para o ${yellow}${DISTRONAME}${reset}:" \
     "${editions[@]}" \
     'Voltar'
 
@@ -230,44 +343,34 @@ get_edition_string() {
   EDITION="${MENU_RESULT}"
 }
 
-get_edition() {
+get_editionOLD() {
 	local editions_var="${DISTRONAME}_edition"
 # local editions=(${!editions_var[@]})
 
   # Usando eval para acessar o conteúdo do array dinamicamente
   eval "local editions=(\"\${${editions_var}[@]}\")"
 	editions+=("Voltar")
-	create_menu_with_array "Escolha uma EDIÇÃO/DE para o ${yellow}${DISTRONAME}${reset}:" editions[@] "$EDITION"
+	create_menu_with_array "Escolha uma ${yellow}EDIÇÃO/DE${reset} para o ${yellow}${DISTRONAME}${reset}:" editions[@] "$EDITION"
 	EDITION="${MENU_RESULT}"
 }
 
-get_build_list() {
-	local build_list_var="${DISTRONAME}_build_list"
-
-  # Usando eval para acessar o conteúdo do array dinamicamente
-  eval "local build_list=(\"\${${build_list_var}[@]}\")"
-	build_list+=("Voltar")
-	create_menu_with_array "Escolha uma BUILD_LIST para o ${yellow}${DISTRONAME}${reset}:" build_list[@] "$DISTRONAME"
-	BUILD_LIST="${MENU_RESULT}"
-}
-
 get_manjaro_branch() {
-	create_menu_with_array "Escolha uma opcao para Branch do ${yellow}Manjaro${reset}:" aBranchs[@] 'stable'
+  create_menu_with_array "Escolha uma opcao para ${yellow}BRANCH${reset} do ${yellow}Manjaro${reset}:" aBranchs[@] 'stable'
   MANJARO_BRANCH="${MENU_RESULT}"
 }
 
 get_biglinux_branch() {
-  create_menu_with_array "Escolha uma opcao para Branch do ${yellow}BigLinux${reset}:" aBranchs[@] 'stable'
+  create_menu_with_array "Escolha uma opcao para ${yellow}BRANCH${reset} do ${yellow}BigLinux${reset}:" aBranchs[@] 'stable'
   BIGLINUX_BRANCH="${MENU_RESULT}"
 }
 
-get_communitybig_branch() {
-	create_menu_with_array "Escolha uma opcao para Branch do ${yellow}CommunityBig${reset}:" aBranchs[@] 'stable'
-  COMMUNITYBIG_BRANCH="${MENU_RESULT}"
+get_bigcommunity_branch() {
+	create_menu_with_array "Escolha uma opcao para ${yellow}BRANCH${reset} do ${yellow}BigCommunity${reset}:" aBranchs[@] 'stable'
+  BIGCOMMUNITY_BRANCH="${MENU_RESULT}"
 }
 
 get_chililinux_branch() {
-  create_menu_with_array "Escolha uma opcao para Branch do ${yellow}ChiliLinux${reset}:" aBranchs[@] 'stable'
+  create_menu_with_array "Escolha uma opcao para ${yellow}BRANCH${reset} do ${yellow}ChiliLinux${reset}:" aBranchs[@] 'stable'
   CHILILINUX_BRANCH="${MENU_RESULT}"
 }
 
@@ -278,7 +381,7 @@ get_kernel() {
 
 get_debug() {
   local -a aDebug=('Não' 'Sim' 'Voltar')
-	create_menu_with_array "Ativar sessão de debug TMATE?" aDebug[@] "$TMATE"
+	create_menu_with_array "Ativar sessão debug TMATE?" aDebug[@] "$TMATE"
   DEBUG="${MENU_RESULT}"
   TMATE="${MENU_RESULT}"
 }
@@ -391,7 +494,7 @@ main() {
 				DISTRONAME=chililinux
 				ISO_PROFILES_REPO='https://github.com/chililinux/iso-profiles'
 				MANJARO_BRANCH=stable
-				COMMUNITYBIG_BRANCH=
+				BIGCOMMUNITY_BRANCH=
 				BIGLINUX_BRANCH=stable
 				CHILILINUX_BRANCH=stable
 				KERNEL=lts
@@ -402,7 +505,7 @@ main() {
 				DISTRONAME=chililinux
 				ISO_PROFILES_REPO='https://github.com/vcatafesta/iso-profiles'
 				MANJARO_BRANCH=stable
-				COMMUNITYBIG_BRANCH=
+				BIGCOMMUNITY_BRANCH=
 				BIGLINUX_BRANCH=stable
 				CHILILINUX_BRANCH=stable
 				KERNEL=lts
@@ -413,7 +516,7 @@ main() {
 				DISTRONAME=manjaro
 				ISO_PROFILES_REPO='https://gitlab.manjaro.org/profiles-and-settings/iso-profiles.git'
 				MANJARO_BRANCH=stable
-				COMMUNITYBIG_BRANCH=
+				BIGCOMMUNITY_BRANCH=
 				BIGLINUX_BRANCH=
 				CHILILINUX_BRANCH=
 				KERNEL=latest
@@ -424,7 +527,7 @@ main() {
 				DISTRONAME=biglinux
 				ISO_PROFILES_REPO='https://github.com/biglinux/iso-profiles'
 				MANJARO_BRANCH=stable
-				COMMUNITYBIG_BRANCH=
+				BIGCOMMUNITY_BRANCH=
 				BIGLINUX_BRANCH=stable
 				CHILILINUX_BRANCH=
 				KERNEL=latest
@@ -432,10 +535,10 @@ main() {
 				TAG=$(date "+%Y-%m-%d_%H-%M")
 				TMATE='Sim'
 			elif [[ "$ORGANIZATION" =~ ^(communitybig|talesam)$ ]]; then
-				DISTRONAME=communitybig
+				DISTRONAME=bigcommunity
 				ISO_PROFILES_REPO='https://github.com/communitybig/iso-profiles'
 				MANJARO_BRANCH=stable
-				COMMUNITYBIG_BRANCH=stable
+				BIGCOMMUNITY_BRANCH=stable
 				BIGLINUX_BRANCH=stable
 				CHILILINUX_BRANCH=
 				KERNEL=latest
@@ -447,7 +550,7 @@ main() {
 	done
 
 	sh_configure_environment "$@"
-	p_log "${BLUE}" "${BOLD}Construção de ISO CommunityBig (versão $VERSION)${NC}\n"
+	p_log "${BLUE}" "${BOLD}Construção de ISO BigCommunity (versão $VERSION)${NC}\n"
 
 	if $IS_AUTO; then
 		resume_and_build
@@ -469,19 +572,19 @@ main() {
 			  continue
 			fi
 
-			get_edition
-			# Verifica se a opção selecionada foi "Voltar"
-			if [[ $MENU_RESULT == "Voltar" ]]; then
-				continue
-			fi
-
 			get_iso_profiles_repo
 			# Verifica se a opção selecionada foi "Voltar"
 			if [[ $MENU_RESULT == "Voltar" ]]; then
 				continue
 			fi
 
-			get_build_list
+			get_build_list "$ISO_PROFILES_REPO"
+			# Verifica se a opção selecionada foi "Voltar"
+			if [[ $MENU_RESULT == "Voltar" ]]; then
+				continue
+			fi
+
+      get_edition "$ISO_PROFILES_REPO" "$BUILD_DIR"
 			# Verifica se a opção selecionada foi "Voltar"
 			if [[ $MENU_RESULT == "Voltar" ]]; then
 				continue
@@ -494,7 +597,7 @@ main() {
 			fi
 
 			if [[ "$DISTRONAME" =~ ^(manjaro)$ ]]; then
-				COMMUNITYBIG_BRANCH=
+				BIGCOMMUNITY_BRANCH=
 				BIGLINUX_BRANCH=
 				CHILILINUX_BRANCH=
 			else
@@ -506,16 +609,16 @@ main() {
 			fi
 
 			if [[ "$DISTRONAME" =~ ^(manjaro|biglinux|chililinux)$ ]]; then
-				COMMUNITYBIG_BRANCH=
+				BIGCOMMUNITY_BRANCH=
 			else
-				get_communitybig_branch
+				get_bigcommunity_branch
 				# Verifica se a opção selecionada foi "Voltar"
 				if [[ $MENU_RESULT == "Voltar" ]]; then
 					continue
 				fi
 			fi
 
-			if [[ "$DISTRONAME" =~ ^(manjaro|biglinux|communitybig)$ ]]; then
+			if [[ "$DISTRONAME" =~ ^(manjaro|biglinux|bigcommunity)$ ]]; then
 				CHILILINUX_BRANCH=
 			else
 				get_chililinux_branch

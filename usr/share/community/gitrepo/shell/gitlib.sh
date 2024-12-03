@@ -493,11 +493,12 @@ create_menu_with_array() {
 
 		if $IS_BUILD_ISO_RESUME; then
       echo -e "Distroname     : ${cyan}$DISTRONAME ${reset}"
-      echo -e "Edition        : ${cyan}$EDITION ${reset}"
       echo -e "Iso-Profiles   : ${cyan}$ISO_PROFILES_REPO ${reset}"
+      echo -e "Build dir      : ${cyan}$BUILD_DIR ${reset}"
+      echo -e "Edition        : ${cyan}$EDITION ${reset}"
       echo -e "Br Manjaro     : ${cyan}$MANJARO_BRANCH ${reset}"
       echo -e "Br BigLinux    : ${cyan}$BIGLINUX_BRANCH ${reset}"
-      echo -e "Br BigCommunity: ${cyan}$COMMUNITYBIG_BRANCH ${reset}"
+      echo -e "Br BigCommunity: ${cyan}$BIGCOMMUNITY_BRANCH ${reset}"
       echo -e "Br ChiliLinux  : ${cyan}$CHILILINUX_BRANCH ${reset}"
       echo -e "Kernel         : ${cyan}$KERNEL ${reset}"
 			echo '---------------------------------------------------------------------------------'
@@ -592,7 +593,7 @@ create_menu() {
       echo -e "Iso-Profiles   : ${cyan}$ISO_PROFILES_REPO ${reset}"
       echo -e "Br Manjaro     : ${cyan}$MANJARO_BRANCH ${reset}"
       echo -e "Br BigLinux    : ${cyan}$BIGLINUX_BRANCH ${reset}"
-      echo -e "Br BigCommunity: ${cyan}$COMMUNITYBIG_BRANCH ${reset}"
+      echo -e "Br BigCommunity: ${cyan}$BIGCOMMUNITY_BRANCH ${reset}"
       echo -e "Br ChiliLinux  : ${cyan}$CHILILINUX_BRANCH ${reset}"
       echo -e "Kernel         : ${cyan}$KERNEL ${reset}"
 			echo '---------------------------------------------------------------------------------'
