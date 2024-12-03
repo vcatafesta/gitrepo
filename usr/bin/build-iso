@@ -133,6 +133,7 @@ trigger_workflow() {
   \"client_payload\": { \
     \"distroname\": \"$DISTRONAME\", \
     \"iso_profiles_repo\": \"$ISO_PROFILES_REPO\", \
+    \"build_dir\": \"$BUILD_DIR\", \
     \"edition\": \"$EDITION\", \
     \"manjaro_branch\": \"$MANJARO_BRANCH\", \
     \"community_branch\": \"$BIGCOMMUNITY_BRANCH\", \
@@ -498,6 +499,7 @@ main() {
 				BIGLINUX_BRANCH=stable
 				CHILILINUX_BRANCH=stable
 				KERNEL=lts
+				BUILD_DIR=chililinux
 				EDITION=xfce
 				TAG=$(date "+%Y-%m-%d_%H-%M")
 				TMATE='Sim'
@@ -509,6 +511,7 @@ main() {
 				BIGLINUX_BRANCH=stable
 				CHILILINUX_BRANCH=stable
 				KERNEL=lts
+				BUILD_DIR=chililinux
 				EDITION=xfce
 				TAG=$(date "+%Y-%m-%d_%H-%M")
 				TMATE='Sim'
@@ -520,6 +523,7 @@ main() {
 				BIGLINUX_BRANCH=
 				CHILILINUX_BRANCH=
 				KERNEL=latest
+				BUILD_DIR=manjaro
 				EDITION=xfce
 				TAG=$(date "+%Y-%m-%d_%H-%M")
 				TMATE='Sim'
@@ -531,6 +535,7 @@ main() {
 				BIGLINUX_BRANCH=stable
 				CHILILINUX_BRANCH=
 				KERNEL=latest
+				BUILD_DIR=biglinux
 				EDITION=xfce
 				TAG=$(date "+%Y-%m-%d_%H-%M")
 				TMATE='Sim'
@@ -542,6 +547,7 @@ main() {
 				BIGLINUX_BRANCH=stable
 				CHILILINUX_BRANCH=
 				KERNEL=latest
+				BUILD_DIR=bigcommunity
 				EDITION=xfce
 				TAG=$(date "+%Y-%m-%d_%H-%M")
 				TMATE='Sim'
