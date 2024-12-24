@@ -7,7 +7,7 @@
 #  ao fluxo padrão de construção de ISOs.
 #
 #  Created: ter 24 set 2024 04:26:12 -04
-#  Altered: seg 02 dez 2024 12:39:29 -04
+#  Altered: sex 06 dez 2024 10:09:52 -04
 #
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -34,7 +34,7 @@
 ##############################################################################
 declare APP="${0##*/}"
 declare APPDESC="Wrapper bash para o buildiso"
-declare VERSION="1.12.1" # Versão do script
+declare VERSION="1.12.3" # Versão do script
 export TERM=${TERM:-xterm}
 export TERM=${TERM:-xterm-256color}
 declare IS_AUTO=false
@@ -48,25 +48,36 @@ configure_vars() {
 	declare -aG manjaro_edition=(architect bladebook gnome gnome-next grub i3 kde kde-dev netinstall nxd xfce)
 	declare -aG talesam_edition=(cinnamon cosmic deepin gnome kde xfce wmaker)
 	declare -aG vcatafesta_edition=(base cinnamon cosmic deepin gnome kde xfce wmaker)
-	declare -aG aDistros=('communitybig' 'biglinux' 'chililinux' 'manjaro' 'Sair')
+	declare -aG aDistros=('bigcommunity' 'biglinux' 'chililinux' 'manjaro' 'Sair')
 	declare -aG aBranchs=('stable' 'testing' 'unstable' 'Sair')
 	declare -aG aKernels=('latest' 'lts' 'oldlts' 'xanmod' 'Sair')
-	declare -aG aProfiles=(
-		'https://github.com/communitybig/iso-profiles'
-		'https://github.com/biglinux/iso-profiles'
-		'https://github.com/chililinux/iso-profiles'
-		'https://github.com/chililinux/manjaro-iso-profiles'
-		'https://gitlab.manjaro.org/profiles-and-settings/iso-profiles.git'
-		'https://github.com/talesam/iso-profiles'
-		'https://github.com/vcatafesta/iso-profiles'
-		'Sair'
-	)
+  declare -aG aProfiles=(
+      'https://github.com/communitybig/iso-profiles'
+      'https://github.com/biglinux/iso-profiles'
+      'https://github.com/chililinux/iso-profiles'
+      'https://github.com/chililinux/manjaro-iso-profiles'
+      'https://gitlab.manjaro.org/profiles-and-settings/iso-profiles.git'
+      'https://github.com/talesam/iso-profiles'
+      'https://github.com/vcatafesta/iso-profiles'
+      'Sair'
+  )
+  declare -AG ApiProfiles=(
+    # GitHub Repositories
+    [https://github.com/communitybig/iso-profiles]='https://api.github.com/repos/communitybig/iso-profiles/contents/'
+    [https://github.com/biglinux/iso-profiles]='https://api.github.com/repos/biglinux/iso-profiles/contents/'
+    [https://github.com/chililinux/iso-profiles]='https://api.github.com/repos/chililinux/iso-profiles/contents/'
+    [https://github.com/chililinux/manjaro-iso-profiles]='https://api.github.com/repos/chililinux/manjaro-iso-profiles/contents/'
+    [https://github.com/talesam/iso-profiles]='https://api.github.com/repos/talesam/iso-profiles/contents/'
+    [https://github.com/vcatafesta/iso-profiles]='https://api.github.com/repos/vcatafesta/iso-profiles/contents/'
+    # GitLab Repositories
+    [https://gitlab.manjaro.org/profiles-and-settings/iso-profiles.git]='https://gitlab.manjaro.org/api/v4/projects/profiles-and-settings%2Fiso-profiles/repository/tree'
+  )
 	#
-	declare -aG communitybig_build_list=(communitybig)
+	declare -aG bigcommunity_build_list=(bigcommunity)
 	declare -aG biglinux_build_list=(biglinux biglinux-make-iso-profiles)
 	declare -aG chililinux_build_list=(chililinux)
 	declare -aG manjaro_build_list=(community manjaro oem)
-	declare -aG talesam_build_list=(communitybig)
+	declare -aG talesam_build_list=(bigcommunity)
 	declare -aG vcatafesta_build_list=(chililinux)
 	#
 	declare -g IS_GIT_REPO=false
@@ -74,7 +85,7 @@ configure_vars() {
 	declare -g ORGANIZATION='<local>'
 	declare -g REPO_WORKFLOW='<local>'
 	declare -g DISTRONAME='chililinux'
-	declare -g EDITION='xfce'
+	declare -g EDITION='base'
 	declare -g KERNEL='lts'
 	declare -g TMATE='Sim'
 	#
@@ -82,16 +93,20 @@ configure_vars() {
 	USERNAME="$USER"
 	GITHUB_USER_NAME="$USERNAME"
 	HOME_FOLDER="/home/$USERNAME"
+	BIGCOMMUNITY_BRANCH=''
+	BIGLINUX_BRANCH='stable'
+	CHILILINUX_BRANCH='stable'
+	MANJARO_BRANCH='stable'
 
 	get_distroname
-	get_edition
 	get_iso_profiles_repo
-	get_build_list
+	get_build_list "$ISO_PROFILES_REPO"
+	get_edition "$ISO_PROFILES_REPO" "$BUILD_DIR"
 	DISTRONAME_ISOPROFILES="$(get_distroname_isoprofiles)"
 	WORK_PATH="$HOME_FOLDER/__w/build-iso/build-iso"
 	WORK_PATH_ISO_PROFILES="$HOME_FOLDER/__w/build-iso/build-iso/iso-profiles"
-	PROFILE_PATH="$HOME_FOLDER/__w/build-iso/build-iso/iso-profiles/${DISTRONAME_ISOPROFILES}"
-	PROFILE_PATH_EDITION="$HOME_FOLDER/__w/build-iso/build-iso/iso-profiles/${DISTRONAME_ISOPROFILES}/$EDITION"
+	PROFILE_PATH="$HOME_FOLDER/__w/build-iso/build-iso/iso-profiles/${BUILD_DIR}"
+	PROFILE_PATH_EDITION="$HOME_FOLDER/__w/build-iso/build-iso/iso-profiles/${BUILD_DIR}/$EDITION"
 	PATH_MANJARO_ISO_PROFILES='/usr/share/manjaro-tools/iso-profiles'
 	PATH_MANJARO_TOOLS='/usr/share/manjaro-tools'
 	VAR_CACHE_MANJARO_TOOLS='/var/cache/manjaro-tools'
@@ -100,7 +115,7 @@ configure_vars() {
 
 	get_manjaro_branch
 	if [[ "$DISTRONAME" =~ ^(manjaro)$ ]]; then
-		COMMUNITYBIG_BRANCH=
+		BIGCOMMUNITY_BRANCH=
 		BIGLINUX_BRANCH=
 		CHILILINUX_BRANCH=
 	else
@@ -108,12 +123,12 @@ configure_vars() {
 	fi
 
 	if [[ "$DISTRONAME" =~ ^(manjaro|biglinux|chililinux)$ ]]; then
-		COMMUNITYBIG_BRANCH=
+		BIGCOMMUNITY_BRANCH=
 	else
-		get_communitybig_branch
+		get_bigcommunity_branch
 	fi
 
-	if [[ "$DISTRONAME" =~ ^(manjaro|biglinux|communitybig|talesam)$ ]]; then
+	if [[ "$DISTRONAME" =~ ^(manjaro|biglinux|bigcommunity|talesam)$ ]]; then
 		CHILILINUX_BRANCH=
 	else
 		get_chililinux_branch
@@ -136,6 +151,65 @@ get_distroname() {
 }
 
 get_edition() {
+  local repo="$1"
+  local dir="$2"
+  local api_url="${ApiProfiles[$repo]}"
+  local response
+
+  # Verifica se o repositório existe no array
+  if [[ -z "$api_url" ]]; then
+    die "${red}" "Erro: Repositório não encontrado no array: $repo ${reset}"
+  fi
+
+  # Se for GitHub, faz a requisição
+  if [[ "$api_url" == *"github"* ]]; then
+    # Faz a requisição para o GitHub
+    p_log "${CYAN}" "Fazendo requisição na API $api_url {NC}"
+    response=$(curl -sL "${api_url}${dir}")
+
+    # Verifica se a resposta está vazia ou se ocorreu erro
+    if [[ -z "$response" || "$response" == *"404 Not Found"* ]]; then
+      die "${red}" "Erro: Problema ao acessar o diretório: $dir ${reset}"
+    fi
+
+    # Processamento para GitHub
+    mapfile -t subdirs < <(
+      echo "$response" | \
+      jq -r '.[] | select(.type == "dir") | .name'
+    )
+  elif [[ "$api_url" == *"gitlab"* ]]; then
+    # Faz a requisição para o GitLab com o parâmetro 'path'
+    p_log "${CYAN}" "Fazendo requisição na API $api_url {NC}"
+    response=$(curl -sL "${api_url}?path=${dir}")
+
+    # Verifica se a resposta está vazia ou se ocorreu erro
+    if [[ -z "$response" || "$response" == *"404 Not Found"* ]]; then
+      die "${red}" "Erro: Problema ao acessar o repositório: $repo ${reset}"
+    fi
+
+    # Processamento para GitLab
+    # Filtra os diretórios e pega o nome de cada um, excluindo os indesejados
+    mapfile -t subdirs < <(
+      echo "$response" | \
+      jq -r '.[] | select(.type == "tree") | .name' | \
+      grep -vE '^(shared|grub|temp_repo|.github)$'
+    )
+  else
+    die "${red}" "Erro: Repositório desconhecido ${reset}"
+  fi
+
+  # Adiciona a opção "Sair"
+  subdirs+=("Sair")
+
+  # Cria o menu com as edições encontradas
+  create_menu_with_array "Escolha uma ${yellow}EDIÇÃO/DE${reset} para o ${yellow}${DISTRONAME}${reset}:" subdirs[@] "$EDITION"
+	if [[ $MENU_RESULT == "Sair" ]]; then
+		die "${red}" "Construção da ISO cancelada.${reset}"
+	fi
+  EDITION="${MENU_RESULT}"
+}
+
+get_editionOLD() {
 	local editions_var="${DISTRONAME}_edition"
 	# local editions=(${!editions_var[@]})
 
@@ -161,17 +235,48 @@ get_iso_profiles_repo() {
 }
 
 get_build_list() {
-	local build_list_var="${DISTRONAME}_build_list"
+  local repo="$1"
+  local api_url="${ApiProfiles[$repo]}"
 
-	# Usando eval para acessar o conteúdo do array dinamicamente
-	eval "local build_list=(\"\${${build_list_var}[@]}\")"
-	build_list+=("Sair")
-	create_menu_with_array "Escolha uma ${yellow}BUILD_LIST ${reset}para o ${yellow}${DISTRONAME}${reset}:" build_list[@] "$DISTRONAME"
-	# Verifica se a opção selecionada foi "Sair"
+  # Verifica se o repositório existe no array
+  if [[ -z "$api_url" ]]; then
+    die "${red}" "Erro: Repositório não encontrado no array: $repo ${reset}"
+  fi
+
+  # Faz a requisição e inspeciona a resposta para entender o formato
+  p_log "${cyan}" "Fazendo requisição na API $api_url ${reset}"
+  local response=$(curl -sL "$api_url")
+
+  # Verifica se a resposta está vazia ou se ocorreu um erro 404
+  if [[ -z "$response" || "$response" == *"404 Not Found"* ]]; then
+    die "${red}" "Erro: Repositório não encontrado ou erro ao acessar a URL: $repo ${reset}"
+  fi
+
+  # Se o repositório for do GitHub, a estrutura de resposta é diferente
+  if [[ "$api_url" == *"github"* ]]; then
+    # Processa a resposta para GitHub
+    mapfile -t build_list < <(
+      echo "$response" | \
+      jq -r '.[] | select(.type == "dir") | .name' | \
+      grep -vE '^(shared|grub|temp_repo|.github)$'
+    )
+  else
+    # Processa a resposta para GitLab
+    mapfile -t build_list < <(
+      echo "$response" | \
+      jq -r '.[] | select(.type == "tree") | .name' | \
+      grep -vE '^(shared|grub|temp_repo|.github)$'
+    )
+  fi
+
+  # Retorna o array
+  #echo "${build_list[@]}"
+  build_list+=("Sair")
+  create_menu_with_array "Escolha uma ${yellow}BUILD_LIST${reset} para o ${yellow}${DISTRONAME}${reset}:" build_list[@] "$DISTRONAME"
 	if [[ $MENU_RESULT == "Sair" ]]; then
 		die "${red}" "Construção da ISO cancelada.${reset}"
 	fi
-	BUILD_LIST="${MENU_RESULT}"
+  BUILD_DIR="${MENU_RESULT}"
 }
 
 get_manjaro_branch() {
@@ -192,13 +297,13 @@ get_biglinux_branch() {
 	BIGLINUX_BRANCH="${MENU_RESULT}"
 }
 
-get_communitybig_branch() {
-	create_menu_with_array "Escolha uma opcao para Branch do ${yellow}CommunityBig${reset}:" aBranchs[@] 'stable'
+get_bigcommunity_branch() {
+	create_menu_with_array "Escolha uma opcao para Branch do ${yellow}BigCommunity${reset}:" aBranchs[@] 'stable'
 	# Verifica se a opção selecionada foi "Sair"
 	if [[ $MENU_RESULT == "Sair" ]]; then
 		die "${red}" "Construção da ISO cancelada.${reset}"
 	fi
-	COMMUNITYBIG_BRANCH="${MENU_RESULT}"
+	BIGCOMMUNITY_BRANCH="${MENU_RESULT}"
 }
 
 get_chililinux_branch() {
@@ -399,7 +504,7 @@ sh_version() {
 ${bold}${cyan}${0##*/} v${VERSION}${reset}
 ${APPDESC}
 ${bold}${black}Copyright (c) 2024-2024, ${reset}Vilmar Catafesta <vcatafesta@gmail.com>${black}
-${bold}${black}Copyright (C) 2024-2024, ${reset}CommunityBig Team${black}
+${bold}${black}Copyright (C) 2024-2024, ${reset}BigCommunity Team${black}
 
   Este é um software livre: você é livre para alterá-lo e redistribuí-lo.
   O $APP é disponibilizado para você sob a ${yellow}Licença MIT${black}, e
@@ -479,7 +584,7 @@ create_menu_with_array() {
 			msg_info "Iso-Profiles   : ${green}$ISO_PROFILES_REPO${reset}"
 			msg_info "Br Manjaro     : ${green}$MANJARO_BRANCH${reset}"
 			msg_info "Br BigLinux    : ${green}$BIGLINUX_BRANCH${reset}"
-			msg_info "Br BigCommunity: ${green}$COMMUNITYBIG_BRANCH${reset}"
+			msg_info "Br BigCommunity: ${green}$BIGCOMMUNITY_BRANCH${reset}"
 			msg_info "Br ChiliLinux  : ${green}$CHILILINUX_BRANCH${reset}"
 			msg_info "Kernel         : ${green}$KERNEL${reset}"
 			echo '---------------------------------------------------------------------------------'
@@ -844,8 +949,8 @@ add_repositorys_only_install() {
 	done
 	echo '' | sudo tee -a "$arquivo_conf" >/dev/null
 
-	msg 'Configurando repositórios do CommunityBig'
-	case "$COMMUNITYBIG_BRANCH" in
+	msg 'Configurando repositórios do BigCommunity'
+	case "$BIGCOMMUNITY_BRANCH" in
 	stable)
 		add_biglinux-update-stable | sudo tee -a "$arquivo_conf" >/dev/null
 		add_community-stable | sudo tee -a "$arquivo_conf" >/dev/null
@@ -911,15 +1016,18 @@ configure_repositories_and_build_environment() {
 		add_repositorys_only_install "$PATH_MANJARO_TOOLS/pacman-multilib.conf"
 	fi
 
-	msg 'Alterando o path da remoção do cache de pacotes para remover /usr/share/man'
+	msg "Alterando o path da remoção do cache de pacotes para remover '/usr/share/man'"
 	msg_info "sudo sed -i 's/path=\$1\/var\/lib\/pacman\/sync/path=\$1\/usr\/share\/man/g' /usr/lib/manjaro-tools/util-iso-image.sh"
 	sudo sed -i 's/path=\$1\/var\/lib\/pacman\/sync/path=\$1\/usr\/share\/man/g' /usr/lib/manjaro-tools/util-iso-image.sh
 
-	msg 'Configurando compressão'
-	#if [[ "$COMMUNITYBIG_BRANCH" != "stable" ]]; then
-	msg_info "sudo sed -i 's/-Xcompression-level 20/-Xcompression-level 6/g' /usr/lib/manjaro-tools/util-iso.sh"
-	sudo sed -i 's/-Xcompression-level 20/-Xcompression-level 6/g' /usr/lib/manjaro-tools/util-iso.sh
-	#fi
+  msg 'Configurando compressão'
+  # Acessa dinamicamente a variável correspondente ao DISTRONAME_BRANCH
+  BRANCH_VAR="${DISTRONAME^^}_BRANCH" # Converte DISTRONAME para maiúsculas
+  BRANCH="${!BRANCH_VAR}"             # Expande o valor da variável com esse nome
+  if [[ "$BRANCH" != "stable" ]]; then
+    msg_info "sudo sed -i 's/-Xcompression-level 22/-Xcompression-level 7/g' /usr/lib/manjaro-tools/util-iso.sh"
+    sudo sed -i 's/-Xcompression-level 22/-Xcompression-level 7/g' /usr/lib/manjaro-tools/util-iso.sh
+  fi
 	msg_info "sudo sed -i 's/256K/1024K/g' /usr/lib/manjaro-tools/util-iso.sh"
 	sudo sed -i 's/256K/1024K/g' /usr/lib/manjaro-tools/util-iso.sh
 
@@ -938,7 +1046,7 @@ configure_repositories_and_build_environment() {
 }
 export -f configure_repositories_and_build_environment
 
-add_big_cleanups() {
+add_iso_cleanups() {
 	# cleanups
 	local cleanup_script="/usr/lib/manjaro-tools/util-iso-image.sh"
 
@@ -966,7 +1074,7 @@ add_big_cleanups() {
 		fi
 	EOF_CLEANUPS
 }
-export -f add_big_cleanups
+export -f add_iso_cleanups
 
 setup_manjaro_tools() {
 	msg "Setting up Manjaro tools..."
@@ -1049,8 +1157,8 @@ setup_manjaro_tools() {
 	msg 'Desabilitar a verificação de versão do kernel'
 	sudo sed -i '/${iso_kernel}/s/^/#/' /usr/lib/manjaro-tools/util-iso.sh
 
-	msg 'Adicionar limpezas do Big'
-	add_big_cleanups
+	msg 'Adicionar limpezas da ISO'
+	add_iso_cleanups
 
 	msg 'Adicionar root-overlay'
 	sudo sed -i '/copy_overlay "${profile_dir}\/root-overlay" "${path}"/a [[ -e ${profile_dir}\/root-overlay ]] && copy_overlay "${profile_dir}\/root-overlay" "${path}"' /usr/lib/manjaro-tools/util-iso.sh
@@ -1308,7 +1416,7 @@ export -f configure_kernel
 
 add_repos_to_pacman_conf_into_iso_distro() {
 	local config_file="$1"
-	local communitybig_branch="$2"
+	local bigcommunity_branch="$2"
 	local biglinux_branch="$3"
 	local config_dir
 
@@ -1317,8 +1425,8 @@ add_repos_to_pacman_conf_into_iso_distro() {
 	mkdir -p "$config_dir"
 
 	# Community repositories
-	if [[ "$DISTRONAME" == "communitybig" ]]; then
-		if [[ "$communitybig_branch" == "testing" ]]; then
+	if [[ "$DISTRONAME" == "bigcommunity" ]]; then
+		if [[ "$bigcommunity_branch" == "testing" ]]; then
 			add_community-testing | sudo tee -a "$config_file" >/dev/null
 			add_community-stable | sudo tee -a "$config_file" >/dev/null
 			add_community-extra | sudo tee -a "$config_file" >/dev/null
@@ -1350,8 +1458,15 @@ add_repos_to_pacman_conf_into_iso_distro() {
 export -f add_repos_to_pacman_conf_into_iso_distro
 
 set_build_info() {
-	local release_file="$PROFILE_PATH_EDITION/root-overlay/etc/big-release"
+	local release_file
 	local release_dir
+
+  case "$DISTRONAME" in
+  bigcommunity) release_file="$PROFILE_PATH_EDITION/root-overlay/etc/big-release";;
+  biglinux) release_file="$PROFILE_PATH_EDITION/root-overlay/etc/big-release";;
+  chililinux) release_file="$PROFILE_PATH_EDITION/root-overlay/etc/chili-release";;
+  manjaro) release_file="$PROFILE_PATH_EDITION/root-overlay/etc/manjaro-release";;
+  esac
 	release_dir=$(dirname "$release_file")
 
 	# Ensure the directory exists
@@ -1397,7 +1512,7 @@ export -f verificar_iso_profiles_conf
 configure_iso_name() {
 	msg_info "Debug: DISTRONAME=$DISTRONAME"
 	msg_info "Debug: MANJARO_BRANCH=$MANJARO_BRANCH"
-	msg_info "Debug: COMMUNITYBIG_BRANCH=$COMMUNITYBIG_BRANCH"
+	msg_info "Debug: BIGCOMMUNITY_BRANCH=$BIGCOMMUNITY_BRANCH"
 	msg_info "Debug: ISO_LABEL=${VOL_ID}"
 
 	msg 'Configurando nome da ISO'
@@ -1406,8 +1521,8 @@ configure_iso_name() {
 	sed -i "s/label=.*/label=${VOL_ID}/" "$PROFILE_PATH_EDITION"/profile.conf
 	sudo sed -i "s/iso_label=.*/iso_label=${VOL_ID}/" "/usr/lib/manjaro-tools/util-iso.sh"
 
-	if [[ "$DISTRONAME" == 'communitybig' ]]; then
-		case "$MANJARO_BRANCH/$COMMUNITYBIG_BRANCH" in
+	if [[ "$DISTRONAME" == 'bigcommunity' ]]; then
+		case "$MANJARO_BRANCH/$BIGCOMMUNITY_BRANCH" in
 		stable/stable) ISO_BASENAME="${DISTRONAME}_STABLE_${EDITION}_${RELEASE_TAG%%_*}_k${KERNEL}.iso" ;;
 		stable/testing | testing/*) ISO_BASENAME="${DISTRONAME}_BETA_${EDITION}_${RELEASE_TAG%%_*}_k${KERNEL}.iso" ;;
 		unstable/*) ISO_BASENAME="${DISTRONAME}_DEVELOPMENT_${EDITION}_${RELEASE_TAG%%_*}_k${KERNEL}.iso" ;;
@@ -1449,7 +1564,7 @@ build_iso() {
 	echo "DISTRONAME               : $DISTRONAME"
 	echo "EDITION                  : $EDITION"
 	echo "MANJARO_BRANCH           : $MANJARO_BRANCH"
-	echo "COMMUNITYBIG_BRANCH      : $COMMUNITYBIG_BRANCH"
+	echo "BIGCOMMUNITY_BRANCH      : $BIGCOMMUNITY_BRANCH"
 	echo "BIGLINUX_BRANCH          : $BIGLINUX_BRANCH"
 	echo "CHILILINUX_BRANCH        : $CHILILINUX_BRANCH"
 	echo "KERNEL_VERSION_DOT       : ${KERNEL_VERSION_DOT}"
@@ -1571,7 +1686,7 @@ make_iso() {
 	msg_info "Adicionando repositórios em: $WORK_PATH_ISO_PROFILES/shared/pacman.conf"
 	add_repos_to_pacman_conf_into_iso_distro \
 		"$WORK_PATH_ISO_PROFILES/shared/pacman.conf" \
-		"$COMMUNITYBIG_BRANCH" \
+		"$BIGCOMMUNITY_BRANCH" \
 		"$BIGLINUX_BRANCH"
 
 	set_build_info

@@ -4,7 +4,7 @@
 #
 #  /usr/share/community/gitrepo/shell/gitlib.sh - lib for gitrepo.sh and buildiso.sh
 #  Created: qui 05 set 2024 00:51:12 -04
-#  Altered: dom 01 dez 2024 10:12:36 -04
+#  Altered: seg 23 dez 2024 23:28:25 -04
 #
 #  Copyright (c) 2024-2024, Tales A. Mendonça <talesam@gmail.com>
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
@@ -650,11 +650,11 @@ get_package_name() {
 
 	pkgbuild_path=$(find . -name PKGBUILD -print -quit)
 	if [[ -z "$pkgbuild_path" ]]; then
-		die "$RED" "Erro: Arquivo PKGBUILD não encontrado."
-	fi
-
-	if pkgname=$(grep -E "^pkgname=" "$pkgbuild_path" | cut -d'=' -f2) && [[ -z "$pkgname" ]]; then
-		die "$RED" "Erro: Nome do pacote não encontrado no PKGBUILD."
+		#die "$RED" "Erro: Arquivo PKGBUILD não encontrado."
+		echo 'erro2'
+	elif pkgname=$(grep -E "^pkgname=" "$pkgbuild_path" | cut -d'=' -f2) && [[ -z "$pkgname" ]]; then
+		#die "$RED" "Erro: Nome do pacote não encontrado no PKGBUILD."
+		echo 'erro3'
 	fi
 	echo "$pkgname"
 }

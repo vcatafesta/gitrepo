@@ -4,7 +4,7 @@
 #
 #  build-package - Wrapper git para o BigCommunity
 #  Created: qui 05 set 2024 00:51:12 -04
-#  Altered: seg 25 nov 2024 23:24:09 -04
+#  Altered: seg 23 dez 2024 23:28:25 -04
 #
 #  Copyright (c) 2024-2024, Tales A. Mendonça <talesam@gmail.com>
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
@@ -156,7 +156,8 @@ parse_parameters() {
 			die "$RED" "Erro fatal: Valor inválido para o parâmetro ${YELLOW}'-c|--commit' ${RESET}
 Ao usar o parametro ${YELLOW}'-b|--build' ${reset}é necessário também este parâmetro"
 		fi
-		Realizar_commit_e_gerar_pacote
+		#Realizar_commit_e_gerar_pacote
+    resume_and_build
 	fi
 
 	if $param_commit_was_supplied; then
@@ -270,6 +271,7 @@ sh_configure_environment() {
 	p_log "$BLUE" "Configurando ambiente"
 	declare -g IS_GIT_REPO="$(check_repo_is_git)"
 	declare -g IS_AUR_PACKAGE=false
+	declare -g IS_BUILD_ISO_RESUME=false
 	declare -g tmate_option="false"
 
 	checkDependencies
@@ -285,10 +287,44 @@ Apenas_fazer_commit_push() {
 	checkout_and_exit 0
 }
 
+resume_and_build() {
+  local package_name=$(get_package_name)
+  local repo_name=$(git config --get remote.origin.url | sed 's/.*[:/]\([^/]*\/[^.]*\).*/\1/')
+
+  if [[ "$package_name" == 'erro2' ]]; then
+    die "$RED" "Erro: Arquivo PKGBUILD não encontrado."
+  elif [[ "$package_name" == 'erro3' ]]; then
+    die "$RED" "Erro: Nome do pacote não encontrado no PKGBUILD."
+  fi
+
+  # Confirmar as escolhas
+  clear
+  echo "${black}$(replicate '=')${reset}"
+  echo -e "${cyan}Resumo das escolhas:${reset}"
+  echo "${black}$(replicate '=')${reset}"
+  echo "Organization     : ${orange}$ORGANIZATION ${reset}"
+  echo "Repo Workflow    : ${orange}$REPO_WORKFLOW ${reset}"
+  echo "User Name        : ${orange}$GITHUB_USER_NAME ${reset}"
+  echo "Package Name     : ${orange}$package_name ${reset}"
+
+  echo "Branch_type      : ${orange}$branch_type ${reset}"
+  echo "New Branch       : ${orange}${branch_type}-$(date +%Y%m%d_%H%M%S) ${reset}"
+  echo "Url              : ${orange}https://github.com/${repo_name} ${reset}"
+  echo "TMATE Debug      : ${orange}$tmate_option ${reset}"
+  echo "${black}$(replicate '=')${reset}"
+
+  if conf "${YELLOW}Deseja prosseguir com a construção da ISO?"; then
+    Realizar_commit_e_gerar_pacote "$package_name"
+  else
+    die "${RED}" "Construção do PACOTE cancelada."
+  fi
+}
+
 Realizar_commit_e_gerar_pacote() {
+  package_name="$1"
+	#package_name=$(get_package_name)
 	update_commit_push
 	create_branch_and_push "$branch_type"
-	package_name=$(get_package_name)
 	trigger_workflow "$package_name" "$branch_type"
 }
 
@@ -417,7 +453,8 @@ while true; do
 				continue
 			fi
 			branch_type=$MENU_RESULT
-			Realizar_commit_e_gerar_pacote
+			#Realizar_commit_e_gerar_pacote
+      resume_and_build
 			break
 		else
 			die "$RED" "Esta opção só está disponível em repositórios git."

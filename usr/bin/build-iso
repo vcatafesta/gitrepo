@@ -503,7 +503,7 @@ main() {
 				CHILILINUX_BRANCH=stable
 				KERNEL=lts
 				BUILD_DIR=chililinux
-				EDITION=xfce
+				EDITION=base
 				TAG=$(date "+%Y-%m-%d_%H-%M")
 				TMATE='Sim'
 			elif [[ "$ORGANIZATION" =~ ^(vcatafesta)$ ]]; then
