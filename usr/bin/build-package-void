@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # shellcheck shell=bash disable=SC1091,SC2039,SC2166,SC2317,SC2155,SC2034,SC2229,SC2076,SC2199,SC2015
 #
-#  build-package - Wrapper git para o BigCommunity
+#  build-package-void - Wrapper git para o VoidLinux
 #  Created: qui 05 set 2024 00:51:12 -04
 #  Altered: seg 23 dez 2024 23:28:25 -04
 #
@@ -32,7 +32,7 @@
 ##############################################################################
 # system
 declare APP="${0##*/}"
-declare APPDESC="Wrapper git para o BigCommunity"
+declare APPDESC="Wrapper git para o VoidLinux"
 declare VERSION="2.1.7" # Versão do script
 : "${reset=$(tput sgr0)}"
 : "${red=$(tput bold)$(tput setaf 196)}"
@@ -137,8 +137,8 @@ parse_parameters() {
 	done
 
 	if $param_organization_was_supplied; then
-		REPO_WORKFLOW="${value_organization}/build-package" # Repositório que contém os workflows
-		ORGANIZATION="${REPO_WORKFLOW%%/*}"                 # default=communitybig
+		REPO_WORKFLOW="${value_organization}/build-package-void"  # Repositório que contém os workflows
+		ORGANIZATION="${REPO_WORKFLOW%%/*}"                       # default=communitybig
 	fi
 
 	get_token_release # Obtem o TOKEN_RELEASE utilizando a função get_token_release
@@ -255,9 +255,9 @@ sh_configure_environment() {
 	#set -x
 	#set -e
 
-	declare -g REPO_WORKFLOW="communitybig/build-package" # Repositório que contém os workflows
-	declare -g ORGANIZATION="${REPO_WORKFLOW%%/*}"        # communitybig
-	declare -g CFILETOKEN="$HOME/.GITHUB_TOKEN"           # path do arquivo que contem os tokens do github
+	declare -g REPO_WORKFLOW="chililinux/build-package-void"  # Repositório que contém os workflows
+	declare -g ORGANIZATION="${REPO_WORKFLOW%%/*}"            # chililinux
+	declare -g CFILETOKEN="$HOME/.GITHUB_TOKEN"               # path do arquivo que contem os tokens do github
 	declare -g GITHUB_USER_NAME
 
 	declare -g REPO_NAME="$(get_repo_name)"      # Obtém o nome do repositório utilizando a função get_repo_name
