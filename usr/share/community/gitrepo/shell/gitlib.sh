@@ -714,7 +714,6 @@ create_branch_and_push() {
 	local branch_type="$1"
 	declare -g new_branch
 
-	#new_branch="${branch_type}-$(date +%Y-%m-%d_%H-%M)"
 	new_branch="${branch_type}-$(date +%Y%m%d_%H%M%S)"
 	p_log "$CYAN" "Atualizando o branch main..."
 

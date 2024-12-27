@@ -199,18 +199,32 @@ trigger_workflow() {
 	p_log "$CYAN" "Acionando o workflow de build no GitHub..."
 	if [[ -n "$aur_package" ]]; then
 		aur_url="https://aur.archlinux.org/${package_name}.git"
-#		data="{\"event_type\": \"aur-$package_name\", \"client_payload\": { \"package_name\": \"${package_name}\", \"aur_url\": \"${aur_url}\", \"branch_type\": \"aur\", \"build_env\": \"aur\", \"tmate\": $tmate_option}}"
+##		data="{\"event_type\": \"aur-$package_name\", \"client_payload\": { \"package_name\": \"${package_name}\", \"aur_url\": \"${aur_url}\", \"branch_type\": \"aur\", \"build_env\": \"aur\", \"tmate\": $tmate_option}}"
+#    data="{\
+#      \"event_type\": \"aur-$package_name\", \
+#      \"client_payload\": { \
+#      \"package_name\": \"${package_name}\", \
+#      \"aur_url\": \"${aur_url}\", \
+#      \"branch_type\": \"aur\", \
+#      \"build_env\": \"aur\", \
+#      \"tmate\": $tmate_option \
+#      }\
+#    }"
+#		event_type="aur-build"
+
     data="{\
       \"event_type\": \"aur-$package_name\", \
       \"client_payload\": { \
       \"package_name\": \"${package_name}\", \
       \"aur_url\": \"${aur_url}\", \
+      \"branch\": \"${new_branch}\", \
       \"branch_type\": \"aur\", \
       \"build_env\": \"aur\", \
+      \"url\": \"${aur_url}\", \
       \"tmate\": $tmate_option \
       }\
     }"
-		event_type="aur-build"
+		event_type="package-build"
 	else
 		repo_name=$(git config --get remote.origin.url | sed 's/.*[:/]\([^/]*\/[^.]*\).*/\1/')
 		if [[ -z "$repo_name" ]]; then
@@ -312,7 +326,7 @@ resume_and_build() {
   echo "TMATE Debug      : ${orange}$tmate_option ${reset}"
   echo "${black}$(replicate '=')${reset}"
 
-  if conf "${YELLOW}Deseja prosseguir com a construção da ISO?"; then
+  if conf "${YELLOW}Deseja prosseguir com a construção do PACOTE?"; then
     Realizar_commit_e_gerar_pacote "$package_name"
   else
     die "${RED}" "Construção do PACOTE cancelada."
@@ -325,6 +339,28 @@ Realizar_commit_e_gerar_pacote() {
 	update_commit_push
 	create_branch_and_push "$branch_type"
 	trigger_workflow "$package_name" "$branch_type"
+}
+
+resume_and_build_aur() {
+  local aur_url="https://aur.archlinux.org/${aur_package_name}.git"
+  # Confirmar as escolhas
+  clear
+  echo "${black}$(replicate '=')${reset}"
+  echo -e "${cyan}Resumo das escolhas:${reset}"
+  echo "${black}$(replicate '=')${reset}"
+  echo "Organization     : ${orange}$ORGANIZATION ${reset}"
+  echo "Repo Workflow    : ${orange}$REPO_WORKFLOW ${reset}"
+  echo "User Name        : ${orange}$GITHUB_USER_NAME ${reset}"
+  echo "Package AUR Name : ${orange}$aur_package_name ${reset}"
+  echo "Branch_type      : ${orange}aur-$(date +%Y%m%d_%H%M%S) ${reset}"
+  echo "New Branch       : ${orange}aur-$(date +%Y%m%d_%H%M%S) ${reset}"
+  echo "Url              : ${orange}$aur_url ${reset}"
+  echo "TMATE Debug      : ${orange}$tmate_option ${reset}"
+  echo "${black}$(replicate '=')${reset}"
+
+  if ! conf "${YELLOW}Deseja prosseguir com a construção do PACOTE?"; then
+    die "${RED}" "Construção do PACOTE cancelada."
+  fi
 }
 
 Construir_pacote_do_AUR() {
@@ -356,6 +392,8 @@ Construir_pacote_do_AUR() {
 			break
 		done
 	fi
+
+  resume_and_build_aur
 
 	if $IS_GIT_REPO; then
 		create_branch_and_push "aur"
@@ -395,6 +433,14 @@ menu_advanced() {
 			;;
 		esac
 	done
+}
+
+get_debug() {
+  local -a aDebug=('Não' 'Sim' 'Voltar')
+  create_menu_with_array "Ativar sessão debug TMATE?" aDebug[@] "$TMATE"
+  DEBUG="${MENU_RESULT}"
+  TMATE="${MENU_RESULT}"
+  tmate_option=$([ "$TMATE" == "Sim" ] && echo "true" || echo "false")
 }
 
 ## main() { Início do script principal }
@@ -453,6 +499,12 @@ while true; do
 			fi
 			branch_type=$MENU_RESULT
 			#Realizar_commit_e_gerar_pacote
+
+      get_debug
+      # Verifica se a opção selecionada foi "Voltar"
+      if [[ $MENU_RESULT == "Voltar" ]]; then
+        continue
+      fi
       resume_and_build
 			break
 		else
@@ -460,6 +512,11 @@ while true; do
 		fi
 		;;
 	"Construir pacote do AUR")
+    get_debug
+    # Verifica se a opção selecionada foi "Voltar"
+    if [[ $MENU_RESULT == "Voltar" ]]; then
+      continue
+    fi
 		Construir_pacote_do_AUR
 		break
 		;;
