@@ -4,7 +4,7 @@
 #
 #  build-package - Wrapper git para o BigCommunity
 #  Created: qui 05 set 2024 00:51:12 -04
-#  Altered: seg 23 dez 2024 23:28:25 -04
+#  Altered: seg 30 dez 2024 21:23:39 -04
 #
 #  Copyright (c) 2024-2024, Tales A. Mendonça <talesam@gmail.com>
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
@@ -199,39 +199,39 @@ trigger_workflow() {
 	p_log "$CYAN" "Acionando o workflow de build no GitHub..."
 	if [[ -n "$aur_package" ]]; then
 		aur_url="https://aur.archlinux.org/${package_name}.git"
-##		data="{\"event_type\": \"aur-$package_name\", \"client_payload\": { \"package_name\": \"${package_name}\", \"aur_url\": \"${aur_url}\", \"branch_type\": \"aur\", \"build_env\": \"aur\", \"tmate\": $tmate_option}}"
-#    data="{\
-#      \"event_type\": \"aur-$package_name\", \
-#      \"client_payload\": { \
-#      \"package_name\": \"${package_name}\", \
-#      \"aur_url\": \"${aur_url}\", \
-#      \"branch_type\": \"aur\", \
-#      \"build_env\": \"aur\", \
-#      \"tmate\": $tmate_option \
-#      }\
-#    }"
-#		event_type="aur-build"
-
-    data="{\
-      \"event_type\": \"aur-$package_name\", \
-      \"client_payload\": { \
-      \"package_name\": \"${package_name}\", \
-      \"aur_url\": \"${aur_url}\", \
-      \"branch\": \"${new_branch}\", \
-      \"branch_type\": \"aur\", \
-      \"build_env\": \"aur\", \
-      \"url\": \"${aur_url}\", \
-      \"tmate\": $tmate_option \
-      }\
-    }"
-		event_type="package-build"
+    if [[ "$ORGANIZATION" =~ ^(chililinux|vcatafesta)$ ]]; then
+      data="{\
+        \"event_type\": \"aur-$package_name\", \
+        \"client_payload\": { \
+        \"package_name\": \"${package_name}\", \
+        \"aur_url\": \"${aur_url}\", \
+        \"branch\": \"${new_branch}\", \
+        \"branch_type\": \"aur\", \
+        \"build_env\": \"aur\", \
+        \"url\": \"${aur_url}\", \
+        \"tmate\": $tmate_option \
+        }\
+      }"
+  		event_type="package-build"
+    else
+      data="{\
+        \"event_type\": \"aur-$package_name\", \
+        \"client_payload\": { \
+        \"package_name\": \"${package_name}\", \
+        \"aur_url\": \"${aur_url}\", \
+        \"branch_type\": \"aur\", \
+        \"build_env\": \"aur\", \
+        \"tmate\": $tmate_option \
+        }\
+      }"
+  		event_type="aur-build"
+		fi
 	else
 		repo_name=$(git config --get remote.origin.url | sed 's/.*[:/]\([^/]*\/[^.]*\).*/\1/')
 		if [[ -z "$repo_name" ]]; then
 			die "$RED" "Deu ruim na recuperação da URL do repositório remoto do pacote: $package_name"
 		fi
 		p_log "$CYAN" "Repositório detectado: $repo_name"
-#		data="{\"event_type\": \"$package_name\", \"client_payload\": { \"branch\": \"${new_branch}\", \"type\": \"${branch_type}\", \"url\": \"https://github.com/${repo_name}\"}}"
     data="{\
       \"event_type\": \"$package_name\", \
       \"client_payload\": { \
