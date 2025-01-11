@@ -734,12 +734,14 @@ while [[ $# -gt 0 ]]; do
 	case "$arg" in
 	-v | --verbose)
 		verbose=true
+	  msg_info "Detectado parâmetro -v - modo verbose ativado!"
 		shift
 		;;
 	-n | --nocolor)
 		nocolor=true
 		if [[ "$nocolor" == "true" ]]; then
 			unset_varcolors
+	    msg_info "Detectado parâmetro -n - desativando saida em cores!"
 		else
 			set_varcolors
 		fi
