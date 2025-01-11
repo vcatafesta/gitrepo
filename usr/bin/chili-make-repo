@@ -58,20 +58,119 @@ declare PKG_EXT='pkg.tar.zst'
 declare -A AVps=([communitybig]="oracle" [chili]="hostinger|oracle")
 declare config_file="$HOME/.chili-make-repo.conf"
 
-#TIni.Set "$app_fullname" "Desktop Entry" "Exec" "$line_exec"
-#name=$(TIni.Get "$file" 'Desktop Entry' 'Name')
-#local_PATH=$(TIni.Get "$config_file" '$organization' 'local_PATH')
-
 sh_config() {
+  declare -gA Acores=(
+    [cabecalho]="$roxo"
+    [logo]="$red"
+    [statussup]="$ciano"
+    [statusinf]="$azul"
+    [box]="$azul"
+    [boxtitle]="${reverse}$azul"
+    [dispbox]="$cinza"
+    [msgok]="$green"
+    [msgerror]="$red"
+    [conf]="$red"
+    [panofundo]="█▓░▒pdvShell█▒▓░"
+    [corpanofundo]="$cinza"
+  )
+	declare -gi lastrow=$(lastrow)
+	declare -gi lastcol=$(lastcol)
+	declare -gi Prow=0
+	declare -gi Pcol=0
+
 	if check_config_file; then
-		local_PATH=$(TIni.Get "$config_file" "$organization" 'local_PATH')
-		prefix_DB=$(TIni.Get "$config_file" "$organization" 'prefix_DB')
-		remote_USER=$(TIni.Get "$config_file" "$organization" 'remote_USER')
-		remote_PORT=$(TIni.Get "$config_file" "$organization" 'remote_PORT')
-		remote_HOST=$(TIni.Get "$config_file" "$organization" 'remote_HOST')
-		remote_PATH=$(TIni.Get "$config_file" "$organization" 'remote_PATH')
+    get_organization_conf
 	fi
 	return 0
+}
+
+errorbeep() {
+  printf '\a' # beep
+}
+
+get_organization_conf() {
+  local_PATH=$(TIni.Get "$config_file" "$organization" 'local_PATH')
+  prefix_DB=$(TIni.Get "$config_file" "$organization" 'prefix_DB')
+  remote_USER=$(TIni.Get "$config_file" "$organization" 'remote_USER')
+  remote_PORT=$(TIni.Get "$config_file" "$organization" 'remote_PORT')
+  remote_HOST=$(TIni.Get "$config_file" "$organization" 'remote_HOST')
+  remote_PATH=$(TIni.Get "$config_file" "$organization" 'remote_PATH')
+  SECRETKEY=$(TIni.Get "$config_file" "$organization" 'SECRETKEY')
+  GPGKEY=$(TIni.Get "$config_file" "$organization" 'GPGKEY')
+}
+
+dbseek_conf() {
+  get_organization_conf "$@"
+}
+
+function row() { echo "$Prow"; }
+function col() { echo "$Pcol"; }
+function lastrow() { echo "$(tput lines)"; }
+function lastcol() { echo "$(tput cols)"; }
+
+function print() {
+	local row="$1"
+	local col="$2"
+	local msg="$3"
+	local color="${4:-${Acores[box]}}"
+
+	setpos "$row" "$col"
+	printf "${color}${msg}"
+}
+
+function setpos() {
+	local row="$1"
+	local col="$2"
+
+	Prow="$row"
+	Pcol="$col"
+	# tput cup "$row" "$col"
+	printf "\e[$((row + 1));$((col + 1))H"
+}
+
+function get() {
+	local row="$1"
+	local col="$2"
+	local prompt="$3"
+	local new_value="$4"
+	local old_value="$5"
+	local color="${6:-${Acores[box]}}"
+
+	setpos "$row" "$col"
+	printf "%s" "${reset}$color"
+	read -p "${prompt}${reverse}" -e -i "$old_value" "$new_value"
+	tput sc # Salva a posição atual do cursor
+	echo -e "$reset"
+}
+
+function readconf() {
+	local msg="$1"
+	local color="${2:-${Acores[conf]}}"
+	local nobox="${3:-0}"
+	local largura_mensagem
+	local nrow="$(row)"
+	local ncol="$(col)"
+
+	echo -n -e "$color"
+	printf '\a' # beep
+	if ((nobox)); then
+		setpos "$nrow" "$ncol"
+	else
+		largura_mensagem=$((${#msg} + 9))
+		#mabox "$nrow" "$ncol" 3 "$largura_mensagem"
+		setpos "$((nrow + 1))" "$((ncol + 1))"
+	fi
+	if [[ $LC_DEFAULT -eq 0 ]]; then
+		read -n1 -s -r -p "$msg [S/n]"
+	else
+		read -n1 -s -r -p "$msg [Y/n]"
+	fi
+	echo -n -e "$reset"
+	case "${REPLY^}" in
+	[SY]) return 0 ;;
+	"") return 0 ;;
+	*) return 1 ;;
+	esac
 }
 
 function TIni.Get() {
@@ -617,12 +716,12 @@ sh_remote_pull() {
 		msg_raw "    Local : ${local_PATH}"
 		msg_raw "   Remoto : ${remote_PATH}"
 		if $verbose; then
-  		echo -n $black
-	  	rsync --itemize-changes --info=skip0 -Craz -e "ssh -p ${remote_PORT}" ${remote_USER}@${remote_HOST}:${remote_PATH}/ ${local_PATH}/
-		  echo -n $reset
-    else
-	  	rsync --info=skip0 -Craz -e "ssh -p ${remote_PORT}" ${remote_USER}@${remote_HOST}:${remote_PATH}/ ${local_PATH}/
-    fi
+			echo -n $black
+			rsync --itemize-changes --info=skip0 -Craz -e "ssh -p ${remote_PORT}" ${remote_USER}@${remote_HOST}:${remote_PATH}/ ${local_PATH}/
+			echo -n $reset
+		else
+			rsync --info=skip0 -Craz -e "ssh -p ${remote_PORT}" ${remote_USER}@${remote_HOST}:${remote_PATH}/ ${local_PATH}/
+		fi
 	done
 }
 
@@ -644,19 +743,19 @@ sh_create_databases() {
 		msg_info "${cyan}Recriando database ${orange}'${db_name}.db.tar.gz' ${cyan}localmente ${reset}"
 		msg_run "repo-add -q -p -n -R ${db_name}.db.tar.gz *.pkg.tar.zst"
 
-    if [[ "$organization" == 'chili' ]]; then
-  		msg_info "${cyan}Recriando link for ${orange}'chililinux-${branch}.db.tar.gz' ${cyan}localmente ${reset}"
-  		msg_run "cp -f ${db_name}.db.tar.gz chililinux-${branch}.db.tar.gz"
-  		msg_run "cp -f ${db_name}.files.tar.gz chililinux-${branch}.files.tar.gz"
-  		msg_run "ln -sf chililinux-${branch}.db.tar.gz chililinux-${branch}.db"
-	  	msg_run "ln -sf chililinux-${branch}.files.tar.gz chililinux-${branch}.files"
-	  else
-   		msg_info "${cyan}Recriando link for ${orange}'chili-${branch}.db.tar.gz' ${cyan}localmente ${reset}"
-  		msg_run "cp -f ${db_name}.db.tar.gz chili-${branch}.db.tar.gz"
-  		msg_run "cp -f ${db_name}.files.tar.gz chili-${branch}.files.tar.gz"
-	  	msg_run "ln -sf chili-${branch}.db.tar.gz chili-${branch}.db"
-	  	msg_run "ln -sf chili-${branch}.files.tar.gz chili-${branch}.files"
-	  fi
+		if [[ "$organization" == 'chili' ]]; then
+			msg_info "${cyan}Recriando link for ${orange}'chililinux-${branch}.db.tar.gz' ${cyan}localmente ${reset}"
+			msg_run "cp -f ${db_name}.db.tar.gz chililinux-${branch}.db.tar.gz"
+			msg_run "cp -f ${db_name}.files.tar.gz chililinux-${branch}.files.tar.gz"
+			msg_run "ln -sf chililinux-${branch}.db.tar.gz chililinux-${branch}.db"
+			msg_run "ln -sf chililinux-${branch}.files.tar.gz chililinux-${branch}.files"
+		else
+			msg_info "${cyan}Recriando link for ${orange}'chili-${branch}.db.tar.gz' ${cyan}localmente ${reset}"
+			msg_run "cp -f ${db_name}.db.tar.gz chili-${branch}.db.tar.gz"
+			msg_run "cp -f ${db_name}.files.tar.gz chili-${branch}.files.tar.gz"
+			msg_run "ln -sf chili-${branch}.db.tar.gz chili-${branch}.db"
+			msg_run "ln -sf chili-${branch}.files.tar.gz chili-${branch}.files"
+		fi
 		popd >/dev/null 2>&- || exit 1
 		replicate '-'
 	done
@@ -671,12 +770,12 @@ sh_remote_push() {
 		pushd $local_PATH >/dev/null 2>&- || exit 1
 		msg_info "${cyan}Empurrando para o remoto: ${orange}$organization ${reset}"
 		if $verbose; then
-  		echo -n $black
-  		rsync --itemize-changes --info=skip0 --delete -Craz -e "ssh -p ${remote_PORT}" ${local_PATH}/ ${remote_USER}@${remote_HOST}:${remote_PATH}/
-  		echo -n $reset
-	  else
-  		rsync --info=skip0 --delete -Craz -e "ssh -p ${remote_PORT}" ${local_PATH}/ ${remote_USER}@${remote_HOST}:${remote_PATH}/
-	  fi
+			echo -n $black
+			rsync --itemize-changes --info=skip0 --delete -Craz -e "ssh -p ${remote_PORT}" ${local_PATH}/ ${remote_USER}@${remote_HOST}:${remote_PATH}/
+			echo -n $reset
+		else
+			rsync --info=skip0 --delete -Craz -e "ssh -p ${remote_PORT}" ${local_PATH}/ ${remote_USER}@${remote_HOST}:${remote_PATH}/
+		fi
 		popd >/dev/null 2>&- || exit 1
 		replicate '-'
 	done
@@ -707,12 +806,13 @@ sh_usage() {
 		    ${red}Uso: ${reset}$APP ${cyan}[opções]${reset}
 
 		        ${cyan}Opções:${reset}
-		          -o|--org|--organization ${orange}<name> ${cyan} # Configura organização no Github ${reset}válidos: ${yellow}chili,chililinux, communitybig ou biglinux ${reset}
-		          -V|--version                   ${cyan} # Imprime a versão do aplicativo ${reset}
-		          -n|--nocolor                   ${cyan} # Suprime a impressão de cores ${reset}
+		          -o|--org|--organization ${orange}<name> ${cyan} # Configura organização no Github ${reset}válidos: ${yellow}chili,chililinux,communitybig ou biglinux ${reset}
+		          -c|--config                    ${cyan} # configurar ambiente ${reset}
 		          -s|--synchronize               ${cyan} # sincronizar local com remoto (puxar/empurrar) ${reset}
 		          -S|--sign                      ${cyan} # assinar pacote faltantes ${reset}
+		          -n|--nocolor                   ${cyan} # Suprime a impressão de cores ${reset}
 		          -v|--verbose                   ${cyan} # ativa modo verboso ${reset}
+		          -V|--version                   ${cyan} # Imprime a versão do aplicativo ${reset}
 		          -h|--help                      ${cyan} # Mostra este Help ${reset}
 
 		    ${red}ex: ${cyan}${APP} -o chili -s testing      ${reset}
@@ -721,6 +821,64 @@ sh_usage() {
 		        ${cyan}${APP} -o chili --sign all      ${reset}
 	EOF
 	exit 0
+}
+
+sh_setup() {
+	clear
+	get_organization_conf
+	setpos 9 00
+	print 9 10 "$APP - CONFIGURAÇÃO de organization" $red
+	setpos 10 00
+	replicate '-'
+	print 11 10 "Organization  : $organization"
+	print 12 10 "prefix_DB     : $prefix_DB"
+	print 13 10 "local_PATH    : $local_PATH"
+	print 14 10 "remote_HOST   : $remote_HOST"
+	print 15 10 "remote_PORT   : $remote_PORT"
+	print 16 10 "remote_PATH   : $remote_PATH"
+	print 17 10 "remote_USER   : $remote_USER"
+	print 18 10 "SECRETKEY     : $SECRETKEY"
+	print 19 10 "GPGKEY        : $GPGKEY"
+	setpos 20 00
+	replicate '-'
+
+	while true; do
+		get 11 10 "Organization  : " get_organization $organization
+		if [[ -z "$get_organization" ]]; then
+			setpos 22 10
+		  errorbeep
+			if readconf "$(gettext "Organization não pode ser em branco. Cancelar?")" $red 1; then
+			  echo
+			  die "$(gettext "Organization não pode ser em branco.")"
+			fi
+			continue
+		fi
+		organization="$get_organization"; dbseek_conf
+    break
+  done
+
+  while true; do
+		get 12 10 "prefix_DB     : " get_prefix_DB $prefix_DB
+		get 13 10 "local_PATH    : " get_local_PATH $local_PATH
+		get 14 10 "remote_HOST   : " get_remote_HOST $remote_HOST
+		get 15 10 "remote_PORT   : " get_remote_PORT $remote_PORT
+		get 16 10 "remote_PATH   : " get_remote_PATH $remote_PATH
+		get 17 10 "remote_USER   : " get_remote_USER $remote_USER
+		get 18 10 "SECRETKEY     : " get_SECRETKEY   $SECRETKEY
+		get 19 10 "GPGKEY        : " get_GPGKEY      $GPGKEY
+
+		TIni.Set "$config_file" "$get_organization" "SECRETKEY" "$get_SECRETKEY"
+		TIni.Set "$config_file" "$get_organization" "GPGKEY" "$get_GPGKEY"
+		TIni.Set "$config_file" "$get_organization" "local_PATH" "$get_local_PATH"
+		TIni.Set "$config_file" "$get_organization" "prefix_DB" "$get_prefix_DB"
+		TIni.Set "$config_file" "$get_organization" "remote_USER" "$get_remote_USER"
+		TIni.Set "$config_file" "$get_organization" "remote_PORT" "$get_remote_PORT"
+		TIni.Set "$config_file" "$get_organization" "remote_HOST" "$get_remote_HOST"
+		TIni.Set "$config_file" "$get_organization" "remote_PATH" "$get_remote_PATH"
+		break
+	done
+	clear
+	return 0
 }
 
 set_varcolors
@@ -734,14 +892,14 @@ while [[ $# -gt 0 ]]; do
 	case "$arg" in
 	-v | --verbose)
 		verbose=true
-	  msg_info "Detectado parâmetro -v - modo verbose ativado!"
+		msg_info "Detectado parâmetro -v - modo verbose ativado!"
 		shift
 		;;
 	-n | --nocolor)
 		nocolor=true
 		if [[ "$nocolor" == "true" ]]; then
 			unset_varcolors
-	    msg_info "Detectado parâmetro -n - desativando saida em cores!"
+			msg_info "Detectado parâmetro -n - desativando saida em cores!"
 		else
 			set_varcolors
 		fi
@@ -768,7 +926,7 @@ while [[ $# -gt 0 ]]; do
 			if [[ -z "$organization" ]]; then
 				die "${cyan}Nenhuma organização definida. (Use -h para ajuda)${reset}"
 			fi
-  		search_for_sign_package
+			search_for_sign_package
 			exit 0
 		else
 			die "Opção inválida para --sign: $next_arg. Use ${yellow}'stable', 'testing', 'extra' ou 'all'${reset}"
@@ -780,6 +938,7 @@ while [[ $# -gt 0 ]]; do
 			branch="$next_arg"
 			shift 2
 			if [[ -z "$organization" ]]; then
+			  errorbeep
 				die "${cyan}Nenhuma organização definida. (Use -h para ajuda)${reset}"
 			fi
 			sh_synchronize_remote_with_local "$branch"
@@ -788,9 +947,18 @@ while [[ $# -gt 0 ]]; do
 			die "Opção inválida para --synchronize: $next_arg. Use ${yellow}'stable', 'testing', 'extra' ou 'all'${reset}"
 		fi
 		;;
+	-c | --config)
+		sh_setup
+		break
+		;;
 	*)
 		die "Opção inválida! (Use -h para ajuda)"
 		break
 		;;
 	esac
 done
+
+if [[ $# -lt 1 ]]; then
+  die "Faltou parâmetros para continuar! (Use -h para ajuda)"
+fi
+
