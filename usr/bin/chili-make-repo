@@ -5,7 +5,7 @@
 #  chili-make-repo
 #  Created: 2024/08/21 - 19:07
 #  Altered: dom 27 out 2024 09:19:14 -04
-#  Updated: sex 10 jan 2025 16:34:23 -04
+#  Updated: sáb 11 jan 2025 11:04:29 -04
 #
 #  Copyright (c) 2024-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -48,9 +48,10 @@ shopt -s extglob
 
 #system
 declare APP="${0##*/}"
-declare VERSION="1.1.5-20250109"
+declare VERSION="1.1.11-20250111"
 declare APPDESC="Wrapper para gerenciamento de repositorios like arch"
 declare nocolor=false
+declare verbose=false
 declare organization=
 declare FETCH_RE='-[^-]+[0-9]+[^.]*.pkg[^.]*.tar.zst$'
 declare PKG_EXT='pkg.tar.zst'
@@ -615,7 +616,13 @@ sh_remote_pull() {
 		msg_info "${cyan}Sincronizando... Puxando do remoto para local ${reset}"
 		msg_raw "    Local : ${local_PATH}"
 		msg_raw "   Remoto : ${remote_PATH}"
-		rsync --info=skip0 -Craz -e "ssh -p ${remote_PORT}" ${remote_USER}@${remote_HOST}:${remote_PATH}/ ${local_PATH}/
+		if $verbose; then
+  		echo -n $black
+	  	rsync --itemize-changes --info=skip0 -Craz -e "ssh -p ${remote_PORT}" ${remote_USER}@${remote_HOST}:${remote_PATH}/ ${local_PATH}/
+		  echo -n $reset
+    else
+	  	rsync --info=skip0 -Craz -e "ssh -p ${remote_PORT}" ${remote_USER}@${remote_HOST}:${remote_PATH}/ ${local_PATH}/
+    fi
 	done
 }
 
@@ -663,9 +670,13 @@ sh_remote_push() {
 
 		pushd $local_PATH >/dev/null 2>&- || exit 1
 		msg_info "${cyan}Empurrando para o remoto: ${orange}$organization ${reset}"
-		echo -n $black
-		rsync --itemize-changes --info=skip0 --delete -Craz -e "ssh -p ${remote_PORT}" ${local_PATH}/ ${remote_USER}@${remote_HOST}:${remote_PATH}/
-		echo -n $reset
+		if $verbose; then
+  		echo -n $black
+  		rsync --itemize-changes --info=skip0 --delete -Craz -e "ssh -p ${remote_PORT}" ${local_PATH}/ ${remote_USER}@${remote_HOST}:${remote_PATH}/
+  		echo -n $reset
+	  else
+  		rsync --info=skip0 --delete -Craz -e "ssh -p ${remote_PORT}" ${local_PATH}/ ${remote_USER}@${remote_HOST}:${remote_PATH}/
+	  fi
 		popd >/dev/null 2>&- || exit 1
 		replicate '-'
 	done
@@ -701,6 +712,7 @@ sh_usage() {
 		          -n|--nocolor                   ${cyan} # Suprime a impressão de cores ${reset}
 		          -s|--synchronize               ${cyan} # sincronizar local com remoto (puxar/empurrar) ${reset}
 		          -S|--sign                      ${cyan} # assinar pacote faltantes ${reset}
+		          -v|--verbose                   ${cyan} # ativa modo verboso ${reset}
 		          -h|--help                      ${cyan} # Mostra este Help ${reset}
 
 		    ${red}ex: ${cyan}${APP} -o chili -s testing      ${reset}
@@ -720,6 +732,10 @@ fi
 while [[ $# -gt 0 ]]; do
 	arg="$1"
 	case "$arg" in
+	-v | --verbose)
+		verbose=true
+		shift
+		;;
 	-n | --nocolor)
 		nocolor=true
 		if [[ "$nocolor" == "true" ]]; then
