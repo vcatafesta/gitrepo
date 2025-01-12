@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # -*- coding: utf-8 -*-
-# shellcheck shell=bash disable=SC1091,SC2039,SC2166,SC2001,SC2034,SC2183,SC2154
+# shellcheck shell=bash disable=SC1091,SC2039,SC2166,SC2001,SC2034,SC2183,SC2154,SC2059,SC2229,SC2128
 #
 #  chili-make-repo
 #  Created: 2024/08/21 - 19:07
 #  Altered: dom 27 out 2024 09:19:14 -04
-#  Updated: sáb 11 jan 2025 11:04:29 -04
+#  Updated: dom 12 jan 2025 01:41:48 -04
 #
 #  Copyright (c) 2024-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -59,54 +59,54 @@ declare -A AVps=([communitybig]="oracle" [chili]="hostinger|oracle")
 declare config_file="$HOME/.chili-make-repo.conf"
 
 sh_config() {
-  declare -gA Acores=(
-    [cabecalho]="$roxo"
-    [logo]="$red"
-    [statussup]="$ciano"
-    [statusinf]="$azul"
-    [box]="$azul"
-    [boxtitle]="${reverse}$azul"
-    [dispbox]="$cinza"
-    [msgok]="$green"
-    [msgerror]="$red"
-    [conf]="$red"
-    [panofundo]="█▓░▒pdvShell█▒▓░"
-    [corpanofundo]="$cinza"
-  )
-	declare -gi lastrow=$(lastrow)
-	declare -gi lastcol=$(lastcol)
+	declare -gA Acores=(
+		[cabecalho]="$roxo"
+		[logo]="$red"
+		[statussup]="$ciano"
+		[statusinf]="$azul"
+		[box]="$azul"
+		[boxtitle]="${reverse}$azul"
+		[dispbox]="$cinza"
+		[msgok]="$green"
+		[msgerror]="$red"
+		[conf]="$red"
+		[panofundo]="█▓░▒pdvShell█▒▓░"
+		[corpanofundo]="$cinza"
+	)
+	declare -gi lastrow; lastrow=$(lastrow)
+	declare -gi lastcol; lastcol=$(lastcol)
 	declare -gi Prow=0
 	declare -gi Pcol=0
 
 	if check_config_file; then
-    get_organization_conf
+		get_organization_conf
 	fi
 	return 0
 }
 
 errorbeep() {
-  printf '\a' # beep
+	printf '\a' # beep
 }
 
 get_organization_conf() {
-  local_PATH=$(TIni.Get "$config_file" "$organization" 'local_PATH')
-  prefix_DB=$(TIni.Get "$config_file" "$organization" 'prefix_DB')
-  remote_USER=$(TIni.Get "$config_file" "$organization" 'remote_USER')
-  remote_PORT=$(TIni.Get "$config_file" "$organization" 'remote_PORT')
-  remote_HOST=$(TIni.Get "$config_file" "$organization" 'remote_HOST')
-  remote_PATH=$(TIni.Get "$config_file" "$organization" 'remote_PATH')
-  SECRETKEY=$(TIni.Get "$config_file" "$organization" 'SECRETKEY')
-  GPGKEY=$(TIni.Get "$config_file" "$organization" 'GPGKEY')
+	local_PATH=$(TIni.Get "$config_file" "$organization" 'local_PATH')
+	prefix_DB=$(TIni.Get "$config_file" "$organization" 'prefix_DB')
+	remote_USER=$(TIni.Get "$config_file" "$organization" 'remote_USER')
+	remote_PORT=$(TIni.Get "$config_file" "$organization" 'remote_PORT')
+	remote_HOST=$(TIni.Get "$config_file" "$organization" 'remote_HOST')
+	remote_PATH=$(TIni.Get "$config_file" "$organization" 'remote_PATH')
+	SECRETKEY=$(TIni.Get "$config_file" "$organization" 'SECRETKEY')
+	GPGKEY=$(TIni.Get "$config_file" "$organization" 'GPGKEY')
 }
 
 dbseek_conf() {
-  get_organization_conf "$@"
+	get_organization_conf "$@"
 }
 
 function row() { echo "$Prow"; }
 function col() { echo "$Pcol"; }
-function lastrow() { echo "$(tput lines)"; }
-function lastcol() { echo "$(tput cols)"; }
+function lastrow() { tput lines; }
+function lastcol() { tput cols; }
 
 function print() {
 	local row="$1"
@@ -138,7 +138,7 @@ function get() {
 
 	setpos "$row" "$col"
 	printf "%s" "${reset}$color"
-	read -p "${prompt}${reverse}" -e -i "$old_value" "$new_value"
+	read -r -p "${prompt}${reverse}" -e -i "$old_value" "$new_value"
 	tput sc # Salva a posição atual do cursor
 	echo -e "$reset"
 }
@@ -148,9 +148,11 @@ function readconf() {
 	local color="${2:-${Acores[conf]}}"
 	local nobox="${3:-0}"
 	local largura_mensagem
-	local nrow="$(row)"
-	local ncol="$(col)"
+	local nrow
+	local ncol
 
+  nrow="$(row)"
+	ncol="$(col)"
 	echo -n -e "$color"
 	printf '\a' # beep
 	if ((nobox)); then
@@ -692,7 +694,7 @@ sh_synchronize_remote_with_local() {
 	sh_remote_pull
 	search_for_sign_package
 	sh_create_databases
-	sh_remote_push
+	sh_remote_push "$@"
 }
 
 sh_remote_pull() {
@@ -711,16 +713,16 @@ sh_remote_pull() {
 		msg_raw " remote_HOST: ${remote_HOST}"
 		msg_raw " remote_PORT: ${remote_PORT}"
 
-		pushd $local_PATH >/dev/null 2>&- || exit 1
+		pushd "$local_PATH" >/dev/null 2>&- || exit 1
 		msg_info "${cyan}Sincronizando... Puxando do remoto para local ${reset}"
 		msg_raw "    Local : ${local_PATH}"
 		msg_raw "   Remoto : ${remote_PATH}"
 		if $verbose; then
-			echo -n $black
-			rsync --itemize-changes --info=skip0 -Craz -e "ssh -p ${remote_PORT}" ${remote_USER}@${remote_HOST}:${remote_PATH}/ ${local_PATH}/
-			echo -n $reset
+			echo -n "$black"
+			rsync --itemize-changes --info=skip0 -Craz -e "ssh -p ${remote_PORT}" "${remote_USER}"@"${remote_HOST}":"${remote_PATH}"/ "${local_PATH}"/
+			echo -n "$reset"
 		else
-			rsync --info=skip0 -Craz -e "ssh -p ${remote_PORT}" ${remote_USER}@${remote_HOST}:${remote_PATH}/ ${local_PATH}/
+			rsync --info=skip0 -Craz -e "ssh -p ${remote_PORT}" "${remote_USER}"@"${remote_HOST}":"${remote_PATH}"/ "${local_PATH}"/
 		fi
 	done
 }
@@ -731,15 +733,15 @@ sh_create_databases() {
 		local_PATH+="/${branch,,}/x86_64"
 		db_name="${prefix_DB}-${branch,,}"
 
-		pushd $local_PATH >/dev/null 2>&- || exit 1
-		rm -f *.md5 >/dev/null 2>&-
+		pushd "$local_PATH" >/dev/null 2>&- || exit 1
+		rm -f -- *.md5 >/dev/null 2>&-
 
 		AllOldPackages=$(find "$PWD" -type f -iname "*.$PKG_EXT" | sort -Vr | awk -F "$FETCH_RE" 'lista[$1]++')
-		for old in ${AllOldPackages[@]}; do
+		for old in "${AllOldPackages[@]}"; do
 			msg_info "${red}=>Removendo pacote antigo: [$((++count))] => $(basename "${old}") ${reset}"
-			rm -f ${old} ${old}.sig ${old}.md5 ${old}.sig.md5 >/dev/null 2>&-
+			rm -f "${old}" "${old}".sig "${old}".md5 "${old}".sig.md5 >/dev/null 2>&-
 		done
-		rm -f ${db_name}* >/dev/null 2>&-
+		rm -f "${db_name}"* >/dev/null 2>&-
 		msg_info "${cyan}Recriando database ${orange}'${db_name}.db.tar.gz' ${cyan}localmente ${reset}"
 		msg_run "repo-add -q -p -n -R ${db_name}.db.tar.gz *.pkg.tar.zst"
 
@@ -767,14 +769,14 @@ sh_remote_push() {
 		remote_PATH+="/${branch,,}/x86_64"
 		local_PATH+="/${branch,,}/x86_64"
 
-		pushd $local_PATH >/dev/null 2>&- || exit 1
+		pushd "$local_PATH" >/dev/null 2>&- || exit 1
 		msg_info "${cyan}Empurrando para o remoto: ${orange}$organization ${reset}"
 		if $verbose; then
-			echo -n $black
-			rsync --itemize-changes --info=skip0 --delete -Craz -e "ssh -p ${remote_PORT}" ${local_PATH}/ ${remote_USER}@${remote_HOST}:${remote_PATH}/
-			echo -n $reset
+			echo -n "$black"
+			rsync --itemize-changes --info=skip0 --delete -Craz -e "ssh -p ${remote_PORT}" "${local_PATH}"/ "${remote_USER}"@"${remote_HOST}":"${remote_PATH}"/
+			echo -n "$reset"
 		else
-			rsync --info=skip0 --delete -Craz -e "ssh -p ${remote_PORT}" ${local_PATH}/ ${remote_USER}@${remote_HOST}:${remote_PATH}/
+			rsync --info=skip0 --delete -Craz -e "ssh -p ${remote_PORT}" "${local_PATH}"/ "${remote_USER}"@"${remote_HOST}":"${remote_PATH}"/
 		fi
 		popd >/dev/null 2>&- || exit 1
 		replicate '-'
@@ -827,7 +829,7 @@ sh_setup() {
 	clear
 	get_organization_conf
 	setpos 9 00
-	print 9 10 "$APP - CONFIGURAÇÃO de organization" $red
+	print 9 10 "$APP - CONFIGURAÇÃO de organization" "$red"
 	setpos 10 00
 	replicate '-'
 	print 11 10 "Organization  : $organization"
@@ -843,48 +845,53 @@ sh_setup() {
 	replicate '-'
 
 	while true; do
-		get 11 10 "Organization  : " get_organization $organization
+		get 11 10 "Organization  : " get_organization "$organization"
 		if [[ -z "$get_organization" ]]; then
 			setpos 22 10
-		  errorbeep
-			if readconf "$(gettext "Organization não pode ser em branco. Cancelar?")" $red 1; then
-			  echo
-			  die "$(gettext "Organization não pode ser em branco.")"
+			errorbeep
+			if readconf "$(gettext "Organization não pode ser em branco. Cancelar?")" "$red" 1; then
+				echo
+				die "$(gettext "Organization não pode ser em branco.")"
 			fi
 			continue
 		fi
-		organization="$get_organization"; dbseek_conf
-    break
-  done
-
-  while true; do
-		get 12 10 "prefix_DB     : " get_prefix_DB $prefix_DB
-		get 13 10 "local_PATH    : " get_local_PATH $local_PATH
-		get 14 10 "remote_HOST   : " get_remote_HOST $remote_HOST
-		get 15 10 "remote_PORT   : " get_remote_PORT $remote_PORT
-		get 16 10 "remote_PATH   : " get_remote_PATH $remote_PATH
-		get 17 10 "remote_USER   : " get_remote_USER $remote_USER
-		get 18 10 "SECRETKEY     : " get_SECRETKEY   $SECRETKEY
-		get 19 10 "GPGKEY        : " get_GPGKEY      $GPGKEY
-
-		TIni.Set "$config_file" "$get_organization" "SECRETKEY" "$get_SECRETKEY"
-		TIni.Set "$config_file" "$get_organization" "GPGKEY" "$get_GPGKEY"
-		TIni.Set "$config_file" "$get_organization" "local_PATH" "$get_local_PATH"
-		TIni.Set "$config_file" "$get_organization" "prefix_DB" "$get_prefix_DB"
-		TIni.Set "$config_file" "$get_organization" "remote_USER" "$get_remote_USER"
-		TIni.Set "$config_file" "$get_organization" "remote_PORT" "$get_remote_PORT"
-		TIni.Set "$config_file" "$get_organization" "remote_HOST" "$get_remote_HOST"
-		TIni.Set "$config_file" "$get_organization" "remote_PATH" "$get_remote_PATH"
+		organization="$get_organization"
+		dbseek_conf "$organization"
 		break
 	done
-	clear
+
+	while true; do
+		get 12 10 "prefix_DB     : " get_prefix_DB "$prefix_DB"
+		get 13 10 "local_PATH    : " get_local_PATH "$local_PATH"
+		get 14 10 "remote_HOST   : " get_remote_HOST "$remote_HOST"
+		get 15 10 "remote_PORT   : " get_remote_PORT "$remote_PORT"
+		get 16 10 "remote_PATH   : " get_remote_PATH "$remote_PATH"
+		get 17 10 "remote_USER   : " get_remote_USER "$remote_USER"
+		get 18 10 "SECRETKEY     : " get_SECRETKEY "$SECRETKEY"
+		get 19 10 "GPGKEY        : " get_GPGKEY "$GPGKEY"
+
+		setpos 21 10
+		errorbeep
+		if readconf "$(gettext "Confirma alteração/inclusão dos dados?")" "$red" 1; then
+			TIni.Set "$config_file" "$get_organization" "SECRETKEY" "$get_SECRETKEY"
+			TIni.Set "$config_file" "$get_organization" "GPGKEY" "$get_GPGKEY"
+			TIni.Set "$config_file" "$get_organization" "local_PATH" "$get_local_PATH"
+			TIni.Set "$config_file" "$get_organization" "prefix_DB" "$get_prefix_DB"
+			TIni.Set "$config_file" "$get_organization" "remote_USER" "$get_remote_USER"
+			TIni.Set "$config_file" "$get_organization" "remote_PORT" "$get_remote_PORT"
+			TIni.Set "$config_file" "$get_organization" "remote_HOST" "$get_remote_HOST"
+			TIni.Set "$config_file" "$get_organization" "remote_PATH" "$get_remote_PATH"
+			echo
+			msg_ok "Inclusão/Alteração aplicada!"
+		fi
+		break
+	done
 	return 0
 }
 
 set_varcolors
 if test $# -lt 1; then
 	sh_usage
-	exit 0
 fi
 
 while [[ $# -gt 0 ]]; do
@@ -911,7 +918,6 @@ while [[ $# -gt 0 ]]; do
 		;;
 	-h | --help)
 		sh_usage
-		exit 0
 		;;
 	-o | --org | --organization)
 		next_arg="${2:-}"
@@ -938,11 +944,10 @@ while [[ $# -gt 0 ]]; do
 			branch="$next_arg"
 			shift 2
 			if [[ -z "$organization" ]]; then
-			  errorbeep
+				errorbeep
 				die "${cyan}Nenhuma organização definida. (Use -h para ajuda)${reset}"
 			fi
 			sh_synchronize_remote_with_local "$branch"
-			exit 0
 		else
 			die "Opção inválida para --synchronize: $next_arg. Use ${yellow}'stable', 'testing', 'extra' ou 'all'${reset}"
 		fi
@@ -953,12 +958,10 @@ while [[ $# -gt 0 ]]; do
 		;;
 	*)
 		die "Opção inválida! (Use -h para ajuda)"
-		break
 		;;
 	esac
 done
 
 if [[ $# -lt 1 ]]; then
-  die "Faltou parâmetros para continuar! (Use -h para ajuda)"
+	die "Faltou parâmetros para continuar! (Use -h para ajuda)"
 fi
-
