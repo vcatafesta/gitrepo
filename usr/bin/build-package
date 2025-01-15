@@ -199,6 +199,8 @@ trigger_workflow() {
 	p_log "$CYAN" "Acionando o workflow de build no GitHub..."
 	if [[ -n "$aur_package" ]]; then
 		aur_url="https://aur.archlinux.org/${package_name}.git"
+    package_name="${package_name//aur-/}"
+    package_name="${package_name//aur/}"
     if [[ "$ORGANIZATION" =~ ^(chililinux|vcatafesta)$ ]]; then
       data="{\
         \"event_type\": \"aur-$package_name\", \
