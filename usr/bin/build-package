@@ -266,6 +266,7 @@ trigger_workflow() {
 	sleep 2
 	p_log "$RESET" "$(get_url_actions)"
 	IS_AUR_PACKAGE=false
+	is_aur_package=false
 }
 
 sh_configure_environment() {
@@ -343,7 +344,7 @@ Realizar_commit_e_gerar_pacote() {
 	#package_name=$(get_package_name)
 	update_commit_push
 	create_branch_and_push "$branch_type"
-	trigger_workflow "$package_name" "$branch_type"
+	trigger_workflow "$package_name" "$branch_type" "false"
 }
 
 resume_and_build_aur() {
@@ -406,6 +407,7 @@ Construir_pacote_do_AUR() {
 		create_branch_and_push "aur"
 	fi
 	trigger_workflow "$aur_package_name" "aur" "true"
+  IS_AUR_PACKAGE=false
 }
 
 menu_advanced() {
