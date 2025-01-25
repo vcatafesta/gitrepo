@@ -4,7 +4,7 @@
 #
 #  build-package - Wrapper git para o BigCommunity
 #  Created: qui 05 set 2024 00:51:12 -04
-#  Altered: seg 30 dez 2024 21:23:39 -04
+#  Altered: sex 24 jan 2025 21:11:42 -04
 #
 #  Copyright (c) 2024-2024, Tales A. Mendonça <talesam@gmail.com>
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
@@ -33,7 +33,7 @@
 # system
 declare APP="${0##*/}"
 declare APPDESC="Wrapper git para o BigCommunity"
-declare VERSION="2.1.7" # Versão do script
+declare VERSION="2.1.24" # Versão do script
 : "${reset=$(tput sgr0)}"
 : "${red=$(tput bold)$(tput setaf 196)}"
 LIBRARY=${LIBRARY:-"/usr/share/community/gitrepo/shell"}
@@ -124,6 +124,8 @@ parse_parameters() {
 		-a | --aur)
 			param_aur="$1"
 			value_aur="$2"
+			value_aur="${value_aur//aur-/}"
+      value_aur="${value_aur//aur\//}"
 			# Teste se o parâmetro foi fornecido e se o valor é válido
 			check_param_aur "$value_aur"
 			param_aur_was_supplied=true
@@ -190,17 +192,17 @@ sh_version() {
 trigger_workflow() {
 	local package_name="$1"
 	local branch_type="$2"
-	local aur_package="$3"
+	local is_aur_package="$3"
 	local data
 	local event_type
 	local response
 	local repo_name
 
 	p_log "$CYAN" "Acionando o workflow de build no GitHub..."
-	if [[ -n "$aur_package" ]]; then
-		aur_url="https://aur.archlinux.org/${package_name}.git"
+	if $is_aur_package; then
     package_name="${package_name//aur-/}"
-    package_name="${package_name//aur/}"
+    package_name="${package_name//aur\//}"
+		aur_url="https://aur.archlinux.org/${package_name}.git"
     if [[ "$ORGANIZATION" =~ ^(chililinux|vcatafesta)$ ]]; then
       data="{\
         \"event_type\": \"aur-$package_name\", \
@@ -348,7 +350,7 @@ resume_and_build_aur() {
   # Confirmar as escolhas
   clear
   echo "${black}$(replicate '=')${reset}"
-  echo -e "${cyan}Resumo das escolhas:${reset}"
+  echo -e "${cyan}AUR - Resumo das escolhas:${reset}"
   echo "${black}$(replicate '=')${reset}"
   echo "Organization     : ${orange}$ORGANIZATION ${reset}"
   echo "Repo Workflow    : ${orange}$REPO_WORKFLOW ${reset}"
@@ -385,6 +387,8 @@ Construir_pacote_do_AUR() {
 		while true; do
 			p_log "$PURPLE" "Digite o nome do pacote AUR (ex: showtime): digite ${YELLOW}SAIR ${PURPLE}para sair"
 			read -r aur_package_name
+			aur_package_name="${aur_package_name//aur-/}"
+			aur_package_name="${aur_package_name//aur\//}"
 			if [[ "${aur_package_name^^}" == "SAIR" ]]; then
 				die "$YELLOW" "Saindo do script. Nenhuma ação foi realizada."
 			elif [[ -z "$aur_package_name" ]]; then
