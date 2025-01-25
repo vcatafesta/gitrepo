@@ -8,7 +8,7 @@
 #
 #  Created: ter 24 set 2024 04:26:12 -04
 #  Altered: dom 08 dez 2024 23:39:02 -04
-#  Updated: qua 01 jan 2025 20:54:23 -04
+#  Updated: sáb 25 jan 2025 00:36:37 -04
 #
 #  Copyright (c) 2024-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -35,7 +35,7 @@
 ##############################################################################
 declare APP="${0##*/}"
 declare APPDESC="Wrapper bash para o buildiso"
-declare VERSION="1.12.3" # Versão do script
+declare VERSION="1.1.25" # Versão do script
 export TERM=${TERM:-xterm}
 export TERM=${TERM:-xterm-256color}
 declare IS_AUTO=false
@@ -87,11 +87,11 @@ configure_vars() {
 	declare -g ORGANIZATION='<local>'
 	declare -g REPO_WORKFLOW='<local>'
 	declare -g DISTRONAME='chililinux'
-	declare -g EDITION='cinnamon'
+  declare -g BUILD_DIR='chililinux'
+	declare -g EDITION='xfce'
 	declare -g KERNEL='lts'
 	declare -g TMATE=true
 	declare -g DEBUG=true
-  declare -g BUILD_DIR='chililinux'
 	#
 	declare -g REPO_PATH="$PWD"
 	declare -g USERNAME="$USER"
@@ -920,6 +920,16 @@ add_chili-stable() {
 }
 export -f add_chili-stable
 
+add_chili-aur() {
+	{
+		echo '[chili-aur]'
+		echo 'SigLevel = Optional TrustAll'
+		echo 'Server = https://repo.chililinux.com/aur/$arch'
+		echo
+	}
+}
+export -f add_chili-aur
+
 add_chili-testing() {
 	{
 		echo '[chili-testing]'
@@ -1010,11 +1020,6 @@ add_repositorys_only_install() {
 		add_community-stable | sudo tee -a "$arquivo_conf" >/dev/null
 		add_community-extra | sudo tee -a "$arquivo_conf" >/dev/null
 		;;
-	*)
-		add_community-testing | sudo tee -a "$arquivo_conf" >/dev/null
-		add_community-stable | sudo tee -a "$arquivo_conf" >/dev/null
-		add_community-extra | sudo tee -a "$arquivo_conf" >/dev/null
-		;;
  	esac
 
   msg 'Configurando repositórios do ChiliLinux'
@@ -1024,16 +1029,25 @@ add_repositorys_only_install() {
     add_chili-stable | sudo tee -a "$arquivo_conf" >/dev/null
 		add_chili-testing | sudo tee -a "$arquivo_conf" >/dev/null
 		add_chili-extra | sudo tee -a "$arquivo_conf" >/dev/null
+		add_chili-aur | sudo tee -a "$arquivo_conf" >/dev/null
+		add_community-stable | sudo tee -a "$arquivo_conf" >/dev/null
+		add_community-extra | sudo tee -a "$arquivo_conf" >/dev/null
 		;;
   testing)
 		add_chili-testing | sudo tee -a "$arquivo_conf" >/dev/null
 		add_chili-stable | sudo tee -a "$arquivo_conf" >/dev/null
 		add_chili-extra | sudo tee -a "$arquivo_conf" >/dev/null
+		add_chili-aur | sudo tee -a "$arquivo_conf" >/dev/null
+		add_community-stable | sudo tee -a "$arquivo_conf" >/dev/null
+		add_community-extra | sudo tee -a "$arquivo_conf" >/dev/null
 		;;
   *)
 		add_chili-testing | sudo tee -a "$arquivo_conf" >/dev/null
 		add_chili-stable | sudo tee -a "$arquivo_conf" >/dev/null
 		add_chili-extra | sudo tee -a "$arquivo_conf" >/dev/null
+		add_chili-aur | sudo tee -a "$arquivo_conf" >/dev/null
+		add_community-stable | sudo tee -a "$arquivo_conf" >/dev/null
+		add_community-extra | sudo tee -a "$arquivo_conf" >/dev/null
 		;;
 	esac
 
@@ -1503,9 +1517,11 @@ add_repos_to_pacman_conf_into_iso_distro() {
 			add_chili-testing | sudo tee -a "$config_file" >/dev/null
 			add_chili-stable | sudo tee -a "$config_file" >/dev/null
 			add_chili-extra | sudo tee -a "$config_file" >/dev/null
+  		add_chili-aur | sudo tee -a "$arquivo_conf" >/dev/null
 		else
 			add_chili-stable | sudo tee -a "$config_file" >/dev/null
 			add_chili-extra | sudo tee -a "$config_file" >/dev/null
+  		add_chili-aur | sudo tee -a "$arquivo_conf" >/dev/null
 		fi
 	fi
 

@@ -241,6 +241,7 @@ trigger_workflow() {
       \"client_payload\": { \
       \"branch\": \"${new_branch}\", \
       \"branch_type\": \"${branch_type}\", \
+      \"build_env\": \"normal\", \
       \"url\": \"https://github.com/${repo_name}\", \
       \"tmate\": $tmate_option \
       }\
@@ -261,7 +262,7 @@ trigger_workflow() {
 	fi
 
 	p_log "$GREEN" "Workflow de build ($event_type) acionado com sucesso. Código de resposta: $response"
-	p_log "$YELLOW" "Por favor, verifique a aba 'Actions' no GitHub para acompanhar o progresso do build."
+	p_log "$YELLOW" "Acesse a aba 'Actions' no GitHub para acompanhar o progresso do build."
 	p_log "$orange" "Aguardando '2s' para a API acionar a Action e podermos pegar o 'id'."
 	sleep 2
 	p_log "$RESET" "$(get_url_actions)"
