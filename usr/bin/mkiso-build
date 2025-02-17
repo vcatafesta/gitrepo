@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #-*- coding: utf-8 -*-
-#shellcheck shell=bash disable=SC1091,SC2039,SC2166,SC2016,SC2120,SC2034,SC2183,SC2154
+#shellcheck shell=bash disable=SC2034,SC2183,SC2016,SC2154
 #
 #  mkiso-build - Wrapper bash para o buildiso
 #  Ferramenta auxiliar para o buildiso, adicionando automações, validações e opções customizadas
@@ -8,7 +8,7 @@
 #
 #  Created: ter 24 set 2024 04:26:12 -04
 #  Altered: dom 08 dez 2024 23:39:02 -04
-#  Updated: sáb 25 jan 2025 00:36:37 -04
+#  Updated: dom 26 jan 2025 02:46:58 -04
 #
 #  Copyright (c) 2024-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -35,45 +35,40 @@
 ##############################################################################
 declare APP="${0##*/}"
 declare APPDESC="Wrapper bash para o buildiso"
-declare VERSION="1.1.25" # Versão do script
+declare VERSION="1.1.26" # Versão do script
 export TERM=${TERM:-xterm}
 export TERM=${TERM:-xterm-256color}
 declare IS_AUTO=false
 declare PARAM_DEFAULT=false
+declare VALUE_DEFAULT=false
 
 configure_vars() {
 	# Declare variáveis de ambiente
 	# somente ativada quando rodar manualmente (-m), no github não é necessário
-	declare -aG communitybig_edition=(cinnamon cosmic deepin gnome kde xfce wmaker)
-	declare -aG biglinux_edition=(base FalaQueEuTeEscuto flisol kde small xivastudio)
-	declare -aG chililinux_edition=(base cinnamon cosmic deepin gnome i3 kde xfce wmaker)
-	declare -aG manjaro_edition=(architect bladebook gnome gnome-next grub i3 kde kde-dev netinstall nxd xfce)
-	declare -aG talesam_edition=(cinnamon cosmic deepin gnome kde xfce wmaker)
-	declare -aG vcatafesta_edition=(base cinnamon cosmic deepin gnome kde xfce wmaker)
 	declare -aG aDistros=('bigcommunity' 'biglinux' 'chililinux' 'manjaro' 'Sair')
 	declare -aG aBranchs=('stable' 'testing' 'unstable' 'Sair')
 	declare -aG aKernels=('latest' 'lts' 'oldlts' 'xanmod' 'Sair')
-  declare -aG aProfiles=(
-      'https://github.com/communitybig/iso-profiles'
-      'https://github.com/biglinux/iso-profiles'
-      'https://github.com/chililinux/iso-profiles'
-      'https://github.com/chililinux/manjaro-iso-profiles'
-      'https://gitlab.manjaro.org/profiles-and-settings/iso-profiles.git'
-      'https://github.com/talesam/iso-profiles'
-      'https://github.com/vcatafesta/iso-profiles'
-      'Sair'
-  )
-  declare -AG ApiProfiles=(
-    # GitHub Repositories
-    [https://github.com/communitybig/iso-profiles]='https://api.github.com/repos/communitybig/iso-profiles/contents/'
-    [https://github.com/biglinux/iso-profiles]='https://api.github.com/repos/biglinux/iso-profiles/contents/'
-    [https://github.com/chililinux/iso-profiles]='https://api.github.com/repos/chililinux/iso-profiles/contents/'
-    [https://github.com/chililinux/manjaro-iso-profiles]='https://api.github.com/repos/chililinux/manjaro-iso-profiles/contents/'
-    [https://github.com/talesam/iso-profiles]='https://api.github.com/repos/talesam/iso-profiles/contents/'
-    [https://github.com/vcatafesta/iso-profiles]='https://api.github.com/repos/vcatafesta/iso-profiles/contents/'
-    # GitLab Repositories
-    [https://gitlab.manjaro.org/profiles-and-settings/iso-profiles.git]='https://gitlab.manjaro.org/api/v4/projects/profiles-and-settings%2Fiso-profiles/repository/tree'
-  )
+	declare -aG aProfiles=(
+		'https://github.com/communitybig/iso-profiles'
+		'https://github.com/biglinux/iso-profiles'
+		'https://github.com/chililinux/iso-profiles'
+		'https://github.com/chililinux/manjaro-iso-profiles'
+		'https://gitlab.manjaro.org/profiles-and-settings/iso-profiles.git'
+		'https://github.com/talesam/iso-profiles'
+		'https://github.com/vcatafesta/iso-profiles'
+		'Sair'
+	)
+	declare -AG ApiProfiles=(
+		# GitHub Repositories
+		['https://github.com/communitybig/iso-profiles']='https://api.github.com/repos/communitybig/iso-profiles/contents/'
+		['https://github.com/biglinux/iso-profiles']='https://api.github.com/repos/biglinux/iso-profiles/contents/'
+		['https://github.com/chililinux/iso-profiles']='https://api.github.com/repos/chililinux/iso-profiles/contents/'
+		['https://github.com/chililinux/manjaro-iso-profiles']='https://api.github.com/repos/chililinux/manjaro-iso-profiles/contents/'
+		['https://github.com/talesam/iso-profiles']='https://api.github.com/repos/talesam/iso-profiles/contents/'
+		['https://github.com/vcatafesta/iso-profiles']='https://api.github.com/repos/vcatafesta/iso-profiles/contents/'
+		# GitLab Repositories
+		['https://gitlab.manjaro.org/profiles-and-settings/iso-profiles.git']='https://gitlab.manjaro.org/api/v4/projects/profiles-and-settings%2Fiso-profiles/repository/tree'
+	)
 	#
 	declare -aG bigcommunity_build_list=(bigcommunity)
 	declare -aG biglinux_build_list=(biglinux biglinux-make-iso-profiles)
@@ -87,30 +82,32 @@ configure_vars() {
 	declare -g ORGANIZATION='<local>'
 	declare -g REPO_WORKFLOW='<local>'
 	declare -g DISTRONAME='chililinux'
-  declare -g BUILD_DIR='chililinux'
-	declare -g EDITION='xfce'
+	declare -g BUILD_DIR='chililinux'
+	if ! $VALUE_DEFAULT; then
+		declare -g EDITION='server'
+	fi
 	declare -g KERNEL='lts'
 	declare -g TMATE=true
-	declare -g DEBUG=true
+	declare -g DEBUG=false
 	#
 	declare -g REPO_PATH="$PWD"
 	declare -g USERNAME="$USER"
 	declare -g GITHUB_USER_NAME="$USERNAME"
 	declare -g HOME_FOLDER="/home/$USERNAME"
-	declare -g BIGCOMMUNITY_BRANCH=''
+	declare -g BIGCOMMUNITY_BRANCH='testing'
 	declare -g BIGLINUX_BRANCH='stable'
 	declare -g CHILILINUX_BRANCH='stable'
 	declare -g MANJARO_BRANCH='stable'
-  declare -g ISO_PROFILES_REPO='https://github.com/chililinux/iso-profiles'
-  declare -g DISTRONAME_ISOPROFILES
+	declare -g ISO_PROFILES_REPO="https://github.com/${DISTRONAME}/iso-profiles"
+	declare -g DISTRONAME_ISOPROFILES
 
-  if ! $PARAM_DEFAULT; then
-  	get_distroname
-	  get_iso_profiles_repo
-  	get_build_list "$ISO_PROFILES_REPO"
-  	get_edition "$ISO_PROFILES_REPO" "$BUILD_DIR"
-  fi
- 	DISTRONAME_ISOPROFILES="$(get_distroname_isoprofiles)"
+	if ! $PARAM_DEFAULT; then
+		get_distroname
+		get_iso_profiles_repo
+		get_build_list "$ISO_PROFILES_REPO"
+		get_edition "$ISO_PROFILES_REPO" "$BUILD_DIR"
+	fi
+	DISTRONAME_ISOPROFILES="$(get_distroname_isoprofiles)"
 	WORK_PATH="$HOME_FOLDER/__w/build-iso/build-iso"
 	WORK_PATH_ISO_PROFILES="$HOME_FOLDER/__w/build-iso/build-iso/iso-profiles"
 	PROFILE_PATH="$HOME_FOLDER/__w/build-iso/build-iso/iso-profiles/${BUILD_DIR}"
@@ -121,63 +118,64 @@ configure_vars() {
 	VAR_CACHE_MANJARO_TOOLS_ISO='/var/cache/manjaro-tools/iso'
 	RELEASE_TAG=$(date "+%Y-%m-%d_%H-%M")
 
-  if ! $PARAM_DEFAULT; then
-  	get_manjaro_branch
-  	if [[ "$DISTRONAME" =~ ^(manjaro)$ ]]; then
-  		BIGCOMMUNITY_BRANCH=
-  		BIGLINUX_BRANCH=
-  		CHILILINUX_BRANCH=
-  	else
-  		get_biglinux_branch
-  	fi
+	if ! $PARAM_DEFAULT; then
+		get_manjaro_branch
+		if [[ "$DISTRONAME" =~ ^(manjaro)$ ]]; then
+			BIGCOMMUNITY_BRANCH=
+			BIGLINUX_BRANCH=
+			CHILILINUX_BRANCH=
+		else
+			get_biglinux_branch
+		fi
 
-  	if [[ "$DISTRONAME" =~ ^(manjaro|biglinux|chililinux)$ ]]; then
-  		BIGCOMMUNITY_BRANCH=
-  	else
-  		get_bigcommunity_branch
-  	fi
+		if [[ "$DISTRONAME" =~ ^(manjaro|biglinux|chililinux)$ ]]; then
+			BIGCOMMUNITY_BRANCH=
+		else
+			get_bigcommunity_branch
+		fi
 
-  	if [[ "$DISTRONAME" =~ ^(manjaro|biglinux|bigcommunity|talesam)$ ]]; then
-  		CHILILINUX_BRANCH=
-  	else
-  		get_chililinux_branch
-  	fi
+		if [[ "$DISTRONAME" =~ ^(manjaro|biglinux|bigcommunity|talesam)$ ]]; then
+			CHILILINUX_BRANCH=
+		else
+			get_chililinux_branch
+		fi
 
-  	get_kernel
-  	get_debug
-  else
-    resume_and_build
-  fi
+		get_kernel
+		get_debug
+	else
+		resume_and_build
+	fi
 	mkdir -p "$WORK_PATH" &>/dev/null
 	pushd "$WORK_PATH" &>/dev/null || false
 }
 export -f configure_vars
 
 resume_and_build() {
-  # Confirmar as escolhas
-  clear
-  echo "${black}$(replicate '=')${reset}"
-  echo -e "${cyan}Resumo das escolhas:${reset}"
-  echo "${black}$(replicate '=')${reset}"
-  echo "Organization     : ${orange}$ORGANIZATION ${reset}"
-  echo "Repo Workflow    : ${orange}$REPO_WORKFLOW ${reset}"
-  echo "User Name        : ${orange}$GITHUB_USER_NAME ${reset}"
-  echo "Distroname       : ${orange}$DISTRONAME ${reset}"
-  echo "Iso Profiles repo: ${orange}$ISO_PROFILES_REPO ${reset}"
-  echo "Build dir        : ${orange}$BUILD_DIR ${reset}"
-  echo "Edition          : ${orange}$EDITION ${reset}"
-  echo "Manjaro Branch   : ${orange}$MANJARO_BRANCH ${reset}"
-  echo "Community Branch : ${orange}$BIGCOMMUNITY_BRANCH ${reset}"
-  echo "BigLinux Branch  : ${orange}$BIGLINUX_BRANCH ${reset}"
-  echo "ChiliLinux Branch: ${orange}$CHILILINUX_BRANCH ${reset}"
-  echo "Kernel           : ${orange}$KERNEL ${reset}"
-  echo "Release Tag      : ${orange}$RELEASE_TAG ${reset}"
-  echo "TMATE Debug      : ${orange}$TMATE ${reset}"
-  echo "${black}$(replicate '=')${reset}"
+	# Confirmar as escolhas
+	clear
+	echo "${black}$(replicate '=')${reset}"
+	echo -e "${cyan}Resumo das escolhas:${reset}"
+	echo "${black}$(replicate '=')${reset}"
+	echo "Organization     : ${orange}$ORGANIZATION ${reset}"
+	echo "Repo Workflow    : ${orange}$REPO_WORKFLOW ${reset}"
+	echo "User Name        : ${orange}$GITHUB_USER_NAME ${reset}"
+	echo "Distroname       : ${orange}$DISTRONAME ${reset}"
+	echo "Iso Profiles repo: ${orange}$ISO_PROFILES_REPO ${reset}"
+	echo "Build dir        : ${orange}$BUILD_DIR ${reset}"
+	echo "Edition          : ${orange}$EDITION ${reset}"
+	echo "Manjaro Branch   : ${orange}$MANJARO_BRANCH ${reset}"
+	echo "Community Branch : ${orange}$BIGCOMMUNITY_BRANCH ${reset}"
+	echo "BigLinux Branch  : ${orange}$BIGLINUX_BRANCH ${reset}"
+	echo "ChiliLinux Branch: ${orange}$CHILILINUX_BRANCH ${reset}"
+	echo "Kernel           : ${orange}$KERNEL ${reset}"
+	echo "Release Tag      : ${orange}$RELEASE_TAG ${reset}"
+	echo "TMATE Debug      : ${orange}$TMATE ${reset}"
+	echo "BASH Debug       : ${orange}$DEBUG ${reset}"
+	echo "${black}$(replicate '=')${reset}"
 
-  if ! conf "${YELLOW}Deseja prosseguir com a construção da ISO?"; then
-    die "${RED}" "Construção da ISO cancelada."
-  fi
+	if ! conf "${YELLOW}Deseja prosseguir com a construção da ISO?"; then
+		die "${RED}" "Construção da ISO cancelada."
+	fi
 }
 
 get_distroname() {
@@ -189,78 +187,78 @@ get_distroname() {
 }
 
 get_edition() {
-  local repo="$1"
-  local dir="$2"
-  local api_url="${ApiProfiles[$repo]}"
-  local response
+	local repo="$1"
+	local dir="$2"
+	local api_url="${ApiProfiles[$repo]}"
+	local response
 
-  # Verifica se o repositório existe no array
-  if [[ -z "$api_url" ]]; then
-    die "${red}" "Erro: Repositório não encontrado no array: $repo ${reset}"
-  fi
-
-  # Se for GitHub, faz a requisição
-  if [[ "$api_url" == *"github"* ]]; then
-    # Faz a requisição para o GitHub
-    p_log "${CYAN}" "Fazendo requisição na API $api_url {NC}"
-    response=$(curl -sL "${api_url}${dir}")
-
-    # Verifica se a resposta está vazia ou se ocorreu erro
-    if [[ -z "$response" || "$response" == *"404 Not Found"* ]]; then
-      die "${red}" "Erro: Problema ao acessar o diretório: $dir ${reset}"
-    fi
-
-    # Processamento para GitHub
-    mapfile -t subdirs < <(
-      echo "$response" | \
-      jq -r '.[] | select(.type == "dir") | .name'
-    )
-  elif [[ "$api_url" == *"gitlab"* ]]; then
-    # Faz a requisição para o GitLab com o parâmetro 'path'
-    p_log "${CYAN}" "Fazendo requisição na API $api_url {NC}"
-    response=$(curl -sL "${api_url}?path=${dir}")
-
-    # Verifica se a resposta está vazia ou se ocorreu erro
-    if [[ -z "$response" || "$response" == *"404 Not Found"* ]]; then
-      die "${red}" "Erro: Problema ao acessar o repositório: $repo ${reset}"
-    fi
-
-    # Processamento para GitLab
-    # Filtra os diretórios e pega o nome de cada um, excluindo os indesejados
-    mapfile -t subdirs < <(
-      echo "$response" | \
-      jq -r '.[] | select(.type == "tree") | .name' | \
-      grep -vE '^(shared|grub|temp_repo|.github)$'
-    )
-  else
-    die "${red}" "Erro: Repositório desconhecido ${reset}"
-  fi
-
-  # Adiciona a opção "Sair"
-  subdirs+=("Sair")
-
-  # Cria o menu com as edições encontradas
-  create_menu_with_array "Escolha uma ${yellow}EDIÇÃO/DE${reset} para o ${yellow}${DISTRONAME}${reset}:" subdirs[@] "$EDITION"
-	if [[ $MENU_RESULT == "Sair" ]]; then
-		die "${red}" "Construção da ISO cancelada.${reset}"
+	# Verifica se o repositório existe no array
+	if [[ -z "$api_url" ]]; then
+		die "${red}" "Erro: Repositório não encontrado no array: $repo ${reset}"
 	fi
-  EDITION="${MENU_RESULT}"
-}
 
-get_editionOLD() {
-	local editions_var="${DISTRONAME}_edition"
-	# local editions=(${!editions_var[@]})
+	# Se for GitHub, faz a requisição
+	if [[ "$api_url" == *"github"* ]]; then
+		# Faz a requisição para o GitHub
+		p_log "${CYAN}" "Fazendo requisição na API $api_url {NC}"
+		response=$(curl -sL "${api_url}${dir}")
 
-	# Usando eval para acessar o conteúdo do array dinamicamente
-	eval "local editions=(\"\${${editions_var}[@]}\")"
-	editions+=("Sair")
-	create_menu_with_array "Escolha uma EDIÇÃO/DE para o ${yellow}${DISTRONAME}${reset}:" editions[@] "$EDITION"
-	# Verifica se a opção selecionada foi "Sair"
+		# Verifica se a resposta está vazia ou se ocorreu erro
+		if [[ -z "$response" || "$response" == *"404 Not Found"* ]]; then
+			die "${red}" "Erro: Problema ao acessar o diretório: $dir ${reset}"
+		fi
+
+		# Processamento para GitHub
+		mapfile -t subdirs < <(
+			echo "$response" |
+				jq -r '.[] | select(.type == "dir") | .name'
+		)
+	elif [[ "$api_url" == *"gitlab"* ]]; then
+		# Faz a requisição para o GitLab com o parâmetro 'path'
+		p_log "${CYAN}" "Fazendo requisição na API $api_url {NC}"
+		response=$(curl -sL "${api_url}?path=${dir}")
+
+		# Verifica se a resposta está vazia ou se ocorreu erro
+		if [[ -z "$response" || "$response" == *"404 Not Found"* ]]; then
+			die "${red}" "Erro: Problema ao acessar o repositório: $repo ${reset}"
+		fi
+
+		# Processamento para GitLab
+		# Filtra os diretórios e pega o nome de cada um, excluindo os indesejados
+		mapfile -t subdirs < <(
+			echo "$response" |
+				jq -r '.[] | select(.type == "tree") | .name' |
+				grep -vE '^(shared|grub|temp_repo|.github)$'
+		)
+	else
+		die "${red}" "Erro: Repositório desconhecido ${reset}"
+	fi
+
+	# Adiciona a opção "Sair"
+	subdirs+=("Sair")
+
+	# Cria o menu com as edições encontradas
+	create_menu_with_array "Escolha uma ${yellow}EDIÇÃO/DE${reset} para o ${yellow}${DISTRONAME}${reset}:" subdirs[@] "$EDITION"
 	if [[ $MENU_RESULT == "Sair" ]]; then
 		die "${red}" "Construção da ISO cancelada.${reset}"
 	fi
 	EDITION="${MENU_RESULT}"
 }
+
+#get_editionOLD() {
+#	local editions_var="${DISTRONAME}_edition"
+#	# local editions=(${!editions_var[@]})
+#
+#	# Usando eval para acessar o conteúdo do array dinamicamente
+#	eval "local editions=(\"\${${editions_var}[@]}\")"
+#	editions+=("Sair")
+#	create_menu_with_array "Escolha uma EDIÇÃO/DE para o ${yellow}${DISTRONAME}${reset}:" editions[@] "$EDITION"
+#	# Verifica se a opção selecionada foi "Sair"
+#	if [[ $MENU_RESULT == "Sair" ]]; then
+#		die "${red}" "Construção da ISO cancelada.${reset}"
+#	fi
+#	EDITION="${MENU_RESULT}"
+#}
 
 get_iso_profiles_repo() {
 	# Gerando a URL padrão com base no valor de $DISTRONAME
@@ -273,48 +271,49 @@ get_iso_profiles_repo() {
 }
 
 get_build_list() {
-  local repo="$1"
-  local api_url="${ApiProfiles[$repo]}"
+	local repo="$1"
+	local api_url="${ApiProfiles[$repo]}"
+	local response
 
-  # Verifica se o repositório existe no array
-  if [[ -z "$api_url" ]]; then
-    die "${red}" "Erro: Repositório não encontrado no array: $repo ${reset}"
-  fi
+	# Verifica se o repositório existe no array
+	if [[ -z "$api_url" ]]; then
+		die "${red}" "Erro: Repositório não encontrado no array: $repo ${reset}"
+	fi
 
-  # Faz a requisição e inspeciona a resposta para entender o formato
-  p_log "${cyan}" "Fazendo requisição na API $api_url ${reset}"
-  local response=$(curl -sL "$api_url")
+	# Faz a requisição e inspeciona a resposta para entender o formato
+	p_log "${cyan}" "Fazendo requisição na API $api_url ${reset}"
+	response=$(curl -sL "$api_url")
 
-  # Verifica se a resposta está vazia ou se ocorreu um erro 404
-  if [[ -z "$response" || "$response" == *"404 Not Found"* ]]; then
-    die "${red}" "Erro: Repositório não encontrado ou erro ao acessar a URL: $repo ${reset}"
-  fi
+	# Verifica se a resposta está vazia ou se ocorreu um erro 404
+	if [[ -z "$response" || "$response" == *"404 Not Found"* ]]; then
+		die "${red}" "Erro: Repositório não encontrado ou erro ao acessar a URL: $repo ${reset}"
+	fi
 
-  # Se o repositório for do GitHub, a estrutura de resposta é diferente
-  if [[ "$api_url" == *"github"* ]]; then
-    # Processa a resposta para GitHub
-    mapfile -t build_list < <(
-      echo "$response" | \
-      jq -r '.[] | select(.type == "dir") | .name' | \
-      grep -vE '^(shared|grub|temp_repo|.github)$'
-    )
-  else
-    # Processa a resposta para GitLab
-    mapfile -t build_list < <(
-      echo "$response" | \
-      jq -r '.[] | select(.type == "tree") | .name' | \
-      grep -vE '^(shared|grub|temp_repo|.github)$'
-    )
-  fi
+	# Se o repositório for do GitHub, a estrutura de resposta é diferente
+	if [[ "$api_url" == *"github"* ]]; then
+		# Processa a resposta para GitHub
+		mapfile -t build_list < <(
+			echo "$response" |
+				jq -r '.[] | select(.type == "dir") | .name' |
+				grep -vE '^(shared|grub|temp_repo|.github)$'
+		)
+	else
+		# Processa a resposta para GitLab
+		mapfile -t build_list < <(
+			echo "$response" |
+				jq -r '.[] | select(.type == "tree") | .name' |
+				grep -vE '^(shared|grub|temp_repo|.github)$'
+		)
+	fi
 
-  # Retorna o array
-  #echo "${build_list[@]}"
-  build_list+=("Sair")
-  create_menu_with_array "Escolha uma ${yellow}BUILD_LIST${reset} para o ${yellow}${DISTRONAME}${reset}:" build_list[@] "$DISTRONAME"
+	# Retorna o array
+	#echo "${build_list[@]}"
+	build_list+=("Sair")
+	create_menu_with_array "Escolha uma ${yellow}BUILD_LIST${reset} para o ${yellow}${DISTRONAME}${reset}:" build_list[@] "$DISTRONAME"
 	if [[ $MENU_RESULT == "Sair" ]]; then
 		die "${red}" "Construção da ISO cancelada.${reset}"
 	fi
-  BUILD_DIR="${MENU_RESULT}"
+	BUILD_DIR="${MENU_RESULT}"
 }
 
 get_manjaro_branch() {
@@ -478,19 +477,19 @@ unset_varcolors() {
 	: "${INFO="${white}[${gray}i${rst}${white}]${rst}"}"
 }
 
-funcao_A() { return; }
-funcao_B() { return; }
-funcao_C() { return; }
-
-switch_to_root() {
-	# Verifica se o usuário não é root
-	if [ "$EUID" -ne 0 ]; then
-		echo "Elevando privilégios para root..."
-		sudo bash -c "$(declare -f funcao_A); $(declare -f funcao_B); $(declare -f funcao_C); funcao_A"
-	else
-		funcao_A
-	fi
-}
+#funcao_A() { return; }
+#funcao_B() { return; }
+#funcao_C() { return; }
+#
+#switch_to_root() {
+#	# Verifica se o usuário não é root
+#	if [ "$EUID" -ne 0 ]; then
+#		echo "Elevando privilégios para root..."
+#		sudo bash -c "$(declare -f funcao_A); $(declare -f funcao_B); $(declare -f funcao_C); funcao_A"
+#	else
+#		funcao_A
+#	fi
+#}
 
 msg() {
 	local msg="$1"
@@ -501,6 +500,31 @@ msg_info() {
 	local msg="$1"
 	echo -e "mkiso=>${yellow}info   : ${cyan}${msg}${reset}"
 }
+
+msg_sub() {
+  local msg="$1"
+  echo -e "               >${green}${msg}${reset}"
+}
+
+msg_raw() {
+	local msg="$1"
+	# Remove tags HTML, se existirem
+	#msg="$(sed 's/<[^>]*>//g' <<< "$msg")"
+
+	# Verifica se existe ':' na mensagem
+	if [[ "$msg" == *:* ]]; then
+		# Divide a string antes e depois do primeiro ':'
+		local before_colon="${msg%%:*}:"
+		local after_colon="${msg#*: }"
+		# Aplica as cores
+		msg="${cyan}${before_colon} ${yellow}${after_colon}${reset}"
+	else
+		# Se não houver ':', aplica apenas a cor padrão
+		msg="${cyan}${msg}${reset}"
+	fi
+	echo -e "$msg"
+}
+export -f msg_raw
 
 msg_warning() {
 	local msg="$1"
@@ -526,9 +550,9 @@ p_log() {
 
 # Funções auxiliares
 conf() {
-  read -r -p "$1 [S/n]"
-  [[ ${REPLY^} == "" ]] && return 0
-  [[ ${REPLY^} == N ]] && return 1 || return 0
+	read -r -p "$1 [S/n]"
+	[[ ${REPLY^} == "" ]] && return 0
+	[[ ${REPLY^} == N ]] && return 1 || return 0
 }
 
 die() {
@@ -547,36 +571,36 @@ replicate() {
 export -f replicate
 
 sh_version() {
-	cat <<EOF_VERSION
-${bold}${cyan}${0##*/} v${VERSION}${reset}
-${APPDESC}
-${bold}${black}Copyright (c) 2024-2024, ${reset}Vilmar Catafesta <vcatafesta@gmail.com>${black}
-${bold}${black}Copyright (C) 2024-2024, ${reset}BigCommunity Team${black}
+	cat <<-EOF_VERSION
+		${bold}${cyan}${0##*/} v${VERSION}${reset}
+		${APPDESC}
+		${bold}${black}Copyright (c) 2024-2024, ${reset}Vilmar Catafesta <vcatafesta@gmail.com>${black}
+		${bold}${black}Copyright (C) 2024-2024, ${reset}BigCommunity Team${black}
 
-  Este é um software livre: você é livre para alterá-lo e redistribuí-lo.
-  O $APP é disponibilizado para você sob a ${yellow}Licença MIT${black}, e
-  inclui software de código aberto sob uma variedade de outras licenças.
-  Você pode ler instruções sobre como baixar e criar para você mesmo
-  o código fonte específico usado para criar esta cópia.
-  ${red}Este programa vem com absolutamente NENHUMA garantia.${reset}
-EOF_VERSION
+		  Este é um software livre: você é livre para alterá-lo e redistribuí-lo.
+		  O $APP é disponibilizado para você sob a ${yellow}Licença MIT${black}, e
+		  inclui software de código aberto sob uma variedade de outras licenças.
+		  Você pode ler instruções sobre como baixar e criar para você mesmo
+		  o código fonte específico usado para criar esta cópia.
+		  ${red}Este programa vem com absolutamente NENHUMA garantia.${reset}
+	EOF_VERSION
 }
 
 # Função para exibir informações de ajuda
 sh_usage() {
-	cat <<EOF_USAGE
-    ${reset}${APP} v${VERSION} - ${APPDESC}${reset}
-    ${red}Uso: ${reset}$APP ${cyan}[opções]${reset}
+	cat <<-EOF_USAGE
+		    ${reset}${APP} v${VERSION} - ${APPDESC}${reset}
+		    ${red}Uso: ${reset}$APP ${cyan}[opções]${reset}
 
-    ${cyan}Opções:${reset}
-      -o|--org|--organization ${orange}<name> ${cyan} # Configura organização de trabalho no Github ${yellow}(default: communitybig)${reset}
-      -a|--auto|--automatic          ${cyan} # Construir ISO automaticamente pelo Action do github ${reset}
-      -m|--manual|--standalone       ${cyan} # Construir ISO localmente ${reset}
-      -d|--defa|--default            ${cyan} # Construir ISO localmente com parametros default - válido somente com -m ${reset}
-      -n|--nocolor                   ${cyan} # Suprime a impressão de cores ${reset}
-      -V|--version                   ${cyan} # Imprime a versão do aplicativo ${reset}
-      -h|--help                      ${cyan} # Mostra este Help ${reset}
-EOF_USAGE
+		    ${cyan}Opções:${reset}
+		      -o|--org|--organization ${orange}<name> ${cyan} # Configura organização de trabalho no Github ${yellow}(default: communitybig)${reset}
+		      -a|--auto|--automatic          ${cyan} # Construir ISO automaticamente pelo Action do github ${reset}
+		      -m|--manual|--standalone       ${cyan} # Construir ISO localmente ${reset}
+		      -d|--defa|--default ${orange}<DE>       ${cyan} # Construir ISO <DE> localmente com parâmetros default ${reset}
+		      -n|--nocolor                   ${cyan} # Suprime a impressão de cores ${reset}
+		      -V|--version                   ${cyan} # Imprime a versão do aplicativo ${reset}
+		      -h|--help                      ${cyan} # Mostra este Help ${reset}
+	EOF_USAGE
 }
 
 create_menu_with_array() {
@@ -627,14 +651,14 @@ create_menu_with_array() {
 		fi
 
 		if $IS_BUILD_ISO_RESUME; then
-			msg_info "Distroname     : ${green}$DISTRONAME${reset}"
-			msg_info "Edition        : ${green}$EDITION${reset}"
-			msg_info "Iso-Profiles   : ${green}$ISO_PROFILES_REPO${reset}"
-			msg_info "Br Manjaro     : ${green}$MANJARO_BRANCH${reset}"
-			msg_info "Br BigLinux    : ${green}$BIGLINUX_BRANCH${reset}"
-			msg_info "Br BigCommunity: ${green}$BIGCOMMUNITY_BRANCH${reset}"
-			msg_info "Br ChiliLinux  : ${green}$CHILILINUX_BRANCH${reset}"
-			msg_info "Kernel         : ${green}$KERNEL${reset}"
+			msg_info "DISTRONAME         : ${green}$DISTRONAME${reset}"
+			msg_info "EDITION            : ${green}$EDITION${reset}"
+			msg_info "ISO_PROFILES       : ${green}$ISO_PROFILES_REPO${reset}"
+			msg_info "MANJARO_BRANCH     : ${green}$MANJARO_BRANCH${reset}"
+			msg_info "BIGCOMMUNITY_BRANCH: ${green}$BIGCOMMUNITY_BRANCH${reset}"
+			msg_info "CHILILINUX_BRANCH  : ${green}$CHILILINUX_BRANCH${reset}"
+			msg_info "BIGLINUX_BRANCH    : ${green}$BIGLINUX_BRANCH${reset}"
+			msg_info "KERNEL             : ${green}$KERNEL${reset}"
 			echo '---------------------------------------------------------------------------------'
 		fi
 		echo -e "${BLUE}${BOLD}$title${NC}\n"
@@ -683,64 +707,6 @@ create_menu_with_array() {
 	#	return $((selected+1))
 }
 
-create_menu() {
-	local title=$1
-	shift
-	#	local options=("$@" "Sair")
-	local options=("$@")
-	local selected=0
-	local key
-
-	tput civis # Esconde o cursor
-
-	while true; do
-		tput clear # Limpa a tela
-		replicate '-'
-		msg_info "USERNAME      : ${green}$USERNAME${reset}"
-		msg_info "HOME_FOLDER   : ${green}$HOME_FOLDER${reset}"
-		msg_info "DISTRONAME    : ${green}$DISTRONAME${reset}"
-		msg_info "EDITION       : ${green}$EDITION${reset}"
-		msg_info "REPO WORKFLOW : ${green}$REPO_WORKFLOW${reset}"
-		msg_info "DEBUG         : ${green}$DEBUG${reset}"
-		replicate '-'
-		echo -e "${BLUE}${BOLD}$title${NC}\n"
-
-		for i in "${!options[@]}"; do
-			if [[ "$i" -eq $selected ]]; then
-				if [[ "${options[$i]}" =~ ^(Sair|Voltar)$ ]]; then
-					echo -e "${red}${bold}> ${reverse}${options[$i]}${reset}"
-				else
-					echo -e "${green}${bold}> ${reverse}${options[$i]}${reset}"
-				fi
-			else
-				if [[ "${options[$i]}" =~ ^(Sair|Voltar)$ ]]; then
-					echo -e "${red}  ${options[$i]}${reset}"
-				else
-					echo "  ${options[$i]}"
-				fi
-			fi
-		done
-
-		read -rsn1 key
-		case "$key" in
-		A)
-			((selected--))
-			[ $selected -lt 0 ] && selected=$((${#options[@]} - 1))
-			;;
-		B)
-			((selected++))
-			[ $selected -eq ${#options[@]} ] && selected=0
-			;;
-		'') break ;;
-		esac
-	done
-
-	tput cnorm # Mostra o cursor novamente
-	echo -e "\nVocê selecionou: ${green}${bold}${options[$selected]}${reset}"
-	MENU_RESULT=${options[$selected]}
-	#	return $((selected+1))
-}
-
 sh_time_elapsed() {
 	local end_time
 	local duration
@@ -785,43 +751,38 @@ checkout_iso-profiles_and_clean_directories() {
 export -f checkout_iso-profiles_and_clean_directories
 
 cleaning_working_directories() {
+	local cpath
 	local path_dirs=('/__t'
 		'/usr/share/manjaro-tools'
 		'/usr/lib/manjaro-tools'
 		'/var/lib/manjaro-tools/buildiso'
 		'/var/cache/manjaro-tools/iso'
 	)
-	local cpath
 
 	for cpath in "${path_dirs[@]}"; do
-		if [[ -d "$cpath" ]]; then
+		[[ -d "$cpath" ]] && {
 			msg "Limpando diretório: $cpath"
 			sudo rm -rf "$cpath"/* || true
-		fi
+		}
 	done
 }
 
 #Step 1 - Setup BUILD - check_directories_and_path
 check_directories_and_path() {
-	if [[ ! -d "$WORK_PATH_ISO_PROFILES" ]]; then
-		msg "ERRO($LINENO): Diretório $WORK_PATH_ISO_PROFILES não localizado!"
-		exit 1
-	fi
+	[[ ! -d "$WORK_PATH_ISO_PROFILES" ]] && {
+		die "ERRO($LINENO): Diretório $WORK_PATH_ISO_PROFILES não localizado!"
+	}
+
+	# Verificando o diretório do perfil específico
+	[[ ! -d "$PROFILE_PATH_EDITION" ]] && {
+		die "${red}" "ERRO($LINENO): perfil $PROFILE_PATH_EDITION não encontrado!"
+	}
+
 	if $DEBUG; then
 		# listando diretório iso-profiles no diretório atual
 		replicate "#"
 		msg_info "conteúdo path: $PROFILE_PATH"
 		ls -la "$PROFILE_PATH"
-		replicate "#"
-	fi
-
-	# Verificando o diretório do perfil específico
-	if [[ ! -d "$PROFILE_PATH_EDITION" ]]; then
-		#msg_info "ERRO($LINENO): perfil $PROFILE_PATH_EDITION não encontrado!"
-		#exit 1
-		die "${red}" "ERRO($LINENO): perfil $PROFILE_PATH_EDITION não encontrado!"
-	fi
-	if $DEBUG; then
 		replicate "#"
 		msg_info "contéudo path: $PROFILE_PATH_EDITION"
 		ls -la "$PROFILE_PATH_EDITION"
@@ -838,8 +799,11 @@ configurar_manjaro_tools_para_usuario_builduser() {
 	#	fi
 
 	msg "Configurando permissôes de ambiente do usuário atual ($USERNAME)"
-	echo 'PACKAGER="Vilmar Catafesta <vcatafesta@gmail.com>"' >>"$HOME_FOLDER"/.makepkg.conf
-	echo 'GPGKEY="A0D5A8312A83940ED8B04B0F4BAC871802E960F1"' >>"$HOME_FOLDER"/.makepkg.conf
+	{
+		echo 'PACKAGER="Vilmar Catafesta <vcatafesta@gmail.com>"'
+		echo 'GPGKEY="A0D5A8312A83940ED8B04B0F4BAC871802E960F1"'
+	} >>"$HOME_FOLDER"/.makepkg.conf
+
 	mkdir -p "$HOME_FOLDER"/.config/manjaro-tools
 	cp -R /etc/manjaro-tools "$HOME_FOLDER"/.config
 	echo "run_dir=$WORK_PATH_ISO_PROFILES" >"$HOME_FOLDER"/.config/manjaro-tools/iso-profiles.conf
@@ -849,7 +813,113 @@ configurar_manjaro_tools_para_usuario_builduser() {
 }
 export -f configurar_manjaro_tools_para_usuario_builduser
 
-#Step 3 - Setup BUILD - configure_repositories_and_build_environment
+configure_repositories_and_build_environment() {
+	local conf_file
+
+	msg 'Configurar repositórios e criar ambiente'
+	msg 'Aplicando as configurações'
+
+	[[ "$DISTRONAME" != "manjaro" ]] && {
+		add_repositorys_only_install "$PATH_MANJARO_TOOLS/pacman-default.conf"
+		add_repositorys_only_install "$PATH_MANJARO_TOOLS/pacman-multilib.conf"
+	  msg_info 'Ajustando ParallelDownloads'
+		sudo sed -i 's/^\(ParallelDownloads *= *\).*/\120/' "$PATH_MANJARO_TOOLS/pacman-default.conf"
+		sudo sed -i 's/^\(ParallelDownloads *= *\).*/\120/' "$PATH_MANJARO_TOOLS/pacman-multilib.conf"
+	}
+
+	conf_file="/usr/lib/manjaro-tools/util-iso-image.sh"
+	if [[ -f "$conf_file" ]]; then
+		msg "Alterando o path da remoção do cache de pacotes para remover '/usr/share/man'"
+		msg_info "sudo sed -i 's/path=\$1\/var\/lib\/pacman\/sync/path=\$1\/usr\/share\/man/g' ${conf_file}"
+		sudo sed -i 's/path=\$1\/var\/lib\/pacman\/sync/path=\$1\/usr\/share\/man/g' "${conf_file}" || {
+			msg_warning "Erro ao aplicar a alteração com sed!"
+		}
+	else
+		msg_warning "Arquivo ${conf_file} não encontrado!"
+	fi
+
+	msg 'Configurando compressão'
+	# Acessa dinamicamente a variável correspondente ao DISTRONAME_BRANCH
+	BRANCH_VAR="${DISTRONAME^^}_BRANCH" # Converte DISTRONAME para maiúsculas
+	BRANCH="${!BRANCH_VAR}"             # Expande o valor da variável com esse nome
+
+	conf_file="/usr/lib/manjaro-tools/util-iso.sh"
+	if [[ -f "${conf_file}" ]]; then
+		if [[ "$BRANCH" == "stable" ]]; then
+			msg_info "sed -i 's/-Xcompression-level [0-9]\+/-Xcompression-level 22/g' ${conf_file}"
+			sudo sed -i "s/-Xcompression-level [0-9]\+/-Xcompression-level 22/g" "${conf_file}" || {
+				msg_warning "Erro ao aplicar a alteração com sed!"
+			}
+		else
+			msg_info "sed -i 's/-Xcompression-level [0-9]\+/-Xcompression-level 3/g' ${conf_file}"
+			sudo sed -i 's/-Xcompression-level [0-9]\+/-Xcompression-level 3/g' "${conf_flle}" || {
+				msg_warning "Erro ao aplicar a alteração com sed!"
+			}
+		fi
+		msg_info "sudo sed -i 's/256K/1024K/g' ${conf_file}"
+		sudo sed -i 's/256K/1024K/g' "${conf_file}" || {
+			msg_warning "Erro ao aplicar a alteração com sed!"
+		}
+	else
+		msg_warning "Arquivo ${conf_file} não encontrado!"
+	fi
+
+	if $DEBUG; then
+		replicate "#"
+		msg_info "cat /etc/pacman.d/mirrorlist"
+		cat /etc/pacman.d/mirrorlist || true
+		replicate "#"
+		msg_info "cat $PATH_MANJARO_TOOLS/pacman-default.conf"
+		cat "$PATH_MANJARO_TOOLS/pacman-default.conf" || true
+		replicate "#"
+		msg_info "cat $PATH_MANJARO_TOOLS/pacman-multilib.conf"
+		cat "$PATH_MANJARO_TOOLS/pacman-multilib.conf" || true
+		replicate "#"
+	fi
+}
+export -f configure_repositories_and_build_environment
+
+add_iso_cleanups() {
+	# cleanups
+	local cleanup_script="/usr/lib/manjaro-tools/util-iso-image.sh"
+
+	#adicionar a chamada da função iso_cleanups antes do fechamento (}) da função
+	sudo sed -i '/^}/i \ \ mkiso_build_iso_cleanups "$1"' "$cleanup_script"
+
+	#adicionar a unção iso_cleanups no fim do arquivo $cleanup_script
+	#Delimitador de EOF_CLEANUPS entre aspas simples (<<-'EOF_CLEANUPS'):
+	#Evita a expansão de variáveis e trata todo o conteúdo como literal.
+	sudo tee -a "$cleanup_script" >/dev/null <<-'EOF_CLEANUPS'
+
+		mkiso_build_iso_cleanups() {
+		  # Big cleanups
+		  local cpath="$1"
+
+		  # Remove documentation
+		  rm -rf "$cpath/usr/share/doc"/* 2> /dev/null
+
+		  # Remove man pages
+		  rm -rf "$cpath/usr/share/man"/* 2> /dev/null
+
+		  # Clean LibreOffice configs
+		  local libreoffice_path="$cpath/usr/lib/libreoffice/share/config"
+		  if [[ -d "$libreoffice_path" ]]; then
+		    rm -f "$libreoffice_path"/images_{karasa_jaga,elementary,sukapura}* 2> /dev/null
+		    rm -f "$libreoffice_path"/images_{colibre,sifr_dark,sifr,breeze_dark,breeze}_svg.zip 2> /dev/null
+		  fi
+
+		  # Clean wallpapers
+		  local wallpapers_path="$cpath/usr/share/wallpapers"
+		  if [[ -d "$wallpapers_path" ]]; then
+		    rm -rf "$wallpapers_path"/{Altai,BytheWater,Cascade,ColdRipple,DarkestHour,EveningGlow,Flow,FlyingKonqui,IceCold,Kokkini,Next,Opal,Patak,SafeLanding,summer_1am,Autumn,Canopee,Cluster,ColorfulCups,Elarun,FallenLeaf,Fluent,Grey,Kite,MilkyWay,OneStandsOut,PastelHills,Path,Shell,Volna}
+		  fi
+		}
+		    export -f mkiso_build_iso_cleanups
+	EOF_CLEANUPS
+}
+export -f add_iso_cleanups
+
+# Step 3 - Setup BUILD - configure_repositories_and_build_environment
 add_biglinux-update-stable() {
 	{
 		echo '[biglinux-update-stable]'
@@ -915,26 +985,18 @@ add_chili-stable() {
 		echo '[chili-stable]'
 		echo 'SigLevel = Optional TrustAll'
 		echo 'Server = https://repo.chililinux.com/stable/$arch'
+		echo 'Server = https://repo2.chililinux.com/stable/$arch'
 		echo
 	}
 }
 export -f add_chili-stable
-
-add_chili-aur() {
-	{
-		echo '[chili-aur]'
-		echo 'SigLevel = Optional TrustAll'
-		echo 'Server = https://repo.chililinux.com/aur/$arch'
-		echo
-	}
-}
-export -f add_chili-aur
 
 add_chili-testing() {
 	{
 		echo '[chili-testing]'
 		echo 'SigLevel = Optional TrustAll'
 		echo 'Server = https://repo.chililinux.com/testing/$arch'
+		echo 'Server = https://repo2.chililinux.com/testing/$arch'
 		echo
 	}
 }
@@ -945,10 +1007,27 @@ add_chili-extra() {
 		echo '[chili-extra]'
 		echo 'SigLevel = Optional TrustAll'
 		echo 'Server = https://repo.chililinux.com/extra/$arch'
+		echo 'Server = https://repo2.chililinux.com/extra/$arch'
+		echo
+		echo '[chili-aur]'
+		echo 'SigLevel = Optional TrustAll'
+		echo 'Server = https://repo.chililinux.com/aur/$arch'
+		echo 'Server = https://repo2.chililinux.com/aur/$arch'
 		echo
 	}
 }
 export -f add_chili-extra
+
+add_chili-aur() {
+	{
+		echo '[chili-aur]'
+		echo 'SigLevel = Optional TrustAll'
+		echo 'Server = https://repo.chililinux.com/aur/$arch'
+		echo 'Server = https://repo2.chililinux.com/aur/$arch'
+		echo
+	}
+}
+export -f add_chili-aur
 
 add_repositorys_only_install() {
 	arquivo_conf="$1"
@@ -956,7 +1035,7 @@ add_repositorys_only_install() {
 	if [[ "$DISTRONAME" != "manjaro" ]]; then
 		# Lista de chaves a serem verificadas
 		for key in biglinux-keyring community-keyring chili-keyring; do
-			msg "Verificando e adicionando repositório '$key' ao arquivo $arquivo_conf, se necessário."
+			msg "Verificando/adicionando '$key' ao arquivo $arquivo_conf, se necessário."
 			# Verifica e adiciona a chave ao SyncFirst, caso não exista
 			if ! grep -q "$key" "$arquivo_conf"; then
 				sudo sed -i '/SyncFirst/s/$/ "$key"/' "$arquivo_conf"
@@ -1010,42 +1089,30 @@ add_repositorys_only_install() {
 	msg 'Configurando repositórios do BigCommunity'
 	case "$BIGCOMMUNITY_BRANCH" in
 	stable)
-		add_biglinux-update-stable | sudo tee -a "$arquivo_conf" >/dev/null
 		add_community-stable | sudo tee -a "$arquivo_conf" >/dev/null
 		add_community-testing | sudo tee -a "$arquivo_conf" >/dev/null
 		add_community-extra | sudo tee -a "$arquivo_conf" >/dev/null
 		;;
-	testing)
+	testing | unstable)
 		add_community-testing | sudo tee -a "$arquivo_conf" >/dev/null
 		add_community-stable | sudo tee -a "$arquivo_conf" >/dev/null
 		add_community-extra | sudo tee -a "$arquivo_conf" >/dev/null
 		;;
- 	esac
+	esac
 
-  msg 'Configurando repositórios do ChiliLinux'
+	msg 'Configurando repositórios do ChiliLinux'
 	case "$CHILILINUX_BRANCH" in
 	stable)
-	  add_biglinux-update-stable | sudo tee -a "$arquivo_conf" >/dev/null
-    add_chili-stable | sudo tee -a "$arquivo_conf" >/dev/null
+		add_chili-stable | sudo tee -a "$arquivo_conf" >/dev/null
 		add_chili-testing | sudo tee -a "$arquivo_conf" >/dev/null
 		add_chili-extra | sudo tee -a "$arquivo_conf" >/dev/null
-		add_chili-aur | sudo tee -a "$arquivo_conf" >/dev/null
 		add_community-stable | sudo tee -a "$arquivo_conf" >/dev/null
 		add_community-extra | sudo tee -a "$arquivo_conf" >/dev/null
 		;;
-  testing)
+	*)
 		add_chili-testing | sudo tee -a "$arquivo_conf" >/dev/null
 		add_chili-stable | sudo tee -a "$arquivo_conf" >/dev/null
 		add_chili-extra | sudo tee -a "$arquivo_conf" >/dev/null
-		add_chili-aur | sudo tee -a "$arquivo_conf" >/dev/null
-		add_community-stable | sudo tee -a "$arquivo_conf" >/dev/null
-		add_community-extra | sudo tee -a "$arquivo_conf" >/dev/null
-		;;
-  *)
-		add_chili-testing | sudo tee -a "$arquivo_conf" >/dev/null
-		add_chili-stable | sudo tee -a "$arquivo_conf" >/dev/null
-		add_chili-extra | sudo tee -a "$arquivo_conf" >/dev/null
-		add_chili-aur | sudo tee -a "$arquivo_conf" >/dev/null
 		add_community-stable | sudo tee -a "$arquivo_conf" >/dev/null
 		add_community-extra | sudo tee -a "$arquivo_conf" >/dev/null
 		;;
@@ -1065,112 +1132,60 @@ add_repositorys_only_install() {
 }
 export -f add_repositorys_only_install
 
-configure_repositories_and_build_environment() {
-	msg 'Configurar repositórios e criar ambiente'
-	msg 'Aplicando as configurações'
+adjust_file() {
+	local file="$1"
+	local search="$2"
+	local replace="$3"
 
-	if [[ "$DISTRONAME" != "manjaro" ]]; then
-		add_repositorys_only_install "$PATH_MANJARO_TOOLS/pacman-default.conf"
-		add_repositorys_only_install "$PATH_MANJARO_TOOLS/pacman-multilib.conf"
-	fi
-
-	msg "Alterando o path da remoção do cache de pacotes para remover '/usr/share/man'"
-	msg_info "sudo sed -i 's/path=\$1\/var\/lib\/pacman\/sync/path=\$1\/usr\/share\/man/g' /usr/lib/manjaro-tools/util-iso-image.sh"
-	sudo sed -i 's/path=\$1\/var\/lib\/pacman\/sync/path=\$1\/usr\/share\/man/g' /usr/lib/manjaro-tools/util-iso-image.sh
-
-  msg 'Configurando compressão'
-  # Acessa dinamicamente a variável correspondente ao DISTRONAME_BRANCH
-  BRANCH_VAR="${DISTRONAME^^}_BRANCH" # Converte DISTRONAME para maiúsculas
-  BRANCH="${!BRANCH_VAR}"             # Expande o valor da variável com esse nome
-
-  if [[ "$BRANCH" == "stable" ]]; then
-    msg_info "sed -i 's/-Xcompression-level [0-9]\+/-Xcompression-level 22/g' /usr/lib/manjaro-tools/util-iso.sh"
-    sudo sed -i 's/-Xcompression-level [0-9]\+/-Xcompression-level 22/g' /usr/lib/manjaro-tools/util-iso.sh
-  else
-    msg_info "sed -i 's/-Xcompression-level [0-9]\+/-Xcompression-level 3/g' /usr/lib/manjaro-tools/util-iso.sh"
-    sudo sed -i 's/-Xcompression-level [0-9]\+/-Xcompression-level 3/g' /usr/lib/manjaro-tools/util-iso.sh
-  fi
-	msg_info "sudo sed -i 's/256K/1024K/g' /usr/lib/manjaro-tools/util-iso.sh"
-	sudo sed -i 's/256K/1024K/g' /usr/lib/manjaro-tools/util-iso.sh
-
-	if $DEBUG; then
-		replicate "#"
-		msg_info "cat /etc/pacman.d/mirrorlist"
-		cat /etc/pacman.d/mirrorlist || true
-		replicate "#"
-		msg_info "cat $PATH_MANJARO_TOOLS/pacman-default.conf"
-		cat "$PATH_MANJARO_TOOLS/pacman-default.conf" || true
-		replicate "#"
-		msg_info "cat $PATH_MANJARO_TOOLS/pacman-multilib.conf"
-		cat "$PATH_MANJARO_TOOLS/pacman-multilib.conf" || true
-		replicate "#"
-	fi
+	[[ -f "$file" ]] && {
+		sudo sed -i "s|$search|$replace|g" "$file" || {
+			msg_warning "Erro ao aplicar a alteração com sed no arquivo ${file}!"
+		}
+	}
 }
-export -f configure_repositories_and_build_environment
 
-add_iso_cleanups() {
-	# cleanups
-	local cleanup_script="/usr/lib/manjaro-tools/util-iso-image.sh"
-
-  #adicionar a chamada da função iso_cleanups antes do fechamento (}) da função
-  sudo sed -i '/^}/i \ \ mkiso_build_iso_cleanups "$1"' "$cleanup_script"
-
-  #adicionar a unção iso_cleanups no fim do arquivo $cleanup_script
-  #Delimitador de EOF_CLEANUPS entre aspas simples (<<-'EOF_CLEANUPS'):
-  #Evita a expansão de variáveis e trata todo o conteúdo como literal.
-	sudo tee -a "$cleanup_script" >/dev/null <<-'EOF_CLEANUPS'
-
-mkiso_build_iso_cleanups() {
-  # Big cleanups
-  local cpath="$1"
-
-  # Remove documentation
-  rm -rf "$cpath/usr/share/doc"/* 2> /dev/null
-
-  # Remove man pages
-  rm -rf "$cpath/usr/share/man"/* 2> /dev/null
-
-  # Clean LibreOffice configs
-  local libreoffice_path="$cpath/usr/lib/libreoffice/share/config"
-  if [[ -d "$libreoffice_path" ]]; then
-    rm -f "$libreoffice_path"/images_{karasa_jaga,elementary,sukapura}* 2> /dev/null
-    rm -f "$libreoffice_path"/images_{colibre,sifr_dark,sifr,breeze_dark,breeze}_svg.zip 2> /dev/null
-  fi
-
-  # Clean wallpapers
-  local wallpapers_path="$cpath/usr/share/wallpapers"
-  if [[ -d "$wallpapers_path" ]]; then
-    rm -rf "$wallpapers_path"/{Altai,BytheWater,Cascade,ColdRipple,DarkestHour,EveningGlow,Flow,FlyingKonqui,IceCold,Kokkini,Next,Opal,Patak,SafeLanding,summer_1am,Autumn,Canopee,Cluster,ColorfulCups,Elarun,FallenLeaf,Fluent,Grey,Kite,MilkyWay,OneStandsOut,PastelHills,Path,Shell,Volna}
-  fi
+remove_packages_from_file() {
+	local remove_list="$1"
+	local target_file="$2"
+	[[ -f "$remove_list" && -f "$target_file" ]] || return
+	while IFS= read -r package; do
+		sed -i "/^$package$/d" "$target_file"
+	done <"$remove_list"
 }
-EOF_CLEANUPS
+
+check_internal_dependencies() {
+	required_commands=("buildiso" "sudo" "sed")
+	for cmd in "${required_commands[@]}"; do
+		if ! command -v "$cmd" &>/dev/null; then
+			die "Error: Required command '$cmd' not found." >&2
+		fi
+	done
+	[[ -d "$WORK_PATH_ISO_PROFILES" ]] || {
+		die "Error: WORK_PATH_ISO_PROFILES directory not found." >&2
+	}
 }
-export -f add_iso_cleanups
 
 setup_manjaro_tools() {
 	msg "Setting up Manjaro tools..."
 
-	msg 'remover pasta para não ter duplicidade de perfil'
-	msg_info "rm -rf ""$WORK_PATH_ISO_PROFILES""/custom-profiles"
-	rm -rf "$WORK_PATH_ISO_PROFILES"/custom-profiles
+	# Remover duplicatas de perfil
+	[[ -d "$WORK_PATH_ISO_PROFILES/custom-profiles" ]] && {
+		msg 'remover pasta para não ter duplicidade de perfil'
+		msg_info "rm -rf $WORK_PATH_ISO_PROFILES/custom-profiles"
+		rm -rf "$WORK_PATH_ISO_PROFILES/custom-profiles"
+	}
 
+	# Configurar diretório de cache
 	msg "Criar e configurar diretórios"
-	msg_info "sudo mkdir -p $VAR_CACHE_MANJARO_TOOLS_ISO"
-	sudo mkdir -p "$VAR_CACHE_MANJARO_TOOLS_ISO"
+	[[ ! -d "$VAR_CACHE_MANJARO_TOOLS_ISO" ]] && {
+		msg_info "sudo mkdir -p $VAR_CACHE_MANJARO_TOOLS_ISO"
+		sudo mkdir -p "$VAR_CACHE_MANJARO_TOOLS_ISO"
+	}
 	msg_info "sudo chmod 1777 $VAR_CACHE_MANJARO_TOOLS_ISO"
 	sudo chmod 1777 "$VAR_CACHE_MANJARO_TOOLS_ISO"
 
-	msg "Verificar se buildiso está disponível"
-	if ! command -v buildiso &>/dev/null; then
-		msg_warning "Error: buildiso command not found. Please ensure manjaro-tools-iso is installed correctly."
-		exit 1
-	fi
-
-	# Verificar se o diretório do perfil existe
-	if [[ ! -d "$PROFILE_PATH_EDITION" ]]; then
-		msg_warning "Error: Profile directory $PROFILE_PATH_EDITION does not exist."
-		exit 1
-	fi
+	# Verificar dependências
+	check_internal_dependencies
 
 	msg "Ajustando 'misobasedir' no arquivo kernels.cfg em $WORK_PATH_ISO_PROFILES"
 	find "$WORK_PATH_ISO_PROFILES" -name "kernels.cfg" -exec sed -i "s/misobasedir=[^ ]*/misobasedir=${DISTRONAME,,}/g" {} + || true
@@ -1188,8 +1203,8 @@ setup_manjaro_tools() {
 	find "$WORK_PATH_ISO_PROFILES/shared/live-overlay/usr/share/grub/cfg/" -name "grub.cfg" -exec sed -i \
 		"s#theme=(\$root)/boot/grub/themes/[^/]*/theme.txt#theme=(\$root)/boot/grub/themes/${DISTRONAME_ISOPROFILES,,}-live/theme.txt#g" {} + || true
 
-  msg "Ajustando o tema no arquivo '/usr/lib/manjaro-tools/util-iso-boot.sh' parar usar DISTRONAME_ISOPROFILES (${DISTRONAME_ISOPROFILES,,})."
-  sudo sed -i "s|\${data_live}/themes/[^ ]*-live \${grub}/themes/|\${data_live}/themes/${DISTRONAME_ISOPROFILES,,}-live \${grub}/themes/|g" /usr/lib/manjaro-tools/util-iso-boot.sh
+	msg "Ajustando o tema no arquivo '/usr/lib/manjaro-tools/util-iso-boot.sh' parar usar DISTRONAME_ISOPROFILES (${DISTRONAME_ISOPROFILES,,})."
+	sudo sed -i "s|\${data_live}/themes/[^ ]*-live \${grub}/themes/|\${data_live}/themes/${DISTRONAME_ISOPROFILES,,}-live \${grub}/themes/|g" /usr/lib/manjaro-tools/util-iso-boot.sh
 
 	# Apply Custom Profile Modifications
 	# Apply edition-specific removals
@@ -1215,21 +1230,25 @@ setup_manjaro_tools() {
 	fi
 
 	msg 'Configurar o nome da distribuição e ISO'
-	sudo sed -i "s/dist_name=.*/dist_name=${DISTRONAME,,}/" /usr/lib/manjaro-tools/util.sh
-	sudo sed -i "s/iso_name=.*/iso_name=${DISTRONAME,,}/" /usr/lib/manjaro-tools/util.sh
+	if [[ -f /usr/lib/manjaro-tools/util.sh ]]; then
+		sudo sed -i "s/dist_name=.*/dist_name=${DISTRONAME,,}/" /usr/lib/manjaro-tools/util.sh
+		sudo sed -i "s/iso_name=.*/iso_name=${DISTRONAME,,}/" /usr/lib/manjaro-tools/util.sh
 
-	msg 'Configurar a marca da distribuição'
-	sudo sed -i "s/dist_branding=.*/dist_branding=${DISTRONAME,,}/" /usr/lib/manjaro-tools/util.sh
+		msg 'Configurar a marca da distribuição'
+		sudo sed -i "s/dist_branding=.*/dist_branding=${DISTRONAME,,}/" /usr/lib/manjaro-tools/util.sh
+	fi
 
-	msg 'Modificar o nome do arquivo ISO'
-	sudo sed -i "s/_${profile}${_edition}_${dist_release//./}/-live/" /usr/lib/manjaro-tools/util-iso.sh
+	if [[ -f /usr/lib/manjaro-tools/util-iso.sh ]]; then
+		msg 'Modificar o nome do arquivo ISO'
+		sudo sed -i "s/_${profile}${_edition}_${dist_release//./}/-live/" /usr/lib/manjaro-tools/util-iso.sh
 
-	msg 'Configurar profile'
-	sudo sed -i "s|profile=.*|profile=\"$EDITION\"|" /usr/lib/manjaro-tools/util-iso.sh
-	sudo sed -i "s|profile_dir=.*|profile_dir=\"$PROFILE_PATH/$EDITION\"|" /usr/lib/manjaro-tools/util-iso.sh
+		msg 'Configurar profile'
+		sudo sed -i "s|profile=.*|profile=\"$EDITION\"|" /usr/lib/manjaro-tools/util-iso.sh
+		sudo sed -i "s|profile_dir=.*|profile_dir=\"$PROFILE_PATH/$EDITION\"|" /usr/lib/manjaro-tools/util-iso.sh
 
-	msg 'Desabilitar a verificação de versão do kernel'
-	sudo sed -i '/${iso_kernel}/s/^/#/' /usr/lib/manjaro-tools/util-iso.sh
+		msg 'Desabilitar a verificação de versão do kernel'
+		sudo sed -i '/${iso_kernel}/s/^/#/' /usr/lib/manjaro-tools/util-iso.sh
+	fi
 
 	msg 'Adicionar limpezas da ISO'
 	add_iso_cleanups
@@ -1239,6 +1258,11 @@ setup_manjaro_tools() {
 
 	msg 'Habilitar plymouth e kms'
 	sudo sed -i 's/keyboard keymap/keyboard keymap kms plymouth/g' /usr/share/manjaro-tools/mkinitcpio.conf
+
+	msg 'Alterar pacman e adicionar --needed'
+  sudo sed -i 's/pacman -Syu --noconfirm || abort/pacman -Syu --needed --noconfirm || abort/' /usr/lib/manjaro-tools/util-pkg-chroot.sh
+
+
 
 	msg "Manjaro tools setup completed."
 	if $DEBUG; then
@@ -1256,117 +1280,117 @@ configure_dwarfs() {
 	# Backup dos arquivos originais
 	sudo sed -i 's/make_sfs\s\+\"\${sfs_dir}\"/make_dwarfs "${sfs_dir}"/g' /usr/lib/manjaro-tools/util-iso.sh
 	# Substituir funções no util-iso-image.sh
-	sudo tee -a /usr/lib/manjaro-tools/util-iso.sh >/dev/null <<'EOF'
+	sudo tee -a /usr/lib/manjaro-tools/util-iso.sh >/dev/null <<-'EOF_DWARFS'
 
-# Função para criar imagem DwarFS
-build_dwarfs_image() {
-  local src="$1"
-  local destname="$2"
-  local dest="$3"
-  local comp_args=()
+		# Função para criar imagem DwarFS
+		build_dwarfs_image() {
+		  local src="$1"
+		  local destname="$2"
+		  local dest="$3"
+		  local comp_args=()
 
-  # Configuração dos argumentos
-  comp_args+=(-i "$src")
-  comp_args+=(-o "$dest/$destname")
-  comp_args+=(--compress-level=9)
-  comp_args+=(--block-size-bits=22)
-  #comp_args+=(--max-block-size=1M)
-  comp_args+=(--num-workers=$(nproc))
+		  # Configuração dos argumentos
+		  comp_args+=(-i "$src")
+		  comp_args+=(-o "$dest/$destname")
+		  comp_args+=(--compress-level=9)
+		  comp_args+=(--block-size-bits=22)
+		  #comp_args+=(--max-block-size=1M)
+		  comp_args+=(--num-workers=$(nproc))
 
-  # Logs para depuração
-  msg2 "Creating DwarFS image, this may take some time..."
-  msg2 "Source: $src"
-  msg2 "Destination: $dest/$destname"
-  msg2 "Compression Level: 9"
-  msg2 "Block Size Bits: 22"
-  msg2 "Workers: $(nproc)"
-  msg2 "DwarFS ALL parameters: ${comp_args[*]}"
+		  # Logs para depuração
+		  msg2 "Creating DwarFS image, this may take some time..."
+		  msg2 "Source: $src"
+		  msg2 "Destination: $dest/$destname"
+		  msg2 "Compression Level: 9"
+		  msg2 "Block Size Bits: 22"
+		  msg2 "Workers: $(nproc)"
+		  msg2 "DwarFS ALL parameters: ${comp_args[*]}"
 
-  # Execução
-  mkdwarfs "${comp_args[@]}"
-}
+		  # Execução
+		  mkdwarfs "${comp_args[@]}"
+		}
 
-# $1: file
-make_checksum_dwarfs(){
-  msg2 "Creating md5sum ..."
-  cd $1
-  md5sum $2.dwarfs > $2.md5
-  cd ${OLDPWD}
-}
+		# $1: file
+		make_checksum_dwarfs(){
+		  msg2 "Creating md5sum ..."
+		  cd $1
+		  md5sum $2.dwarfs > $2.md5
+		  cd ${OLDPWD}
+		}
 
-# $1: image path
-make_dwarfs() {
-  local src="$1"
-  if [[ ! -e "${src}" ]]; then
-    error "The path %s does not exist" "${src}"
-    return 1
-  fi
-  local timer=$(get_timer) dest=${iso_root}/${iso_name}/${target_arch}
-  local name=${1##*/}
-  #local sfs="${dest}/${name}.dwarfs"
-  local sfs="${dest}/${name}.sfs"
-  mkdir -p ${dest}
-  msg "Generating DwarFS image for %s" "${src}"
-    if [[ -f "${sfs}" ]]; then
-        local has_changed_dir=$(find ${src} -newer ${sfs})
-        msg2 "Possible changes for %s ..." "${src}"  >> ${tmp_dir}/buildiso.debug
-        msg2 "%s" "${has_changed_dir}" >> ${tmp_dir}/buildiso.debug
-        if [[ -n "${has_changed_dir}" ]]; then
-            msg2 "DwarFS image %s is not up to date, rebuilding..." "${sfs}"
-            rm "${sfs}"
-        else
-            msg2 "DwarFS image %s is up to date, skipping." "${sfs}"
-            return
-        fi
-    fi
+		# $1: image path
+		make_dwarfs() {
+		  local src="$1"
+		  if [[ ! -e "${src}" ]]; then
+		    error "The path %s does not exist" "${src}"
+		    return 1
+		  fi
+		  local timer=$(get_timer) dest=${iso_root}/${iso_name}/${target_arch}
+		  local name=${1##*/}
+		  #local sfs="${dest}/${name}.dwarfs"
+		  local sfs="${dest}/${name}.sfs"
+		  mkdir -p ${dest}
+		  msg "Generating DwarFS image for %s" "${src}"
+		    if [[ -f "${sfs}" ]]; then
+		        local has_changed_dir=$(find ${src} -newer ${sfs})
+		        msg2 "Possible changes for %s ..." "${src}"  >> ${tmp_dir}/buildiso.debug
+		        msg2 "%s" "${has_changed_dir}" >> ${tmp_dir}/buildiso.debug
+		        if [[ -n "${has_changed_dir}" ]]; then
+		            msg2 "DwarFS image %s is not up to date, rebuilding..." "${sfs}"
+		            rm "${sfs}"
+		        else
+		            msg2 "DwarFS image %s is up to date, skipping." "${sfs}"
+		            return
+		        fi
+		    fi
 
-    if ${persist}; then
-        local size=32G
-        local mnt="${mnt_dir}/${name}"
-        msg2 "Creating ext4 image of %s ..." "${size}"
-        truncate -s ${size} "${src}.img"
-        local ext4_args=()
-        ${verbose} && ext4_args+=(-q)
-        ext4_args+=(-O ^has_journal,^resize_inode -E lazy_itable_init=0 -m 0)
-        mkfs.ext4 ${ext4_args[@]} -F "${src}.img" &>/dev/null
-        tune2fs -c 0 -i 0 "${src}.img" &> /dev/null
-        mount_img "${work_dir}/${name}.img" "${mnt}"
-        msg2 "Copying %s ..." "${src}/"
-        cp -aT "${src}/" "${mnt}/"
-        umount_img "${mnt}"
-    fi
+		    if ${persist}; then
+		        local size=32G
+		        local mnt="${mnt_dir}/${name}"
+		        msg2 "Creating ext4 image of %s ..." "${size}"
+		        truncate -s ${size} "${src}.img"
+		        local ext4_args=()
+		        ${verbose} && ext4_args+=(-q)
+		        ext4_args+=(-O ^has_journal,^resize_inode -E lazy_itable_init=0 -m 0)
+		        mkfs.ext4 ${ext4_args[@]} -F "${src}.img" &>/dev/null
+		        tune2fs -c 0 -i 0 "${src}.img" &> /dev/null
+		        mount_img "${work_dir}/${name}.img" "${mnt}"
+		        msg2 "Copying %s ..." "${src}/"
+		        cp -aT "${src}/" "${mnt}/"
+		        umount_img "${mnt}"
+		    fi
 
-    msg2 "Creating DwarFS image, this may take some time..."
-    local used_kernel=${kernel:5:1} mksfs_args=()
-    if ${persist}; then
-      mksfs_args+=(${work_dir}/${name}.img)
-    else
-      mksfs_args+=(${src})
-    fi
-    mksfs_args+=(${sfs} -noappend)
-    local highcomp
-    [[ "${iso_compression}" == "xz" ]] && highcomp="-b 1024K -Xbcj x86"
-    [[ "${iso_compression}" == "zstd" ]] && highcomp="-b 1024K -Xcompression-level 6" #compression level max 22 (default 15)
-    mksfs_args+=(-comp ${iso_compression} ${highcomp})
-    msg2 "SquashFS parameters: ${mksfs_args[*]}"
+		    msg2 "Creating DwarFS image, this may take some time..."
+		    local used_kernel=${kernel:5:1} mksfs_args=()
+		    if ${persist}; then
+		      mksfs_args+=(${work_dir}/${name}.img)
+		    else
+		      mksfs_args+=(${src})
+		    fi
+		    mksfs_args+=(${sfs} -noappend)
+		    local highcomp
+		    [[ "${iso_compression}" == "xz" ]] && highcomp="-b 1024K -Xbcj x86"
+		    [[ "${iso_compression}" == "zstd" ]] && highcomp="-b 1024K -Xcompression-level 6" #compression level max 22 (default 15)
+		    mksfs_args+=(-comp ${iso_compression} ${highcomp})
+		    msg2 "SquashFS parameters: ${mksfs_args[*]}"
 
-    if ${verbose}; then
-      #mksquashfs "${mksfs_args[@]}" >/dev/null
-      build_dwarfs_image "$src" "$sfs" >/dev/null
-    else
-      #mksquashfs "${mksfs_args[@]}"
-      build_dwarfs_image "$src" "$sfs"
-    fi
-    #make_checksum_dwarfs "${dest}" "${name}"
-    make_checksum "${dest}" "${name}"
-    ${persist} && rm "${src}.img"
+		    if ${verbose}; then
+		      #mksquashfs "${mksfs_args[@]}" >/dev/null
+		      build_dwarfs_image "$src" "$sfs" >/dev/null
+		    else
+		      #mksquashfs "${mksfs_args[@]}"
+		      build_dwarfs_image "$src" "$sfs"
+		    fi
+		    #make_checksum_dwarfs "${dest}" "${name}"
+		    make_checksum "${dest}" "${name}"
+		    ${persist} && rm "${src}.img"
 
-    if [[ -n ${gpgkey} ]]; then
-      make_sig "${dest}" "${name}"
-    fi
-    show_elapsed_time "${FUNCNAME}" "${timer_start}"
-}
-EOF
+		    if [[ -n ${gpgkey} ]]; then
+		      make_sig "${dest}" "${name}"
+		    fi
+		    show_elapsed_time "${FUNCNAME}" "${timer_start}"
+		}
+	EOF_DWARFS
 
 	# Configurar mkinitcpio
 	#sudo sed -i 's/MODULES=()/MODULES=(dwarfs)/' /etc/mkinitcpio.conf
@@ -1379,14 +1403,19 @@ EOF
 export -f configure_dwarfs
 
 configure_mesa() {
-	msg 'configurando mesa'
+	msg 'Iniciando configuração de pacotes Mesa para o kernel.'
 	if [[ "$KERNEL" =~ ^(latest|xanmod)$ ]]; then
 		{
 			echo ''
 			echo "mesa-tkg-stable"
 			echo "lib32-mesa-tkg-stable"
 		} >>"$PROFILE_PATH_EDITION"/Packages-Root
-		sed -i '/libva-mesa/d; /vulkan-swrast/d' "$PROFILE_PATH_EDITION"/Packages-{Desktop,Mhwd}
+
+		if [[ -f "$PROFILE_PATH_EDITION/Packages-Desktop" && -f "$PROFILE_PATH_EDITION/Packages-Mhwd" ]]; then
+			sed -i '/libva-mesa/d; /vulkan-swrast/d' "$PROFILE_PATH_EDITION"/Packages-{Desktop,Mhwd}
+		else
+			msg_warning "Erro: Um ou mais arquivos Packages-{Desktop,Mhwd} não encontrados!" >&2
+		fi
 	fi
 }
 export -f configure_mesa
@@ -1478,13 +1507,13 @@ configure_kernel() {
 		sed -i "s/^KERNEL\b/linux${KERNEL_NAME}/g" "$pkg_file"
 		sed -i "s/^KERNEL-headers\b/linux${KERNEL_NAME}-headers/g" "$pkg_file"
 		sed -i "s/^KERNEL-\(.*\)/linux${KERNEL_NAME}-\1/g" "$pkg_file"
-		if $DEBUG; then
-			msg 'Conteúdo dos arquivos Packages após a limpeza e substituição do kernel:'
-			replicate '#'
-			msg_info "### $pkg_file ###"
-			cat "$pkg_file" || true
-			replicate '#'
-		fi
+		#if $DEBUG; then
+		# msg 'Conteúdo dos arquivos Packages após a limpeza e substituição do kernel:'
+		# replicate '#'
+		# msg_info "cat $pkg_file"
+		# cat "$pkg_file" || true
+		# replicate '#'
+		#fi
 	done
 }
 export -f configure_kernel
@@ -1493,6 +1522,7 @@ add_repos_to_pacman_conf_into_iso_distro() {
 	local config_file="$1"
 	local bigcommunity_branch="$2"
 	local biglinux_branch="$3"
+	local chililinux_branch="$4"
 	local config_dir
 
 	config_dir=$(dirname "$config_file")
@@ -1500,8 +1530,8 @@ add_repos_to_pacman_conf_into_iso_distro() {
 	mkdir -p "$config_dir"
 
 	# Community repositories
-	if [[ "$DISTRONAME" == "bigcommunity" ]]; then
-		if [[ "$bigcommunity_branch" == "testing" ]]; then
+	if [[ "${DISTRONAME,,}" == "bigcommunity" ]]; then
+		if [[ "${bigcommunity_branch,,}" == "testing" ]]; then
 			add_community-testing | sudo tee -a "$config_file" >/dev/null
 			add_community-stable | sudo tee -a "$config_file" >/dev/null
 			add_community-extra | sudo tee -a "$config_file" >/dev/null
@@ -1512,16 +1542,14 @@ add_repos_to_pacman_conf_into_iso_distro() {
 	fi
 
 	# Chililinux repositories
-	if [[ "$DISTRONAME" == "chililinux" ]]; then
-		if [[ "$CHILILINUX_BRANCH" == "testing" ]]; then
+	if [[ "${DISTRONAME,,}" == "chililinux" ]]; then
+		if [[ "${chililinux_branch,,}" == "testing" ]]; then
 			add_chili-testing | sudo tee -a "$config_file" >/dev/null
 			add_chili-stable | sudo tee -a "$config_file" >/dev/null
 			add_chili-extra | sudo tee -a "$config_file" >/dev/null
-  		add_chili-aur | sudo tee -a "$arquivo_conf" >/dev/null
 		else
 			add_chili-stable | sudo tee -a "$config_file" >/dev/null
 			add_chili-extra | sudo tee -a "$config_file" >/dev/null
-  		add_chili-aur | sudo tee -a "$arquivo_conf" >/dev/null
 		fi
 	fi
 
@@ -1538,12 +1566,12 @@ set_build_info() {
 	local release_file
 	local release_dir
 
-  case "$DISTRONAME" in
-  bigcommunity) release_file="$PROFILE_PATH_EDITION/root-overlay/etc/big-release";;
-  biglinux) release_file="$PROFILE_PATH_EDITION/root-overlay/etc/big-release";;
-  chililinux) release_file="$PROFILE_PATH_EDITION/root-overlay/etc/chili-release";;
-  manjaro) release_file="$PROFILE_PATH_EDITION/root-overlay/etc/manjaro-release";;
-  esac
+	case "$DISTRONAME" in
+	bigcommunity) release_file="$PROFILE_PATH_EDITION/root-overlay/etc/big-release" ;;
+	biglinux) release_file="$PROFILE_PATH_EDITION/root-overlay/etc/big-release" ;;
+	chililinux) release_file="$PROFILE_PATH_EDITION/root-overlay/etc/chili-release" ;;
+	manjaro) release_file="$PROFILE_PATH_EDITION/root-overlay/etc/manjaro-release" ;;
+	esac
 	release_dir=$(dirname "$release_file")
 
 	# Ensure the directory exists
@@ -1587,10 +1615,12 @@ verificar_iso_profiles_conf() {
 export -f verificar_iso_profiles_conf
 
 configure_iso_name() {
-	msg_info "Debug: DISTRONAME=$DISTRONAME"
-	msg_info "Debug: MANJARO_BRANCH=$MANJARO_BRANCH"
-	msg_info "Debug: BIGCOMMUNITY_BRANCH=$BIGCOMMUNITY_BRANCH"
-	msg_info "Debug: ISO_LABEL=${VOL_ID}"
+	replicate "-"
+	msg_raw "DISTRONAME          : $DISTRONAME"
+	msg_raw "MANJARO_BRANCH      : $MANJARO_BRANCH"
+	msg_raw "BIGCOMMUNITY_BRANCH : $BIGCOMMUNITY_BRANCH"
+	msg_raw "ISO_LABEL           : ${VOL_ID}"
+	replicate "-"
 
 	msg 'Configurando nome da ISO'
 	msg_info "Usando ${VOL_ID} para o LABEL/VOL_ID da ISO"
@@ -1634,28 +1664,29 @@ configure_iso_name() {
 export -f configure_iso_name
 
 build_iso() {
-	echo "########################## RESUMO #################################"
-	echo "BUILD COMMAND            : buildiso ${SCOPE:+-f} -p $EDITION -b $MANJARO_BRANCH -k ${KERNEL_NAME} ${OFFICE:+-o}"
-	echo "PROFILE_PATH             : $PROFILE_PATH"
-	echo "PROFILE_PATH_EDITION     : $PROFILE_PATH_EDITION"
-	echo "DISTRONAME               : $DISTRONAME"
-	echo "EDITION                  : $EDITION"
-	echo "MANJARO_BRANCH           : $MANJARO_BRANCH"
-	echo "BIGCOMMUNITY_BRANCH      : $BIGCOMMUNITY_BRANCH"
-	echo "BIGLINUX_BRANCH          : $BIGLINUX_BRANCH"
-	echo "CHILILINUX_BRANCH        : $CHILILINUX_BRANCH"
-	echo "KERNEL_VERSION_DOT       : ${KERNEL_VERSION_DOT}"
-	echo "KERNEL_NAME              : ${KERNEL_NAME}"
-	echo "SCOPE                    : $SCOPE"
-	echo "OFFICE                   : $OFFICE"
-	replicate "#"
-	echo "WORK_PATH                : $WORK_PATH"
-	echo "WORK_PATH_ISO_PROFILES   : $WORK_PATH_ISO_PROFILES"
-	echo "PATH_MANJARO_ISO_PROFILES: $PATH_MANJARO_ISO_PROFILES"
-	echo "ISO_BASENAME             : $ISO_BASENAME"
-	replicate "#"
-	echo "DEBUG                    : $DEBUG"
-	echo "BUILDUSER_RUN_DIR        : $(</"$HOME_FOLDER"/.config/manjaro-tools/iso-profiles.conf)" || true
+	replicate "########################## RESUMO #################################" 1
+	msg_raw "BUILD COMMAND            : buildiso ${SCOPE:+-f} -p $EDITION -b $MANJARO_BRANCH -k ${KERNEL_NAME} ${OFFICE:+-o}"
+	msg_raw "PROFILE_PATH             : $PROFILE_PATH"
+	msg_raw "PROFILE_PATH_EDITION     : $PROFILE_PATH_EDITION"
+	msg_raw "DISTRONAME               : $DISTRONAME"
+	msg_raw "EDITION                  : $EDITION"
+	msg_raw "MANJARO_BRANCH           : $MANJARO_BRANCH"
+	msg_raw "BIGCOMMUNITY_BRANCH      : $BIGCOMMUNITY_BRANCH"
+	msg_raw "BIGLINUX_BRANCH          : $BIGLINUX_BRANCH"
+	msg_raw "CHILILINUX_BRANCH        : $CHILILINUX_BRANCH"
+	msg_raw "KERNEL_VERSION_DOT       : ${KERNEL_VERSION_DOT}"
+	msg_raw "KERNEL_NAME              : ${KERNEL_NAME}"
+	msg_raw "SCOPE                    : $SCOPE"
+	msg_raw "OFFICE                   : $OFFICE"
+	replicate "-"
+	msg_raw "WORK_PATH                : $WORK_PATH"
+	msg_raw "WORK_PATH_ISO_PROFILES   : $WORK_PATH_ISO_PROFILES"
+	msg_raw "PATH_MANJARO_ISO_PROFILES: $PATH_MANJARO_ISO_PROFILES"
+	msg_raw "ISO_BASENAME             : $ISO_BASENAME"
+	replicate "-"
+	msg_raw "TMATE debug              : $TMATE"
+	msg_raw "BASH debug               : $DEBUG"
+	msg_raw "BUILDUSER_RUN_DIR        : $(</"$HOME_FOLDER"/.config/manjaro-tools/iso-profiles.conf)" || true
 	replicate "#"
 
 	verificar_iso_profiles_conf
@@ -1666,7 +1697,8 @@ build_iso() {
 	if $DEBUG; then
 		LC_ALL=C sudo -u "$USERNAME" bash -c "buildiso -d zstd ${SCOPE:+-f} -p $EDITION -b $MANJARO_BRANCH -k linux${KERNEL_NAME} ${OFFICE:+-o};exit \$?"
 	else
-		LC_ALL=C sudo -u "$USERNAME" bash -c "buildiso -d zstd ${SCOPE:+-f} -p $EDITION -b $MANJARO_BRANCH -k linux${KERNEL_NAME} ${OFFICE:+-o} > /dev/null 2>&1; exit \$?"
+		#LC_ALL=C sudo -u "$USERNAME" bash -c "buildiso -d zstd ${SCOPE:+-f} -p $EDITION -b $MANJARO_BRANCH -k linux${KERNEL_NAME} ${OFFICE:+-o} > /dev/null 2>&1; exit \$?"
+		LC_ALL=C sudo -u "$USERNAME" bash -c "buildiso -d zstd ${SCOPE:+-f} -p $EDITION -b $MANJARO_BRANCH -k linux${KERNEL_NAME} ${OFFICE:+-o} 1>/dev/null; exit \$?"
 	fi
 	BUILD_EXIT_CODE=$?
 
@@ -1702,8 +1734,8 @@ build_iso() {
 export -f build_iso
 
 cleanup_and_move_files() {
-	OUTPUT_ISO_PATH_NAME=$(find "$VAR_CACHE_MANJARO_TOOLS_ISO" -type f -name "*.iso" -exec stat -c '%Y %n' {} + | sort -nr | awk 'NR==1 {print $2}')
-	FILE_PKG=$(find "$VAR_CACHE_MANJARO_TOOLS_ISO" -type f -name "*-pkgs.txt" -exec stat -c '%Y %n' {} + | sort -nr | awk 'NR==1 {print $2}')
+	OUTPUT_ISO_PATH_NAME=$(find "$VAR_CACHE_MANJARO_TOOLS_ISO" -type f -iname "*.iso" -exec stat -c '%Y %n' {} + | sort -nr | awk 'NR==1 {print $2}')
+	FILE_PKG=$(find "$VAR_CACHE_MANJARO_TOOLS_ISO" -type f -iname "*-pkgs.txt" -exec stat -c '%Y %n' {} + | sort -nr | awk 'NR==1 {print $2}')
 	{
 		echo "ISO_BASENAME=$ISO_BASENAME"
 		echo "OUTPUT_ISO_PATH_NAME=$OUTPUT_ISO_PATH_NAME"
@@ -1716,11 +1748,11 @@ cleanup_and_move_files() {
 	sudo mv -f "$FILE_PKG" "$WORK_PATH/${ISO_BASENAME}.pkgs" || msg_warning "ERRO: Falha ao mover PKGS $FILE_PKG"
 
 	replicate '#'
-	msg_info "OUTPUT_ISO_PATH_NAME: $OUTPUT_ISO_PATH_NAME"
-	msg_info "FILE_PKG            : $FILE_PKG"
-	msg_info "ISO_BASENAME        : $ISO_BASENAME"
-	msg_info "NEW PATH ISO FILE   : $WORK_PATH/$ISO_BASENAME"
-	msg_info "NEW PATH ISO PKGS   : $WORK_PATH/${ISO_BASENAME}.pkgs"
+	msg_raw "OUTPUT_ISO_PATH_NAME: $OUTPUT_ISO_PATH_NAME"
+	msg_raw "FILE_PKG            : $FILE_PKG"
+	msg_raw "ISO_BASENAME        : $ISO_BASENAME"
+	msg_raw "NEW PATH ISO FILE   : $WORK_PATH/$ISO_BASENAME"
+	msg_raw "NEW PATH ISO PKGS   : $WORK_PATH/${ISO_BASENAME}.pkgs"
 	replicate '#'
 }
 export -f cleanup_and_move_files
@@ -1734,19 +1766,16 @@ sh_install_manjaro_build_packages() {
 		cdrkit &>/dev/null
 
 	msg 'Install the manjaro-tools-packages required'
-	sudo pacman -Sy --quiet --noconfirm \
+	if sudo pacman -Sy --quiet --noconfirm \
 		manjaro-chrootbuild \
 		manjaro-tools-iso-git \
 		manjaro-tools-base-git \
 		manjaro-tools-pkg-git \
-		manjaro-tools-yaml-git &>/dev/null
-
-    if [[ $? -eq 0 ]]; then
-      msg "All packages installed successfully."
-    else
-      die "${red}" "[L1656]Failed to install manjaro-tools-packages. ${reset}"
-      exit 1
-    fi
+		manjaro-tools-yaml-git &>/dev/null; then
+		msg "All packages installed successfully."
+	else
+		die "${red}" "[L1656]Failed to install manjaro-tools-packages. ${reset}"
+	fi
 }
 
 make_iso() {
@@ -1757,12 +1786,12 @@ make_iso() {
 	start_time=$(date +%s) # Obtém o tempo de início em segundos desde a época Unix
 	start_datetime=$(date)
 
-	msg_info "Construindo com nome de usuário '$USERNAME'"
+	msg_info "Construindo ISO como usuário '$USERNAME'"
 	sh_install_manjaro_build_packages
 	checkout_iso-profiles_and_clean_directories
 	check_directories_and_path
 	configurar_manjaro_tools_para_usuario_builduser
-  configure_repositories_and_build_environment
+	configure_repositories_and_build_environment
 	# Community Pre Config Build ISO
 	setup_manjaro_tools
 	#configure_dwarfs # substituto ao squashfs
@@ -1775,14 +1804,15 @@ make_iso() {
 	add_repos_to_pacman_conf_into_iso_distro \
 		"$WORK_PATH_ISO_PROFILES/shared/pacman.conf" \
 		"$BIGCOMMUNITY_BRANCH" \
-		"$BIGLINUX_BRANCH"
+		"$BIGLINUX_BRANCH" \
+		"$CHILILINUX_BRANCH"
 
 	set_build_info
 	configure_iso_name
 	build_iso
 	cleanup_and_move_files
 	if $DEBUG; then
-		ls -lah
+		ls -lah "$PWD"
 	fi
 	end_datetime=$(date)
 	msg_info "$APP - Construção ISO ${ISO_BASENAME} finalizada com sucesso"
@@ -1792,13 +1822,13 @@ make_iso() {
 	exit 0
 }
 
-check_user() {
-	set_varcolors
-	# Verifica se o usuário é root
-	if [ "$EUID" -eq 0 ]; then
-		die "${red}" "Construção da ISO não pode ser com usuário root ${reset}"
-	fi
-}
+#check_user() {
+#	# Verifica se o usuário é root
+#	if [[ "$EUID" -eq 0 ]]; then
+#  	set_varcolors
+#		die "${red}" "Construção da ISO não pode ser com usuário root ${reset}"
+#	fi
+#}
 
 ## start script
 if test $# -lt 1; then
@@ -1808,6 +1838,7 @@ if test $# -lt 1; then
 fi
 
 # Loop através de todos os parâmetros ($@)
+set_varcolors
 for arg in "$@"; do
 	if [[ "$arg" = @(-n|--nocolor) ]]; then
 		nocolor=true
@@ -1830,7 +1861,18 @@ for arg in "$@"; do
 		#configure_vars
 		#make_iso
 	elif [[ "$arg" = @(-d|--defa|--default) ]]; then
-    PARAM_DEFAULT=true
+		if [[ "$2" = @(base|bootstrap|cinnamon|cosmic|deepin|fullx|gnome|hyprland|i3|kde|wmaker|xfce|server) ]]; then
+			declare -g EDITION="$2"
+			VALUE_DEFAULT=true
+			msg_info "Definindo EDITION=${yellow}${EDITION}${reset}"
+			sleep 2
+			shift
+		else
+			die "Argumento inválido para ${cyan}--default${rst}.\n" \
+"    Use ${yellow}base|bootstrap|cinnamon|cosmic|deepin|fullx|gnome|hyprland|i3|kde|wmaker|xfce${reset}"
+		fi
+		PARAM_DEFAULT=true
+		break
 	else
 		set_varcolors
 		sh_usage
