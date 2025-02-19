@@ -8,7 +8,7 @@
 #
 #  Created: ter 24 set 2024 04:26:12 -04
 #  Altered: dom 08 dez 2024 23:39:02 -04
-#  Updated: dom 26 jan 2025 02:46:58 -04
+#  Updated: qua 19 fev 2025 01:55:14 -04
 #
 #  Copyright (c) 2024-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -35,120 +35,188 @@
 ##############################################################################
 declare APP="${0##*/}"
 declare APPDESC="Wrapper bash para o buildiso"
-declare VERSION="1.1.26" # Versão do script
+declare VERSION="1.02.19" # Versão do script
 export TERM=${TERM:-xterm}
 export TERM=${TERM:-xterm-256color}
 declare IS_AUTO=false
 declare PARAM_DEFAULT=false
 declare VALUE_DEFAULT=false
+declare	IS_ADD_PERFIL=false
+declare IS_ADD_PROFILE=false
+declare IS_BUILD_ISO_RESUME=true
+declare HOME_DIR="$HOME/.${APP}"
+declare config_file="${HOME_DIR}/mkiso-build.ini"
+# necessário definir global por conta que o bash exporta somente variáveis escalares e não array
+declare -a aDistros
+declare -a aBranchs
+declare -a aKernels
+declare -a aProfiles
+declare -A ApiProfiles
 
-configure_vars() {
+configure_base_vars() {
 	# Declare variáveis de ambiente
 	# somente ativada quando rodar manualmente (-m), no github não é necessário
-	declare -aG aDistros=('bigcommunity' 'biglinux' 'chililinux' 'manjaro' 'Sair')
-	declare -aG aBranchs=('stable' 'testing' 'unstable' 'Sair')
-	declare -aG aKernels=('latest' 'lts' 'oldlts' 'xanmod' 'Sair')
-	declare -aG aProfiles=(
+	aDistros=('bigcommunity' 'biglinux' 'chililinux' 'manjaro' 'Sair')
+	aBranchs=('stable' 'testing' 'unstable' 'Sair')
+	aKernels=('latest' 'lts' 'oldlts' 'xanmod' 'Sair')
+	aProfiles=(
 		'https://github.com/communitybig/iso-profiles'
 		'https://github.com/biglinux/iso-profiles'
 		'https://github.com/chililinux/iso-profiles'
-		'https://github.com/chililinux/manjaro-iso-profiles'
 		'https://gitlab.manjaro.org/profiles-and-settings/iso-profiles.git'
-		'https://github.com/talesam/iso-profiles'
 		'https://github.com/vcatafesta/iso-profiles'
-		'Sair'
 	)
-	declare -AG ApiProfiles=(
+	ApiProfiles=(
 		# GitHub Repositories
 		['https://github.com/communitybig/iso-profiles']='https://api.github.com/repos/communitybig/iso-profiles/contents/'
 		['https://github.com/biglinux/iso-profiles']='https://api.github.com/repos/biglinux/iso-profiles/contents/'
 		['https://github.com/chililinux/iso-profiles']='https://api.github.com/repos/chililinux/iso-profiles/contents/'
-		['https://github.com/chililinux/manjaro-iso-profiles']='https://api.github.com/repos/chililinux/manjaro-iso-profiles/contents/'
-		['https://github.com/talesam/iso-profiles']='https://api.github.com/repos/talesam/iso-profiles/contents/'
 		['https://github.com/vcatafesta/iso-profiles']='https://api.github.com/repos/vcatafesta/iso-profiles/contents/'
 		# GitLab Repositories
 		['https://gitlab.manjaro.org/profiles-and-settings/iso-profiles.git']='https://gitlab.manjaro.org/api/v4/projects/profiles-and-settings%2Fiso-profiles/repository/tree'
 	)
 	#
-	declare -aG bigcommunity_build_list=(bigcommunity)
-	declare -aG biglinux_build_list=(biglinux biglinux-make-iso-profiles)
-	declare -aG chililinux_build_list=(chililinux)
-	declare -aG manjaro_build_list=(community manjaro oem)
-	declare -aG talesam_build_list=(bigcommunity)
-	declare -aG vcatafesta_build_list=(chililinux)
-	#
-	declare -g IS_GIT_REPO=false
+	mkdir -p "$HOME_DIR" 1>/dev/null
+	sh_read_custom_repositorys
+	aProfiles+=('Sair')
 	declare -g IS_BUILD_ISO=true
 	declare -g ORGANIZATION='<local>'
 	declare -g REPO_WORKFLOW='<local>'
-	declare -g DISTRONAME='chililinux'
-	declare -g BUILD_DIR='chililinux'
-	if ! $VALUE_DEFAULT; then
-		declare -g EDITION='server'
-	fi
-	declare -g KERNEL='lts'
-	declare -g TMATE=true
-	declare -g DEBUG=false
-	#
 	declare -g REPO_PATH="$PWD"
 	declare -g USERNAME="$USER"
 	declare -g GITHUB_USER_NAME="$USERNAME"
 	declare -g HOME_FOLDER="/home/$USERNAME"
-	declare -g BIGCOMMUNITY_BRANCH='testing'
-	declare -g BIGLINUX_BRANCH='stable'
-	declare -g CHILILINUX_BRANCH='stable'
-	declare -g MANJARO_BRANCH='stable'
-	declare -g ISO_PROFILES_REPO="https://github.com/${DISTRONAME}/iso-profiles"
+}
+export -f configure_base_vars
+
+configure_vars() {
+  configure_base_vars
+	declare -g DISTRONAME
+	declare -g BUILD_DIR
+	declare -g EDITION
+	declare -g KERNEL
+	declare -g TMATE
+	declare -g DEBUG
+	declare -g MANJARO_BRANCH
+	declare -g BIGLINUX_BRANCH
+	declare -g BIGCOMMUNITY_BRANCH
+	declare -g CHILILINUX_BRANCH
+	declare -g ISO_PROFILES_REPO
 	declare -g DISTRONAME_ISOPROFILES
 
-	if ! $PARAM_DEFAULT; then
-		get_distroname
-		get_iso_profiles_repo
-		get_build_list "$ISO_PROFILES_REPO"
-		get_edition "$ISO_PROFILES_REPO" "$BUILD_DIR"
-	fi
-	DISTRONAME_ISOPROFILES="$(get_distroname_isoprofiles)"
-	WORK_PATH="$HOME_FOLDER/__w/build-iso/build-iso"
-	WORK_PATH_ISO_PROFILES="$HOME_FOLDER/__w/build-iso/build-iso/iso-profiles"
-	PROFILE_PATH="$HOME_FOLDER/__w/build-iso/build-iso/iso-profiles/${BUILD_DIR}"
-	PROFILE_PATH_EDITION="$HOME_FOLDER/__w/build-iso/build-iso/iso-profiles/${BUILD_DIR}/$EDITION"
-	PATH_MANJARO_ISO_PROFILES='/usr/share/manjaro-tools/iso-profiles'
-	PATH_MANJARO_TOOLS='/usr/share/manjaro-tools'
-	VAR_CACHE_MANJARO_TOOLS='/var/cache/manjaro-tools'
-	VAR_CACHE_MANJARO_TOOLS_ISO='/var/cache/manjaro-tools/iso'
-	RELEASE_TAG=$(date "+%Y-%m-%d_%H-%M")
-
-	if ! $PARAM_DEFAULT; then
-		get_manjaro_branch
-		if [[ "$DISTRONAME" =~ ^(manjaro)$ ]]; then
-			BIGCOMMUNITY_BRANCH=
-			BIGLINUX_BRANCH=
-			CHILILINUX_BRANCH=
+	sh_get_values() {
+		if $VALUE_DEFAULT; then
+      sh_get_perfil
+#			DISTRONAME='chililinux'
+#			BUILD_DIR='chililinux'
+#			EDITION='server'
+#			KERNEL='lts'
+#			TMATE=true
+#			DEBUG=false
+#			MANJARO_BRANCH='stable'
+#			BIGLINUX_BRANCH='stable'
+#			BIGCOMMUNITY_BRANCH='testing'
+#			CHILILINUX_BRANCH='stable'
+#			ISO_PROFILES_REPO="https://github.com/${DISTRONAME}/iso-profiles"
 		else
-			get_biglinux_branch
+			get_distroname
+			get_iso_profiles_repo
+			get_build_list "$ISO_PROFILES_REPO"
+			get_edition "$ISO_PROFILES_REPO" "$BUILD_DIR"
 		fi
+	  DISTRONAME_ISOPROFILES="$(get_distroname_isoprofiles)"
+  	WORK_PATH="$HOME_FOLDER/__w/build-iso/build-iso"
+  	WORK_PATH_ISO_PROFILES="$HOME_FOLDER/__w/build-iso/build-iso/iso-profiles"
+  	PROFILE_PATH="$HOME_FOLDER/__w/build-iso/build-iso/iso-profiles/${BUILD_DIR}"
+  	PROFILE_PATH_EDITION="$HOME_FOLDER/__w/build-iso/build-iso/iso-profiles/${BUILD_DIR}/$EDITION"
+  	PATH_MANJARO_ISO_PROFILES='/usr/share/manjaro-tools/iso-profiles'
+  	PATH_MANJARO_TOOLS='/usr/share/manjaro-tools'
+  	VAR_CACHE_MANJARO_TOOLS='/var/cache/manjaro-tools'
+  	VAR_CACHE_MANJARO_TOOLS_ISO='/var/cache/manjaro-tools/iso'
+	  RELEASE_TAG=$(date "+%Y-%m-%d_%H-%M")
+		if ! $VALUE_DEFAULT; then
+      sh_readconf
+    fi
+  }
 
-		if [[ "$DISTRONAME" =~ ^(manjaro|biglinux|chililinux)$ ]]; then
-			BIGCOMMUNITY_BRANCH=
-		else
-			get_bigcommunity_branch
+	sh_readconf() {
+		if ! $PARAM_DEFAULT; then
+			get_manjaro_branch
+			if [[ "$DISTRONAME" =~ ^(manjaro)$ ]]; then
+				BIGCOMMUNITY_BRANCH=
+				BIGLINUX_BRANCH=
+				CHILILINUX_BRANCH=
+			else
+				get_biglinux_branch
+			fi
+			if [[ "$DISTRONAME" =~ ^(manjaro|biglinux|chililinux)$ ]]; then
+				BIGCOMMUNITY_BRANCH=
+			else
+				get_bigcommunity_branch
+			fi
+			if [[ "$DISTRONAME" =~ ^(manjaro|biglinux|bigcommunity|talesam)$ ]]; then
+				CHILILINUX_BRANCH=
+			else
+				get_chililinux_branch
+			fi
+			get_kernel
+			get_debug
+			sh_showchoices
 		fi
+	}
 
-		if [[ "$DISTRONAME" =~ ^(manjaro|biglinux|bigcommunity|talesam)$ ]]; then
-			CHILILINUX_BRANCH=
-		else
-			get_chililinux_branch
-		fi
-
-		get_kernel
-		get_debug
-	else
-		resume_and_build
-	fi
-	mkdir -p "$WORK_PATH" &>/dev/null
-	pushd "$WORK_PATH" &>/dev/null || false
+  if ! $IS_ADD_PROFILE; then
+  	sh_get_values
+	  mkdir -p "$WORK_PATH" &>/dev/null
+    pushd "$WORK_PATH" &>/dev/null || false
+    resume_and_build
+  fi
 }
 export -f configure_vars
+
+sh_get_perfil() {
+	local last_repo_key=$(TIni.Get "$config_file" "perfil" 'keys')
+	local -a aCustomPerfil=()
+	local -A aCustomKey=()
+	local i
+	local str
+	local perfil_value
+
+	if [[ ! -z "$last_repo_key" ]]; then
+		for ((i = 1; i <= last_repo_key; i++)); do
+			str=$(TIni.Get "$config_file" "perfil" "$i")
+			perfil_value="$(sh_splitarray "${str}" 1)"
+			aCustomPerfil+=("$perfil_value")
+			aCustomKey+=(["$perfil_value"]="$i")
+		done
+	fi
+  aCustomPerfil+=("Sair")
+
+	create_menu_with_array "Escolha um ${yellow}PERFIL:" aCustomPerfil[@]
+	if [[ $MENU_RESULT == "Sair" ]]; then
+		die "${red}" "Seleção de PERFIl cancelado.${reset}"
+	fi
+	PERFIL="${MENU_RESULT}"
+  sh_read_custom_perfil "${aCustomKey[$PERFIL]}"
+}
+
+sh_read_custom_perfil() {
+  local key_perfil_number="$1"
+
+  DISTRONAME="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key_perfil_number")" 2)"
+  ISO_PROFILES_REPO="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key_perfil_number")" 3)"
+  DISTRONAME_ISOPROFILES="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key_perfil_number")" 4)"
+  BUILD_DIR="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key_perfil_number")" 5)"
+  EDITION="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key_perfil_number")" 6)"
+  MANJARO_BRANCH="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key_perfil_number")" 7)"
+  BIGLINUX_BRANCH="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key_perfil_number")" 8)"
+  BIGCOMMUNITY_BRANCH="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key_perfil_number")" 9)"
+  CHILILINUX_BRANCH="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key_perfil_number")" 10)"
+  KERNEL="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key_perfil_number")" 11)"
+  RELEASE_TAG="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key_perfil_number")" 12)"
+  TMATE="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key_perfil_number")" 13)"
+  DEBUG="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key_perfil_number")" 14)"
+}
 
 resume_and_build() {
 	# Confirmar as escolhas
@@ -156,26 +224,354 @@ resume_and_build() {
 	echo "${black}$(replicate '=')${reset}"
 	echo -e "${cyan}Resumo das escolhas:${reset}"
 	echo "${black}$(replicate '=')${reset}"
-	echo "Organization     : ${orange}$ORGANIZATION ${reset}"
-	echo "Repo Workflow    : ${orange}$REPO_WORKFLOW ${reset}"
-	echo "User Name        : ${orange}$GITHUB_USER_NAME ${reset}"
-	echo "Distroname       : ${orange}$DISTRONAME ${reset}"
-	echo "Iso Profiles repo: ${orange}$ISO_PROFILES_REPO ${reset}"
-	echo "Build dir        : ${orange}$BUILD_DIR ${reset}"
-	echo "Edition          : ${orange}$EDITION ${reset}"
-	echo "Manjaro Branch   : ${orange}$MANJARO_BRANCH ${reset}"
-	echo "Community Branch : ${orange}$BIGCOMMUNITY_BRANCH ${reset}"
-	echo "BigLinux Branch  : ${orange}$BIGLINUX_BRANCH ${reset}"
-	echo "ChiliLinux Branch: ${orange}$CHILILINUX_BRANCH ${reset}"
-	echo "Kernel           : ${orange}$KERNEL ${reset}"
-	echo "Release Tag      : ${orange}$RELEASE_TAG ${reset}"
-	echo "TMATE Debug      : ${orange}$TMATE ${reset}"
-	echo "BASH Debug       : ${orange}$DEBUG ${reset}"
+	echo "Organization          : ${orange}$ORGANIZATION ${reset}"
+	echo "Repo Workflow         : ${orange}$REPO_WORKFLOW ${reset}"
+	echo "User Name             : ${orange}$GITHUB_USER_NAME ${reset}"
+	echo "Distroname            : ${orange}$DISTRONAME ${reset}"
+	echo "Iso Profiles repo     : ${orange}$ISO_PROFILES_REPO ${reset}"
+	echo "DISTRONAME_ISOPROFILES: ${orange}$DISTRONAME_ISOPROFILES ${reset}"
+	echo "Build List            : ${orange}$BUILD_DIR ${reset}"
+	echo "Edition               : ${orange}$EDITION ${reset}"
+	echo "Manjaro Branch        : ${orange}$MANJARO_BRANCH ${reset}"
+	echo "BigLinux Branch       : ${orange}$BIGLINUX_BRANCH ${reset}"
+	echo "Community Branch      : ${orange}$BIGCOMMUNITY_BRANCH ${reset}"
+	echo "ChiliLinux Branch     : ${orange}$CHILILINUX_BRANCH ${reset}"
+	echo "Kernel                : ${orange}$KERNEL ${reset}"
+	echo "Release Tag           : ${orange}$RELEASE_TAG ${reset}"
+	echo "TMATE Debug           : ${orange}$TMATE ${reset}"
+	echo "BASH Debug            : ${orange}$DEBUG ${reset}"
 	echo "${black}$(replicate '=')${reset}"
 
-	if ! conf "${YELLOW}Deseja prosseguir com a construção da ISO?"; then
-		die "${RED}" "Construção da ISO cancelada."
+  if $IS_ADD_PERFIL; then
+    if conf "${YELLOW}Deseja gravar o perfil?"; then
+      local get_perfil_name
+      local def_perfil_name="$DISTRONAME-$BUILD_DIR-$EDITION"
+      local nRow=21
+
+      while true; do
+  	  	setpos $nRow 0
+        replicate " "
+    		print $nRow 0 "Nome do perfil [ ] : " "$def_perfil_name"
+	    	get   $nRow 0 "Nome do perfil [ ] : " get_perfil_name "$def_perfil_name"
+	     	if [[ -z "$get_perfil_name" ]]; then
+	   	  	errorbeep
+          print $nRow 15 "${CROSS}"
+	  	  	setpos $nRow 21
+	  	  	if ! conf "${red}Nome do perfil não pode ser em branco. Tentar novamente?${rst}"; then
+	  	  		echo
+	  	  		die "Nome do perfil não pode ser em branco."
+		    	fi
+		    	continue
+  		  fi
+  		  break
+		  done
+      print $nRow 15 "${TICK}"
+
+	    last_repo_key=$(TIni.Get "$config_file" "perfil" 'keys')
+  		((last_repo_key++))
+      perfil_data="$get_perfil_name|"
+      perfil_data+="$DISTRONAME|"
+      perfil_data+="$ISO_PROFILES_REPO|"
+      perfil_data+="$DISTRONAME_ISOPROFILES|"
+      perfil_data+="$BUILD_DIR|"
+      perfil_data+="$EDITION|"
+      perfil_data+="$MANJARO_BRANCH|"
+      perfil_data+="$BIGLINUX_BRANCH|"
+      perfil_data+="$BIGCOMMUNITY_BRANCH|"
+      perfil_data+="$CHILILINUX_BRANCH|"
+      perfil_data+="$KERNEL|"
+      perfil_data+="$RELEASE_TAG|"
+      perfil_data+="$TMATE|"
+      perfil_data+="$DEBUG"
+      TIni.Set "$config_file" "perfil" "$last_repo_key" "$perfil_data"
+      TIni.Set "$config_file" "perfil" "keys" "$last_repo_key"
+ 	  	setpos $((nRow+1)) 0
+      msg_ok "Perfil adicionado com sucesso!"
+    fi
+    exit 0
+  fi
+
+  if ! conf "${YELLOW}Deseja prosseguir com a construção da ISO?"; then
+	  die "${RED}" "Construção da ISO cancelada."
+  fi
+}
+
+print() {
+	local row="$1"
+	local col="$2"
+	local msg="$3"
+	local color="${4:-${Acores[box]}}"
+
+	setpos "$row" "$col"
+	printf "${color}${msg}"
+}
+
+setpos() {
+	local row="$1"
+	local col="$2"
+
+	Prow="$row"
+	Pcol="$col"
+	# tput cup "$row" "$col"
+	printf "\e[$((row + 1));$((col + 1))H"
+}
+
+get() {
+	local row="$1"
+	local col="$2"
+	local prompt="$3"
+	local new_value="$4"
+	local old_value="$5"
+	local color="${6:-$white}"
+
+	setpos "$row" "$col"
+	printf "%s" "${reset}$color"
+	#read -r -p "${prompt}${reverse}" -e -i "$old_value" "$new_value"
+	read -r -p "${prompt}" -e -i "$old_value" "$new_value"
+	tput sc # Salva a posição atual do cursor
+	echo -e "$reset"
+}
+
+TIni.Get() {
+	local config_file="$1"
+	local section="$2"
+	local key="$3"
+
+	[[ ! -e "$config_file" ]] && echo "" >"$config_file"
+	sed -nr "/^\[$section\]/ { :l /^[[:space:]]*${key}[[:space:]]*=/ { s/[^=]*=[[:space:]]*//; p; q;}; /^;/b; n; b l;}" "$config_file"
+}
+export -f TIni.Get
+
+# TIni.Set "config.ini" "App" "versao" "2.0"
+TIni.Set() {
+	local config_file="$1"
+	local section="$2"
+	local key="$3"
+	local new_value="$4"
+	local ident_keys=1
+
+	declare -A ini_data # Array associativo para armazenar as seções e chaves
+
+	if [[ -r "$config_file" ]]; then
+		# Ler o arquivo INI e armazenar as informações em um array associativo
+		local current_section=""
+		while IFS= read -r line; do
+			if [[ "$line" =~ ^\[(.*)\] ]]; then
+				current_section="${BASH_REMATCH[1]}"
+			elif [[ "$line" =~ ^([^=]+)=(.*) ]]; then
+				local current_key="${BASH_REMATCH[1]}"
+				local current_value="${BASH_REMATCH[2]}"
+				ini_data["$current_section,$current_key"]="$current_value"
+			fi
+		done <"$config_file"
 	fi
+
+	# Atualizar o valor no array associativo
+	ini_data["$section,$key"]="$new_value"
+
+	# Reescrever o arquivo INI com as seções e chaves atualizadas
+	echo "" >"$config_file"
+	local current_section=""
+	for section_key in "${!ini_data[@]}"; do
+		local section_name="${section_key%,*}"
+		local key_name="${section_key#*,}"
+		local value="${ini_data[$section_key]}"
+
+		# Verifique se a seção já foi gravada
+		if [[ "$current_section" != "$section_name" ]]; then
+			echo "" >>"$config_file"
+			echo "[$section_name]" >>"$config_file"
+			current_section="$section_name"
+		fi
+		echo "$key_name=$value" >>"$config_file"
+	done
+	# TIni.AlignAllSections "$config_file"
+	# big-tini-pretty -q "$config_file"
+	TIni.Sanitize "$config_file"
+}
+export -f TIni.Set
+
+TIni.Sanitize() {
+	local ini_file="$1"
+	local tempfile1
+	local tempfile2
+
+	# Criar arquivos temporários
+	tempfile1=$(mktemp)
+	tempfile2=$(mktemp)
+
+	# Remover linhas em branco do arquivo original
+	sed '/^$/d' "$ini_file" >"$tempfile1"
+
+	# Consolidar seções usando awk e salvar no segundo arquivo temporário
+	awk '
+  BEGIN {
+      section = ""
+  }
+  {
+      if ($0 ~ /^\[.*\]$/) {
+          section = $0
+      } else if (section != "") {
+          sections[section] = sections[section] "\n" $0
+      }
+  }
+  END {
+    for (section in sections) {
+        print section sections[section] "\n"
+    }
+  }
+  ' "$tempfile1" >"$tempfile2"
+
+	sed '/^\s*$/d' "$tempfile2" >"$ini_file"
+
+	# colocar uma linha em branco entre as sessoes e remover a primeira linha em branco
+	sed -i -e '/^\[/s/\[/\n&/' -e '1{/^[[:space:]]*$/d}' "$ini_file"
+	sed -i -e '1{/^[[:space:]]*$/d}' "$ini_file"
+
+	# marcar como executável
+	chmod +x "$ini_file"
+
+	# Remover arquivos temporários
+	rm "$tempfile1" "$tempfile2"
+}
+export -f TIni.Sanitize
+
+TIni.Clean() {
+	local ini_file="$1"
+
+	sed -i -e '/./,$!d' -e 's/[ \t]*=[ \t]*/=/' "$ini_file"
+	# awk -F'=' '{
+	#   gsub(/^[ \t]+|[ \t]+$/, "", $1);
+	#   gsub(/^[ \t]+|[ \t]+$/, "", $2);
+	#   print $1 "=" $2
+	# }' "$ini_file" | tee "$ini_file"
+
+}
+export -f TIni.Clean
+
+sh_splitarray() {
+	local str=("$1")
+	local pos="$2"
+	local sep="${3:-'|'}"
+	local array
+
+	[[ $# -eq 3 && "$pos" = "|" && "$sep" =~ ^[0-9]+$ ]] && {
+		sep="$2"
+		pos="$3"
+	}
+	[[ $# -eq 2 && "$pos" = "$sep" ]] && {
+		sep="$pos"
+		pos=1
+	}
+	[[ $# -eq 1 || ! "$pos" =~ ^[0-9]+$ ]] && { pos=1; }
+
+	IFS="$sep" read -r -a array <<<"$str"
+	echo "${array[pos - 1]}"
+}
+
+repo_exists() {
+	local user_or_org="$1"
+	local repo="$2"
+
+	local url="https://api.github.com/repos/${user_or_org}/${repo}"
+	local status_code=$(curl -s -o /dev/null -w "%{http_code}" "$url")
+
+	if [[ "$status_code" == "200" ]]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
+sh_read_custom_repositorys() {
+	local last_repo_key=$(TIni.Get "$config_file" "custom-repositorys" 'keys')
+	local custom_url=()
+
+	if [[ ! -z "$last_repo_key" ]]; then
+		for ((i = 1; i <= last_repo_key; i++)); do
+			custom_url=($(TIni.Get "$config_file" "custom-repositorys" "$i"))
+			result_url=$(sh_splitarray "${custom_url}" 1)
+			result_api=$(sh_splitarray "${custom_url}" 2)
+			aProfiles+=($result_url)
+			ApiProfiles+=([$result_url]=$result_api)
+		done
+	fi
+}
+
+sh_get_last_repo_key() {
+	last_key=$(awk -F= '/=/ {key=$1} END {print key}' $config_file)
+	echo "$last_key"
+}
+
+sh_add_iso_profiles() {
+	local get_user_repo
+	local get_name_repo
+	local def_user_repo=""
+	local def_name_repo=""
+	local last_repo_key
+
+	while true; do
+		clear
+    configure_base_vars
+		sh_show_is_build_iso
+		echo -e "${BLUE}${BOLD}Entre com o usuario e nome do repositório do iso-profiles no Github:${rst}\n"
+
+		print 8 0 "Github Usuario Repositorio [ ] : " "$def_user_repo"
+		print 9 0 "Github Nome Repositorio    [ ] : " "$def_name_repo"
+		get   8 0 "Github Usuario Repositorio [ ] : " get_user_repo "$def_user_repo"
+		if [[ -z "$get_user_repo" ]]; then
+			errorbeep
+      print 8 27 "${CROSS}"
+			setpos 8 33
+			if ! conf "${red}Usuário do repositorio não pode ser em branco. Tentar novamente?${rst}"; then
+				echo
+				die "Usuário Repositorio não pode ser em branco."
+			fi
+			continue
+		fi
+    print 8 27 "${TICK}"
+
+		get 9 0 "Github Nome Repositorio    [ ] : " get_name_repo "$def_name_repo"
+		if [[ -z "$get_name_repo" ]]; then
+			errorbeep
+      print 9 27 "${CROSS}"
+			setpos 9 33
+			if ! conf "${red}Nome Repositorio não pode ser em branco. Tentar novamente?${rst}"; then
+				echo
+				die "Nome Repositorio não pode ser em branco."
+			fi
+			continue
+		fi
+    print 9 27 "${TICK}"
+
+		full_url="https://github.com/${get_user_repo}/${get_name_repo}"
+		full_url_api="https://api.github.com/repos/${get_user_repo}/${get_name_repo}/contents/"
+		if grep -q $full_url $config_file; then
+			setpos 10 33
+			if ! conf "${red}Repositório já existe no arquivo. Tentar novamente?${rst}"; then
+				echo
+				die "Repositório já existe no arquivo"
+			fi
+			continue
+		fi
+
+		if ! repo_exists "$get_user_repo" "$get_name_repo"; then
+			if ! conf "${red}Usuario ou nome repositorio não localizado no Github. Tentar novamente?${rst}"; then
+				echo
+				die "Usuario ou nome repositorio inválido."
+			fi
+		fi
+
+    setpos 10 33
+    if conf "${YELLOW}Deseja gravar o profile?"; then
+  		last_repo_key=$(TIni.Get "$config_file" "custom-repositorys" 'keys')
+  		((last_repo_key++))
+  		TIni.Set "$config_file" "custom-repositorys" "$last_repo_key" "$full_url|$full_url_api"
+  		TIni.Set "$config_file" "custom-repositorys" "keys" "$last_repo_key"
+  		msg_ok "Profile adicionado com sucesso!"
+    fi
+    exit 0
+	done
 }
 
 get_distroname() {
@@ -402,7 +798,6 @@ set_varcolors() {
 		: "${RESET=$(tput sgr0)}"
 		: "${BOLD=$(tput bold)}"
 		: "${black=$(tput bold)$(tput setaf 0)}"
-		: "${reverse=$(tput rev)}"
 		: "${branca=${black}$(tput setab 7)}"
 
 		: "${reset=$(tput sgr0)}"
@@ -493,17 +888,17 @@ unset_varcolors() {
 
 msg() {
 	local msg="$1"
-	echo -e "mkiso=>${cyan}running: ${yellow}${msg}${reset}"
+	echo -e "mkiso-build=>${cyan}running: ${yellow}${msg}${reset}"
 }
 
 msg_info() {
 	local msg="$1"
-	echo -e "mkiso=>${yellow}info   : ${cyan}${msg}${reset}"
+	echo -e "mkiso-build=>${yellow}info   : ${cyan}${msg}${reset}"
 }
 
 msg_sub() {
-  local msg="$1"
-  echo -e "               >${green}${msg}${reset}"
+	local msg="$1"
+	echo -e "               >${green}${msg}${reset}"
 }
 
 msg_raw() {
@@ -528,8 +923,14 @@ export -f msg_raw
 
 msg_warning() {
 	local msg="$1"
-	echo -e "mkiso=>${red}warning: ${orange}${msg}${reset}"
+	echo -e "mkiso-build=>${red}warning: ${orange}${msg}${reset}"
 }
+
+msg_ok() {
+  local msg="$1"
+  printf "==>%b%-10s%s\n" "${green}" "[FEITO]" "${green}$msg${reset}"
+}
+export -f msg_ok
 
 p_log() {
 	local color="$1"
@@ -539,18 +940,22 @@ p_log() {
 	[[ -z "$died" ]] && died=false
 	# echo -e "${color}=> ${message}${reset}"
 	if $died; then
-		printf "${CROSS} mkiso=>${red}Error: ${color}%s\n\033[m" "$message"
+		printf "${CROSS} mkiso-build=>${red}Error: ${color}%s\n\033[m" "$message"
 	else
-		printf "${TICK} mkiso=> ${color}%s\n\033[m" "$message"
+		printf "${TICK} mkiso-build=> ${color}%s\n\033[m" "$message"
 	fi
 	# Remover códigos de escape ANSI do log
 	#clean_log=$(sed -E 's/\x1b\[[0-9;]*[a-zA-Z]//g; s/\x1b\(B//g' <<<"$message")
 	#echo "[$(date '+%Y-%m-%d %H:%M:%S')] ${clean_log}" >>"${LOG_FILE}"
 }
 
+errorbeep() {
+  printf '\a' # beep
+}
+
 # Funções auxiliares
 conf() {
-	read -r -p "$1 [S/n]"
+  read -r -p "$1 [S/n]"
 	[[ ${REPLY^} == "" ]] && return 0
 	[[ ${REPLY^} == N ]] && return 1 || return 0
 }
@@ -593,14 +998,50 @@ sh_usage() {
 		    ${red}Uso: ${reset}$APP ${cyan}[opções]${reset}
 
 		    ${cyan}Opções:${reset}
-		      -o|--org|--organization ${orange}<name> ${cyan} # Configura organização de trabalho no Github ${yellow}(default: communitybig)${reset}
-		      -a|--auto|--automatic          ${cyan} # Construir ISO automaticamente pelo Action do github ${reset}
-		      -m|--manual|--standalone       ${cyan} # Construir ISO localmente ${reset}
+		      -a|--auto|--automatic          ${cyan} # Construir ISO automaticamente pelo Github Actions. ${yellow}NÃO usar localmente! ${reset}
+		      -m|--manual|--standalone       ${cyan} # Construir ISO localmente escolhendo manualmente os parâmetros${reset}
 		      -d|--defa|--default ${orange}<DE>       ${cyan} # Construir ISO <DE> localmente com parâmetros default ${reset}
+		      -i|--iso-profiles              ${cyan} # Adiciona repositorio iso-profiles customizado do Github ${reset}
+		      -c|--create_perfil             ${cyan} # Adiciona perfil customizado de ISO${reset}
+		      -g|--get_perfil                ${cyan} # Selecione perfil customizado de ISO${reset}
 		      -n|--nocolor                   ${cyan} # Suprime a impressão de cores ${reset}
 		      -V|--version                   ${cyan} # Imprime a versão do aplicativo ${reset}
 		      -h|--help                      ${cyan} # Mostra este Help ${reset}
 	EOF_USAGE
+}
+
+sh_show_is_build_iso() {
+	echo '---------------------------------------------------------------------------------'
+	msg_info "Organization       : ${color}$ORGANIZATION${rst}"
+	msg_info "Repo Workflow      : ${color}$REPO_WORKFLOW${rst}"
+	msg_info "User Name          : ${color}$GITHUB_USER_NAME${rst}"
+	msg_info "Local Path         : ${color}$REPO_PATH${rst}"
+	echo '---------------------------------------------------------------------------------'
+}
+
+sh_showchoices() {
+	local color="${green}"
+	tput clear # Limpa a tela
+	if $IS_BUILD_ISO || $IS_ADD_PERFIL; then
+		sh_show_is_build_iso
+	fi
+	if $IS_BUILD_ISO_RESUME; then
+		msg_info "DISTRONAME         : ${color}$DISTRONAME${rst}"
+		msg_info "ISO_PROFILES       : ${color}$ISO_PROFILES_REPO${rst}"
+		msg_info "BUILD_LIST         : ${color}$BUILD_DIR${rst}"
+		msg_info "EDITION            : ${color}$EDITION${reset}"
+		msg_info "DISTRONAME_PROFILES: ${color}$DISTRONAME_ISOPROFILES${rst}"
+		msg_info "MANJARO_BRANCH     : ${color}$MANJARO_BRANCH${rst}"
+		msg_info "BIGLINUX_BRANCH    : ${color}$BIGLINUX_BRANCH${rst}"
+		msg_info "BIGCOMMUNITY_BRANCH: ${color}$BIGCOMMUNITY_BRANCH${rst}"
+		msg_info "CHILILINUX_BRANCH  : ${color}$CHILILINUX_BRANCH${rst}"
+		msg_info "KERNEL             : ${color}$KERNEL${rst}"
+		msg_info "Release Tag        : ${color}$RELEASE_TAG${rst}"
+		msg_info "TMATE Debug        : ${color}$TMATE${rst}"
+		msg_info "BASH Debug         : ${color}$DEBUG${rst}"
+  	echo '---------------------------------------------------------------------------------'
+	fi
+	echo -e "${BLUE}${BOLD}$title${rst}\n"
 }
 
 create_menu_with_array() {
@@ -609,6 +1050,9 @@ create_menu_with_array() {
 	local default=${3:-}       # Opção padrão, se fornecida
 	local selected=0
 	local key
+
+	#echo "${options[@]}"
+	#exit 0
 
 	# Define a opção padrão como selecionada inicialmente
 	if [[ -n "$default" ]]; then
@@ -623,46 +1067,7 @@ create_menu_with_array() {
 	tput civis # Esconde o cursor
 
 	while true; do
-		tput clear # Limpa a tela
-		if $IS_GIT_REPO; then
-			echo '---------------------------------------------------------------------------------'
-			msg_info "Organization   : ${green}$ORGANIZATION${RESET}"
-			msg_info "Repo Name      : ${green}$REPO_NAME${RESET}"
-			msg_info "User Name      : ${green}$GITHUB_USER_NAME${RESET}"
-			msg_info "Repo Workflow  : ${green}$REPO_WORKFLOW${RESET}"
-			msg_info "Local Path     : ${green}$REPO_PATH${RESET}"
-			msg_info "Branchs        : \n${RED}$(git branch 2>/dev/null)${RESET}"
-			git remote -v 2>/dev/null
-			echo '---------------------------------------------------------------------------------'
-		elif $IS_AUR_PACKAGE; then
-			echo '---------------------------------------------------------------------------------'
-			msg_info "Organization   : ${green}$ORGANIZATION${RESET}"
-			msg_info "Repo Workflow  : ${green}$REPO_WORKFLOW${RESET}"
-			msg_info "User Name      : ${green}$GITHUB_USER_NAME${RESET}"
-			msg_info "Local Path     : ${green}$REPO_PATH${RESET}"
-			echo '---------------------------------------------------------------------------------'
-		elif $IS_BUILD_ISO; then
-			echo '---------------------------------------------------------------------------------'
-			msg_info "Organization   : ${green}$ORGANIZATION${RESET}"
-			msg_info "Repo Workflow  : ${green}$REPO_WORKFLOW${RESET}"
-			msg_info "User Name      : ${green}$GITHUB_USER_NAME${RESET}"
-			msg_info "Local Path     : ${green}$REPO_PATH${RESET}"
-			echo '---------------------------------------------------------------------------------'
-		fi
-
-		if $IS_BUILD_ISO_RESUME; then
-			msg_info "DISTRONAME         : ${green}$DISTRONAME${reset}"
-			msg_info "EDITION            : ${green}$EDITION${reset}"
-			msg_info "ISO_PROFILES       : ${green}$ISO_PROFILES_REPO${reset}"
-			msg_info "MANJARO_BRANCH     : ${green}$MANJARO_BRANCH${reset}"
-			msg_info "BIGCOMMUNITY_BRANCH: ${green}$BIGCOMMUNITY_BRANCH${reset}"
-			msg_info "CHILILINUX_BRANCH  : ${green}$CHILILINUX_BRANCH${reset}"
-			msg_info "BIGLINUX_BRANCH    : ${green}$BIGLINUX_BRANCH${reset}"
-			msg_info "KERNEL             : ${green}$KERNEL${reset}"
-			echo '---------------------------------------------------------------------------------'
-		fi
-		echo -e "${BLUE}${BOLD}$title${NC}\n"
-
+		sh_showchoices
 		for i in "${!options[@]}"; do
 			if [[ "$i" -eq $selected ]]; then
 				if [[ "${options[$i]}" =~ ^(Sair|Voltar)$ ]]; then
@@ -822,7 +1227,7 @@ configure_repositories_and_build_environment() {
 	[[ "$DISTRONAME" != "manjaro" ]] && {
 		add_repositorys_only_install "$PATH_MANJARO_TOOLS/pacman-default.conf"
 		add_repositorys_only_install "$PATH_MANJARO_TOOLS/pacman-multilib.conf"
-	  msg_info 'Ajustando ParallelDownloads'
+		msg_info 'Ajustando ParallelDownloads'
 		sudo sed -i 's/^\(ParallelDownloads *= *\).*/\120/' "$PATH_MANJARO_TOOLS/pacman-default.conf"
 		sudo sed -i 's/^\(ParallelDownloads *= *\).*/\120/' "$PATH_MANJARO_TOOLS/pacman-multilib.conf"
 	}
@@ -1260,9 +1665,7 @@ setup_manjaro_tools() {
 	sudo sed -i 's/keyboard keymap/keyboard keymap kms plymouth/g' /usr/share/manjaro-tools/mkinitcpio.conf
 
 	msg 'Alterar pacman e adicionar --needed'
-  sudo sed -i 's/pacman -Syu --noconfirm || abort/pacman -Syu --needed --noconfirm || abort/' /usr/lib/manjaro-tools/util-pkg-chroot.sh
-
-
+	sudo sed -i 's/pacman -Syu --noconfirm || abort/pacman -Syu --needed --noconfirm || abort/' /usr/lib/manjaro-tools/util-pkg-chroot.sh
 
 	msg "Manjaro tools setup completed."
 	if $DEBUG; then
@@ -1852,14 +2255,33 @@ for arg in "$@"; do
 		sh_usage
 		exit $(($# ? 0 : 1))
 	elif [[ "$arg" = @(-a|--auto|--automatic) ]]; then
+    if [[ -t 0 ]]; then
+      die "Rodando interativamente (terminal presente). Esta opção deve ser somente utilizada via Github Actions"
+    fi
 		#set_varcolors
 		IS_AUTO=true
 		#make_iso
 	elif [[ "$arg" = @(-m|--manual|--standalone) ]]; then
 		#set_varcolors
 		IS_AUTO=false
+		PARAM_DEFAULT=false
 		#configure_vars
 		#make_iso
+	elif [[ "$arg" = @(-i|--iso-profiles) ]]; then
+		IS_AUTO=false
+		VALUE_DEFAULT=true
+		IS_ADD_PERFIL=true
+		IS_ADD_PROFILE=true
+		sh_add_iso_profiles
+	elif [[ "$arg" = @(-c|--create_perfil) ]]; then
+		IS_AUTO=false
+		VALUE_DEFAULT=false
+		IS_ADD_PERFIL=true
+	  configure_vars
+	elif [[ "$arg" = @(-g|--get_perfil) ]]; then
+		IS_AUTO=false
+		VALUE_DEFAULT=true
+    IS_BUILD_ISO_RESUME=false
 	elif [[ "$arg" = @(-d|--defa|--default) ]]; then
 		if [[ "$2" = @(base|bootstrap|cinnamon|cosmic|deepin|fullx|gnome|hyprland|i3|kde|wmaker|xfce|server) ]]; then
 			declare -g EDITION="$2"
@@ -1869,7 +2291,7 @@ for arg in "$@"; do
 			shift
 		else
 			die "Argumento inválido para ${cyan}--default${rst}.\n" \
-"    Use ${yellow}base|bootstrap|cinnamon|cosmic|deepin|fullx|gnome|hyprland|i3|kde|wmaker|xfce${reset}"
+				"    Use ${yellow}base|bootstrap|cinnamon|cosmic|deepin|fullx|gnome|hyprland|i3|kde|wmaker|xfce|server${reset}"
 		fi
 		PARAM_DEFAULT=true
 		break
