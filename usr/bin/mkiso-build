@@ -8,7 +8,7 @@
 #
 #  Created: ter 24 set 2024 04:26:12 -04
 #  Altered: dom 08 dez 2024 23:39:02 -04
-#  Updated: qua 19 fev 2025 01:55:14 -04
+#  Updated: qui 20 fev 2025 11:45:33 -04
 #
 #  Copyright (c) 2024-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -35,7 +35,7 @@
 ##############################################################################
 declare APP="${0##*/}"
 declare APPDESC="Wrapper bash para o buildiso"
-declare VERSION="1.02.19" # Versão do script
+declare VERSION="1.02.20" # Versão do script
 export TERM=${TERM:-xterm}
 export TERM=${TERM:-xterm-256color}
 declare IS_AUTO=false
@@ -52,6 +52,8 @@ declare -a aBranchs
 declare -a aKernels
 declare -a aProfiles
 declare -A ApiProfiles
+declare	-a aCustomPerfilName
+declare -A ACustomPerfilKey
 
 configure_base_vars() {
 	# Declare variáveis de ambiente
@@ -106,7 +108,7 @@ configure_vars() {
 
 	sh_get_values() {
 		if $VALUE_DEFAULT; then
-      sh_get_perfil
+      get_perfil
 #			DISTRONAME='chililinux'
 #			BUILD_DIR='chililinux'
 #			EDITION='server'
@@ -119,10 +121,12 @@ configure_vars() {
 #			CHILILINUX_BRANCH='stable'
 #			ISO_PROFILES_REPO="https://github.com/${DISTRONAME}/iso-profiles"
 		else
-			get_distroname
-			get_iso_profiles_repo
-			get_build_list "$ISO_PROFILES_REPO"
-			get_edition "$ISO_PROFILES_REPO" "$BUILD_DIR"
+		  if ! $PARAM_DEFAULT; then
+  			get_distroname
+  			get_iso_profiles_repo
+  			get_build_list "$ISO_PROFILES_REPO"
+  			get_edition "$ISO_PROFILES_REPO" "$BUILD_DIR"
+  		fi
 		fi
 	  DISTRONAME_ISOPROFILES="$(get_distroname_isoprofiles)"
   	WORK_PATH="$HOME_FOLDER/__w/build-iso/build-iso"
@@ -174,48 +178,73 @@ configure_vars() {
 }
 export -f configure_vars
 
-sh_get_perfil() {
-	local last_repo_key=$(TIni.Get "$config_file" "perfil" 'keys')
-	local -a aCustomPerfil=()
-	local -A aCustomKey=()
-	local i
+sh_get_all_custom_perfil() {
+	local last_key=$(TIni.Get "$config_file" "perfil" 'keys')
 	local str
-	local perfil_value
+	local name
+	local Names
 
-	if [[ ! -z "$last_repo_key" ]]; then
-		for ((i = 1; i <= last_repo_key; i++)); do
+  aCustomPerfilName=()
+  ACustomPerfilKey=()
+
+	if [[ ! -z "$last_key" ]]; then
+		for ((i = 1; i <= last_key; i++)); do
 			str=$(TIni.Get "$config_file" "perfil" "$i")
-			perfil_value="$(sh_splitarray "${str}" 1)"
-			aCustomPerfil+=("$perfil_value")
-			aCustomKey+=(["$perfil_value"]="$i")
+			name=$(sh_splitarray "${str}" 1)
+			Names+="$name "
+			aCustomPerfilName+=("$name")
+			ACustomPerfilKey+=(["$name"]="$i")
 		done
 	fi
-  aCustomPerfil+=("Sair")
+	echo "$Names"
+}
 
-	create_menu_with_array "Escolha um ${yellow}PERFIL:" aCustomPerfil[@]
+get_perfil() {
+#	local last_key=$(TIni.Get "$config_file" "perfil" 'keys')
+#	local -a aCustomPerfil=()
+#	local -A aCustomKey=()
+#	local i
+#	local str
+#	local perfil_value
+#
+#	if [[ ! -z "$last_key" ]]; then
+#		for ((i = 1; i <= last_key; i++)); do
+#			str=$(TIni.Get "$config_file" "perfil" "$i")
+#			perfil_value="$(sh_splitarray "${str}" 1)"
+#			aCustomPerfil+=("$perfil_value")
+#			aCustomKey+=(["$perfil_value"]="$i")
+#		done
+#	fi
+#  aCustomPerfil+=("Sair")
+# create_menu_with_array "Escolha um ${yellow}PERFIL:" aCustomPerfil[@]
+
+  sh_get_all_custom_perfil
+  aCustomPerfilName+=("Sair")
+	create_menu_with_array "Escolha um ${yellow}PERFIL:" aCustomPerfilName[@]
 	if [[ $MENU_RESULT == "Sair" ]]; then
 		die "${red}" "Seleção de PERFIl cancelado.${reset}"
 	fi
 	PERFIL="${MENU_RESULT}"
-  sh_read_custom_perfil "${aCustomKey[$PERFIL]}"
+# sh_read_custom_perfil "${aCustomKey[$PERFIL]}"
+  sh_read_custom_perfil "${ACustomPerfilKey[$PERFIL]}"
 }
 
 sh_read_custom_perfil() {
-  local key_perfil_number="$1"
+  local key="$1"
 
-  DISTRONAME="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key_perfil_number")" 2)"
-  ISO_PROFILES_REPO="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key_perfil_number")" 3)"
-  DISTRONAME_ISOPROFILES="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key_perfil_number")" 4)"
-  BUILD_DIR="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key_perfil_number")" 5)"
-  EDITION="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key_perfil_number")" 6)"
-  MANJARO_BRANCH="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key_perfil_number")" 7)"
-  BIGLINUX_BRANCH="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key_perfil_number")" 8)"
-  BIGCOMMUNITY_BRANCH="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key_perfil_number")" 9)"
-  CHILILINUX_BRANCH="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key_perfil_number")" 10)"
-  KERNEL="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key_perfil_number")" 11)"
-  RELEASE_TAG="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key_perfil_number")" 12)"
-  TMATE="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key_perfil_number")" 13)"
-  DEBUG="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key_perfil_number")" 14)"
+  DISTRONAME="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 2)"
+  ISO_PROFILES_REPO="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 3)"
+  DISTRONAME_ISOPROFILES="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 4)"
+  BUILD_DIR="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 5)"
+  EDITION="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 6)"
+  MANJARO_BRANCH="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 7)"
+  BIGLINUX_BRANCH="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 8)"
+  BIGCOMMUNITY_BRANCH="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 9)"
+  CHILILINUX_BRANCH="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 10)"
+  KERNEL="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 11)"
+  RELEASE_TAG="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 12)"
+  TMATE="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 13)"
+  DEBUG="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 14)"
 }
 
 resume_and_build() {
@@ -251,11 +280,11 @@ resume_and_build() {
       while true; do
   	  	setpos $nRow 0
         replicate " "
-    		print $nRow 0 "Nome do perfil [ ] : " "$def_perfil_name"
-	    	get   $nRow 0 "Nome do perfil [ ] : " get_perfil_name "$def_perfil_name"
+    		printpos $nRow 0 "Nome do perfil [ ] : $def_perfil_name"
+	    	get      $nRow 0 "Nome do perfil [ ] : " get_perfil_name "$def_perfil_name"
 	     	if [[ -z "$get_perfil_name" ]]; then
 	   	  	errorbeep
-          print $nRow 15 "${CROSS}"
+          printpos $nRow 15 "${CROSS}"
 	  	  	setpos $nRow 21
 	  	  	if ! conf "${red}Nome do perfil não pode ser em branco. Tentar novamente?${rst}"; then
 	  	  		echo
@@ -265,10 +294,10 @@ resume_and_build() {
   		  fi
   		  break
 		  done
-      print $nRow 15 "${TICK}"
+      printpos $nRow 15 "${TICK}"
 
-	    last_repo_key=$(TIni.Get "$config_file" "perfil" 'keys')
-  		((last_repo_key++))
+	    last_key=$(TIni.Get "$config_file" "perfil" 'keys')
+  		((last_key++))
       perfil_data="$get_perfil_name|"
       perfil_data+="$DISTRONAME|"
       perfil_data+="$ISO_PROFILES_REPO|"
@@ -283,8 +312,8 @@ resume_and_build() {
       perfil_data+="$RELEASE_TAG|"
       perfil_data+="$TMATE|"
       perfil_data+="$DEBUG"
-      TIni.Set "$config_file" "perfil" "$last_repo_key" "$perfil_data"
-      TIni.Set "$config_file" "perfil" "keys" "$last_repo_key"
+      TIni.Set "$config_file" "perfil" "$last_key" "$perfil_data"
+      TIni.Set "$config_file" "perfil" "keys" "$last_key"
  	  	setpos $((nRow+1)) 0
       msg_ok "Perfil adicionado com sucesso!"
     fi
@@ -296,7 +325,7 @@ resume_and_build() {
   fi
 }
 
-print() {
+printpos() {
 	local row="$1"
 	local col="$2"
 	local msg="$3"
@@ -484,11 +513,11 @@ repo_exists() {
 }
 
 sh_read_custom_repositorys() {
-	local last_repo_key=$(TIni.Get "$config_file" "custom-repositorys" 'keys')
+	local last_key=$(TIni.Get "$config_file" "custom-repositorys" 'keys')
 	local custom_url=()
 
-	if [[ ! -z "$last_repo_key" ]]; then
-		for ((i = 1; i <= last_repo_key; i++)); do
+	if [[ ! -z "$last_key" ]]; then
+		for ((i = 1; i <= last_key; i++)); do
 			custom_url=($(TIni.Get "$config_file" "custom-repositorys" "$i"))
 			result_url=$(sh_splitarray "${custom_url}" 1)
 			result_api=$(sh_splitarray "${custom_url}" 2)
@@ -498,17 +527,34 @@ sh_read_custom_repositorys() {
 	fi
 }
 
-sh_get_last_repo_key() {
-	last_key=$(awk -F= '/=/ {key=$1} END {print key}' $config_file)
-	echo "$last_key"
+sh_custom_repo_exist_and_print() {
+  local url="$1"
+  awk -F= -v val="$url" '
+    BEGIN { found=1 }
+    /^\[custom-repositorys\]/ { inside=1; next }
+    /^\[/ { inside=0 }
+    inside && $2 ~ val { print $0; found=0 }
+    END { exit found }
+  ' $config_file
+}
+
+sh_custom_repo_exist() {
+  local url="$1"
+  awk -F= -v val="$url" '
+    BEGIN { found=1 }
+    /^\[custom-repositorys\]/ { inside=1; next }
+    /^\[/ { inside=0 }
+    inside && $2 ~ val { found=0; exit }
+    END { exit found }
+  ' "$config_file"
 }
 
 sh_add_iso_profiles() {
 	local get_user_repo
 	local get_name_repo
 	local def_user_repo=""
-	local def_name_repo=""
-	local last_repo_key
+	local def_name_repo="iso-profiles"
+	local last_key
 
 	while true; do
 		clear
@@ -516,12 +562,12 @@ sh_add_iso_profiles() {
 		sh_show_is_build_iso
 		echo -e "${BLUE}${BOLD}Entre com o usuario e nome do repositório do iso-profiles no Github:${rst}\n"
 
-		print 8 0 "Github Usuario Repositorio [ ] : " "$def_user_repo"
-		print 9 0 "Github Nome Repositorio    [ ] : " "$def_name_repo"
+		printpos 8 0 "Github Usuario Repositorio [ ] : $def_user_repo"
+		printpos 9 0 "Github Nome Repositorio    [ ] : $def_name_repo"
 		get   8 0 "Github Usuario Repositorio [ ] : " get_user_repo "$def_user_repo"
 		if [[ -z "$get_user_repo" ]]; then
 			errorbeep
-      print 8 27 "${CROSS}"
+      printpos 8 27 "${CROSS}"
 			setpos 8 33
 			if ! conf "${red}Usuário do repositorio não pode ser em branco. Tentar novamente?${rst}"; then
 				echo
@@ -529,12 +575,12 @@ sh_add_iso_profiles() {
 			fi
 			continue
 		fi
-    print 8 27 "${TICK}"
+    printpos 8 27 "${TICK}"
 
 		get 9 0 "Github Nome Repositorio    [ ] : " get_name_repo "$def_name_repo"
 		if [[ -z "$get_name_repo" ]]; then
 			errorbeep
-      print 9 27 "${CROSS}"
+      printpos 9 27 "${CROSS}"
 			setpos 9 33
 			if ! conf "${red}Nome Repositorio não pode ser em branco. Tentar novamente?${rst}"; then
 				echo
@@ -542,11 +588,12 @@ sh_add_iso_profiles() {
 			fi
 			continue
 		fi
-    print 9 27 "${TICK}"
+    printpos 9 27 "${TICK}"
 
 		full_url="https://github.com/${get_user_repo}/${get_name_repo}"
 		full_url_api="https://api.github.com/repos/${get_user_repo}/${get_name_repo}/contents/"
-		if grep -q $full_url $config_file; then
+
+		if sh_custom_repo_exist "$full_url"; then
 			setpos 10 33
 			if ! conf "${red}Repositório já existe no arquivo. Tentar novamente?${rst}"; then
 				echo
@@ -555,19 +602,24 @@ sh_add_iso_profiles() {
 			continue
 		fi
 
+    setpos 10 0; msg "Aguarde, checando a existência do repositório ==> $full_url ..."
 		if ! repo_exists "$get_user_repo" "$get_name_repo"; then
+      setpos 10 0; replicate " "
+      printpos 9 27 "${CROSS}"
+			setpos 10 33
 			if ! conf "${red}Usuario ou nome repositorio não localizado no Github. Tentar novamente?${rst}"; then
 				echo
 				die "Usuario ou nome repositorio inválido."
 			fi
 		fi
 
+    setpos 10 0; replicate " "
     setpos 10 33
     if conf "${YELLOW}Deseja gravar o profile?"; then
-  		last_repo_key=$(TIni.Get "$config_file" "custom-repositorys" 'keys')
-  		((last_repo_key++))
-  		TIni.Set "$config_file" "custom-repositorys" "$last_repo_key" "$full_url|$full_url_api"
-  		TIni.Set "$config_file" "custom-repositorys" "keys" "$last_repo_key"
+  		last_key=$(TIni.Get "$config_file" "custom-repositorys" 'keys')
+  		((last_key++))
+  		TIni.Set "$config_file" "custom-repositorys" "$last_key" "$full_url|$full_url_api"
+  		TIni.Set "$config_file" "custom-repositorys" "keys" "$last_key"
   		msg_ok "Profile adicionado com sucesso!"
     fi
     exit 0
@@ -886,6 +938,11 @@ unset_varcolors() {
 #	fi
 #}
 
+print() {
+  local msg="$1"
+  echo -e "${msg}"
+}
+
 msg() {
 	local msg="$1"
 	echo -e "mkiso-build=>${cyan}running: ${yellow}${msg}${reset}"
@@ -1000,7 +1057,7 @@ sh_usage() {
 		    ${cyan}Opções:${reset}
 		      -a|--auto|--automatic          ${cyan} # Construir ISO automaticamente pelo Github Actions. ${yellow}NÃO usar localmente! ${reset}
 		      -m|--manual|--standalone       ${cyan} # Construir ISO localmente escolhendo manualmente os parâmetros${reset}
-		      -d|--defa|--default ${orange}<DE>       ${cyan} # Construir ISO <DE> localmente com parâmetros default ${reset}
+		      -d|--defa|--default ${orange}<perfil>   ${cyan} # Construir ISO localmente com parâmetros default de ${orange}<perfil> ${rst}
 		      -i|--iso-profiles              ${cyan} # Adiciona repositorio iso-profiles customizado do Github ${reset}
 		      -c|--create_perfil             ${cyan} # Adiciona perfil customizado de ISO${reset}
 		      -g|--get_perfil                ${cyan} # Selecione perfil customizado de ISO${reset}
@@ -2283,18 +2340,21 @@ for arg in "$@"; do
 		VALUE_DEFAULT=true
     IS_BUILD_ISO_RESUME=false
 	elif [[ "$arg" = @(-d|--defa|--default) ]]; then
-		if [[ "$2" = @(base|bootstrap|cinnamon|cosmic|deepin|fullx|gnome|hyprland|i3|kde|wmaker|xfce|server) ]]; then
-			declare -g EDITION="$2"
-			VALUE_DEFAULT=true
-			msg_info "Definindo EDITION=${yellow}${EDITION}${reset}"
-			sleep 2
-			shift
-		else
-			die "Argumento inválido para ${cyan}--default${rst}.\n" \
-				"    Use ${yellow}base|bootstrap|cinnamon|cosmic|deepin|fullx|gnome|hyprland|i3|kde|wmaker|xfce|server${reset}"
+    sh_get_all_custom_perfil
+    Names="${!ACustomPerfilKey[*]}"
+    if [[ -n "$2" && "${Names}" =~ "$2" ]]; then
+      var="$2"
+  	  perfil_name="${var%"${var##*[![:space:]]}"}"
+  		IS_AUTO=false
+  		PARAM_DEFAULT=true
+      sh_read_custom_perfil "${ACustomPerfilKey[$perfil_name]}"
+      shift
+    else
+      die "${red}Erro:${rst} Argumento inválido para ${cyan}--default${rst}. $([[ -n $Names ]] && \
+        print "\n    Válidos são: ${yellow}$Names" || \
+        print "${yellow}nenhum perfil disponível") ${rst}" >&2
 		fi
-		PARAM_DEFAULT=true
-		break
+    break
 	else
 		set_varcolors
 		sh_usage
