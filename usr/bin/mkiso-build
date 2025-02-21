@@ -8,7 +8,7 @@
 #
 #  Created: ter 24 set 2024 04:26:12 -04
 #  Altered: dom 08 dez 2024 23:39:02 -04
-#  Updated: qui 20 fev 2025 11:45:33 -04
+#  Updated: qui 20 fev 2025 21:19:43 -04
 #
 #  Copyright (c) 2024-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -46,6 +46,7 @@ declare IS_ADD_PROFILE=false
 declare IS_BUILD_ISO_RESUME=true
 declare HOME_DIR="$HOME/.${APP}"
 declare config_file="${HOME_DIR}/mkiso-build.ini"
+declare ccabec=''
 # necessário definir global por conta que o bash exporta somente variáveis escalares e não array
 declare -a aDistros
 declare -a aBranchs
@@ -109,17 +110,6 @@ configure_vars() {
 	sh_get_values() {
 		if $VALUE_DEFAULT; then
       get_perfil
-#			DISTRONAME='chililinux'
-#			BUILD_DIR='chililinux'
-#			EDITION='server'
-#			KERNEL='lts'
-#			TMATE=true
-#			DEBUG=false
-#			MANJARO_BRANCH='stable'
-#			BIGLINUX_BRANCH='stable'
-#			BIGCOMMUNITY_BRANCH='testing'
-#			CHILILINUX_BRANCH='stable'
-#			ISO_PROFILES_REPO="https://github.com/${DISTRONAME}/iso-profiles"
 		else
 		  if ! $PARAM_DEFAULT; then
   			get_distroname
@@ -196,28 +186,10 @@ sh_get_all_custom_perfil() {
 			ACustomPerfilKey+=(["$name"]="$i")
 		done
 	fi
-	echo "$Names"
+#	echo "$Names"
 }
 
 get_perfil() {
-#	local last_key=$(TIni.Get "$config_file" "perfil" 'keys')
-#	local -a aCustomPerfil=()
-#	local -A aCustomKey=()
-#	local i
-#	local str
-#	local perfil_value
-#
-#	if [[ ! -z "$last_key" ]]; then
-#		for ((i = 1; i <= last_key; i++)); do
-#			str=$(TIni.Get "$config_file" "perfil" "$i")
-#			perfil_value="$(sh_splitarray "${str}" 1)"
-#			aCustomPerfil+=("$perfil_value")
-#			aCustomKey+=(["$perfil_value"]="$i")
-#		done
-#	fi
-#  aCustomPerfil+=("Sair")
-# create_menu_with_array "Escolha um ${yellow}PERFIL:" aCustomPerfil[@]
-
   sh_get_all_custom_perfil
   aCustomPerfilName+=("Sair")
 	create_menu_with_array "Escolha um ${yellow}PERFIL:" aCustomPerfilName[@]
@@ -225,7 +197,6 @@ get_perfil() {
 		die "${red}" "Seleção de PERFIl cancelado.${reset}"
 	fi
 	PERFIL="${MENU_RESULT}"
-# sh_read_custom_perfil "${aCustomKey[$PERFIL]}"
   sh_read_custom_perfil "${ACustomPerfilKey[$PERFIL]}"
 }
 
@@ -555,46 +526,48 @@ sh_add_iso_profiles() {
 	local def_user_repo=""
 	local def_name_repo="iso-profiles"
 	local last_key
+	local nRow=9
 
 	while true; do
 		clear
     configure_base_vars
 		sh_show_is_build_iso
+		echo -e "${BLUE}${BOLD}${ccabec}${rst}"
 		echo -e "${BLUE}${BOLD}Entre com o usuario e nome do repositório do iso-profiles no Github:${rst}\n"
 
-		printpos 8 0 "Github Usuario Repositorio [ ] : $def_user_repo"
-		printpos 9 0 "Github Nome Repositorio    [ ] : $def_name_repo"
-		get   8 0 "Github Usuario Repositorio [ ] : " get_user_repo "$def_user_repo"
+		printpos $((nRow+0)) 0 "Github Usuario Repositorio [ ] : $def_user_repo"
+		printpos $((nRow+1)) 0 "Github Nome Repositorio    [ ] : $def_name_repo"
+		get      $((nRow+0)) 0 "Github Usuario Repositorio [ ] : " get_user_repo "$def_user_repo"
 		if [[ -z "$get_user_repo" ]]; then
 			errorbeep
-      printpos 8 27 "${CROSS}"
-			setpos 8 33
+      printpos $((nRow+0)) 27 "${CROSS}"
+			setpos $((nRow+0)) 33
 			if ! conf "${red}Usuário do repositorio não pode ser em branco. Tentar novamente?${rst}"; then
 				echo
 				die "Usuário Repositorio não pode ser em branco."
 			fi
 			continue
 		fi
-    printpos 8 27 "${TICK}"
+    printpos $((nRow+0)) 27 "${TICK}"
 
-		get 9 0 "Github Nome Repositorio    [ ] : " get_name_repo "$def_name_repo"
+		get $((nRow+1)) 0 "Github Nome Repositorio    [ ] : " get_name_repo "$def_name_repo"
 		if [[ -z "$get_name_repo" ]]; then
 			errorbeep
-      printpos 9 27 "${CROSS}"
-			setpos 9 33
+      printpos $((nRow+1)) 27 "${CROSS}"
+			setpos $((nRow+1)) 33
 			if ! conf "${red}Nome Repositorio não pode ser em branco. Tentar novamente?${rst}"; then
 				echo
 				die "Nome Repositorio não pode ser em branco."
 			fi
 			continue
 		fi
-    printpos 9 27 "${TICK}"
+    printpos $((nRow+1)) 27 "${TICK}"
 
 		full_url="https://github.com/${get_user_repo}/${get_name_repo}"
 		full_url_api="https://api.github.com/repos/${get_user_repo}/${get_name_repo}/contents/"
 
 		if sh_custom_repo_exist "$full_url"; then
-			setpos 10 33
+			setpos $((nRow+2)) 33
 			if ! conf "${red}Repositório já existe no arquivo. Tentar novamente?${rst}"; then
 				echo
 				die "Repositório já existe no arquivo"
@@ -602,19 +575,19 @@ sh_add_iso_profiles() {
 			continue
 		fi
 
-    setpos 10 0; msg "Aguarde, checando a existência do repositório ==> $full_url ..."
+    setpos $((nRow+2)) 0; msg "Aguarde, checando a existência do repositório ==> $full_url ..."
 		if ! repo_exists "$get_user_repo" "$get_name_repo"; then
-      setpos 10 0; replicate " "
-      printpos 9 27 "${CROSS}"
-			setpos 10 33
+      setpos $((nRow+2)) 0; replicate " "
+      printpos $((nRow+1)) 27 "${CROSS}"
+			setpos $((nRow+2)) 33
 			if ! conf "${red}Usuario ou nome repositorio não localizado no Github. Tentar novamente?${rst}"; then
 				echo
 				die "Usuario ou nome repositorio inválido."
 			fi
 		fi
 
-    setpos 10 0; replicate " "
-    setpos 10 33
+    setpos $((nRow+2)) 0; replicate " "
+    setpos $((nRow+2)) 33
     if conf "${YELLOW}Deseja gravar o profile?"; then
   		last_key=$(TIni.Get "$config_file" "custom-repositorys" 'keys')
   		((last_key++))
@@ -693,21 +666,6 @@ get_edition() {
 	EDITION="${MENU_RESULT}"
 }
 
-#get_editionOLD() {
-#	local editions_var="${DISTRONAME}_edition"
-#	# local editions=(${!editions_var[@]})
-#
-#	# Usando eval para acessar o conteúdo do array dinamicamente
-#	eval "local editions=(\"\${${editions_var}[@]}\")"
-#	editions+=("Sair")
-#	create_menu_with_array "Escolha uma EDIÇÃO/DE para o ${yellow}${DISTRONAME}${reset}:" editions[@] "$EDITION"
-#	# Verifica se a opção selecionada foi "Sair"
-#	if [[ $MENU_RESULT == "Sair" ]]; then
-#		die "${red}" "Construção da ISO cancelada.${reset}"
-#	fi
-#	EDITION="${MENU_RESULT}"
-#}
-
 get_iso_profiles_repo() {
 	# Gerando a URL padrão com base no valor de $DISTRONAME
 	local default_url="https://github.com/$DISTRONAME/iso-profiles"
@@ -729,7 +687,7 @@ get_build_list() {
 	fi
 
 	# Faz a requisição e inspeciona a resposta para entender o formato
-	p_log "${cyan}" "Fazendo requisição na API $api_url ${reset}"
+#	p_log "${cyan}" "Fazendo requisição na API $api_url ${reset}"
 	response=$(curl -sL "$api_url")
 
 	# Verifica se a resposta está vazia ou se ocorreu um erro 404
@@ -754,8 +712,6 @@ get_build_list() {
 		)
 	fi
 
-	# Retorna o array
-	#echo "${build_list[@]}"
 	build_list+=("Sair")
 	create_menu_with_array "Escolha uma ${yellow}BUILD_LIST${reset} para o ${yellow}${DISTRONAME}${reset}:" build_list[@] "$DISTRONAME"
 	if [[ $MENU_RESULT == "Sair" ]]; then
@@ -1055,19 +1011,21 @@ sh_usage() {
 		    ${red}Uso: ${reset}$APP ${cyan}[opções]${reset}
 
 		    ${cyan}Opções:${reset}
-		      -a|--auto|--automatic          ${cyan} # Construir ISO automaticamente pelo Github Actions. ${yellow}NÃO usar localmente! ${reset}
+		      -a|--auto|--automatic          ${cyan} # Construir ISO pelo Github Actions. ${yellow}NÃO usar localmente! ${reset}
 		      -m|--manual|--standalone       ${cyan} # Construir ISO localmente escolhendo manualmente os parâmetros${reset}
-		      -d|--defa|--default ${orange}<perfil>   ${cyan} # Construir ISO localmente com parâmetros default de ${orange}<perfil> ${rst}
-		      -i|--iso-profiles              ${cyan} # Adiciona repositorio iso-profiles customizado do Github ${reset}
-		      -c|--create_perfil             ${cyan} # Adiciona perfil customizado de ISO${reset}
-		      -g|--get_perfil                ${cyan} # Selecione perfil customizado de ISO${reset}
-		      -n|--nocolor                   ${cyan} # Suprime a impressão de cores ${reset}
-		      -V|--version                   ${cyan} # Imprime a versão do aplicativo ${reset}
-		      -h|--help                      ${cyan} # Mostra este Help ${reset}
+		      -d|--defa|--default ${orange}<perfil>   ${cyan} # Construir ISO localmente com parâmetros do ${orange}<perfil> ${rst}
+		      -i|--iso-profiles              ${cyan} # Adicionar repositorio iso-profiles customizado do Github ${reset}
+		      -c|--create_perfil             ${cyan} # Adicionar perfil customizado de ISO${reset}
+		      -g|--get_perfil                ${cyan} # Selecionar perfil customizado de ISO${reset}
+		      -l|--list_perfil               ${cyan} # Listar perfils customizado de ISO${reset}
+		      -n|--nocolor                   ${cyan} # Suprimir impressão de cores ${reset}
+		      -V|--version                   ${cyan} # Imprimir versão do aplicativo ${reset}
+		      -h|--help                      ${cyan} # Exibir este Help ${reset}
 	EOF_USAGE
 }
 
 sh_show_is_build_iso() {
+  setpos 0 0
 	echo '---------------------------------------------------------------------------------'
 	msg_info "Organization       : ${color}$ORGANIZATION${rst}"
 	msg_info "Repo Workflow      : ${color}$REPO_WORKFLOW${rst}"
@@ -1078,7 +1036,7 @@ sh_show_is_build_iso() {
 
 sh_showchoices() {
 	local color="${green}"
-	tput clear # Limpa a tela
+#	tput clear # Limpa a tela
 	if $IS_BUILD_ISO || $IS_ADD_PERFIL; then
 		sh_show_is_build_iso
 	fi
@@ -1098,6 +1056,7 @@ sh_showchoices() {
 		msg_info "BASH Debug         : ${color}$DEBUG${rst}"
   	echo '---------------------------------------------------------------------------------'
 	fi
+	echo -e "${BLUE}${BOLD}$ccabec${rst}"
 	echo -e "${BLUE}${BOLD}$title${rst}\n"
 }
 
@@ -1107,9 +1066,6 @@ create_menu_with_array() {
 	local default=${3:-}       # Opção padrão, se fornecida
 	local selected=0
 	local key
-
-	#echo "${options[@]}"
-	#exit 0
 
 	# Define a opção padrão como selecionada inicialmente
 	if [[ -n "$default" ]]; then
@@ -1122,6 +1078,7 @@ create_menu_with_array() {
 	fi
 
 	tput civis # Esconde o cursor
+	tput clear # Limpa a tela
 
 	while true; do
 		sh_showchoices
@@ -2313,33 +2270,42 @@ for arg in "$@"; do
 		exit $(($# ? 0 : 1))
 	elif [[ "$arg" = @(-a|--auto|--automatic) ]]; then
     if [[ -t 0 ]]; then
-      die "Rodando interativamente (terminal presente). Esta opção deve ser somente utilizada via Github Actions"
+      die "Rodando interativamente (terminal presente).\n    Esta opção deve ser somente utilizada via Github Actions"
     fi
-		#set_varcolors
 		IS_AUTO=true
-		#make_iso
 	elif [[ "$arg" = @(-m|--manual|--standalone) ]]; then
-		#set_varcolors
+    ccabec="$APP --manual - Construir ISO localmente escolhendo manualmente os parâmetros"
 		IS_AUTO=false
 		PARAM_DEFAULT=false
-		#configure_vars
-		#make_iso
 	elif [[ "$arg" = @(-i|--iso-profiles) ]]; then
+    ccabec="$APP --iso-profiles - Adicionar repositorio iso-profiles customizado do Github"
 		IS_AUTO=false
 		VALUE_DEFAULT=true
 		IS_ADD_PERFIL=true
 		IS_ADD_PROFILE=true
 		sh_add_iso_profiles
 	elif [[ "$arg" = @(-c|--create_perfil) ]]; then
+    ccabec="$APP --create_perfil - Adicionar perfil customizado de ISO"
 		IS_AUTO=false
 		VALUE_DEFAULT=false
 		IS_ADD_PERFIL=true
 	  configure_vars
 	elif [[ "$arg" = @(-g|--get_perfil) ]]; then
+	  ccabec="$APP --get_perfil - Selecionar perfil customizado de ISO"
 		IS_AUTO=false
 		VALUE_DEFAULT=true
     IS_BUILD_ISO_RESUME=false
+	elif [[ "$arg" = @(-l|--list_perfil) ]]; then
+	  ccabec="$APP --list_perfil - Listar perfis customizados de ISO"
+		IS_AUTO=false
+		VALUE_DEFAULT=true
+    IS_BUILD_ISO_RESUME=false
+    sh_get_all_custom_perfil
+    Names="${!ACustomPerfilKey[@]}"
+    [[ -n $Names ]] && printf "${yellow}%s\n${rst}" "${Names}" | nl -s ' - ' || printf "${yellow}%s\n${rst}" "<none>"
+    exit 0
 	elif [[ "$arg" = @(-d|--defa|--default) ]]; then
+	  ccabec="$APP --default"
     sh_get_all_custom_perfil
     Names="${!ACustomPerfilKey[*]}"
     if [[ -n "$2" && "${Names}" =~ "$2" ]]; then
@@ -2351,7 +2317,7 @@ for arg in "$@"; do
       shift
     else
       die "${red}Erro:${rst} Argumento inválido para ${cyan}--default${rst}. $([[ -n $Names ]] && \
-        print "\n    Válidos são: ${yellow}$Names" || \
+        print "\n    Válidos são: "; printf "${yellow}\t\t%s\n${rst}" "${!ACustomPerfilKey[@]}" || \
         print "${yellow}nenhum perfil disponível") ${rst}" >&2
 		fi
     break
