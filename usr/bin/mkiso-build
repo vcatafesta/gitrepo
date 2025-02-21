@@ -8,7 +8,7 @@
 #
 #  Created: ter 24 set 2024 04:26:12 -04
 #  Altered: dom 08 dez 2024 23:39:02 -04
-#  Updated: qui 20 fev 2025 21:19:43 -04
+#  Updated: sex 21 fev 2025 12:30:58 -04
 #
 #  Copyright (c) 2024-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -35,13 +35,13 @@
 ##############################################################################
 declare APP="${0##*/}"
 declare APPDESC="Wrapper bash para o buildiso"
-declare VERSION="1.02.20" # Versão do script
+declare VERSION="1.02.21" # Versão do script
 export TERM=${TERM:-xterm}
 export TERM=${TERM:-xterm-256color}
 declare IS_AUTO=false
 declare PARAM_DEFAULT=false
 declare VALUE_DEFAULT=false
-declare	IS_ADD_PERFIL=false
+declare IS_ADD_PERFIL=false
 declare IS_ADD_PROFILE=false
 declare IS_BUILD_ISO_RESUME=true
 declare HOME_DIR="$HOME/.${APP}"
@@ -53,7 +53,7 @@ declare -a aBranchs
 declare -a aKernels
 declare -a aProfiles
 declare -A ApiProfiles
-declare	-a aCustomPerfilName
+declare -a aCustomPerfilName
 declare -A ACustomPerfilKey
 
 configure_base_vars() {
@@ -93,7 +93,7 @@ configure_base_vars() {
 export -f configure_base_vars
 
 configure_vars() {
-  configure_base_vars
+	configure_base_vars
 	declare -g DISTRONAME
 	declare -g BUILD_DIR
 	declare -g EDITION
@@ -109,29 +109,29 @@ configure_vars() {
 
 	sh_get_values() {
 		if $VALUE_DEFAULT; then
-      get_perfil
+			get_perfil
 		else
-		  if ! $PARAM_DEFAULT; then
-  			get_distroname
-  			get_iso_profiles_repo
-  			get_build_list "$ISO_PROFILES_REPO"
-  			get_edition "$ISO_PROFILES_REPO" "$BUILD_DIR"
-  		fi
+			if ! $PARAM_DEFAULT; then
+				get_distroname
+				get_iso_profiles_repo
+				get_build_list "$ISO_PROFILES_REPO"
+				get_edition "$ISO_PROFILES_REPO" "$BUILD_DIR"
+			fi
 		fi
-	  DISTRONAME_ISOPROFILES="$(get_distroname_isoprofiles)"
-  	WORK_PATH="$HOME_FOLDER/__w/build-iso/build-iso"
-  	WORK_PATH_ISO_PROFILES="$HOME_FOLDER/__w/build-iso/build-iso/iso-profiles"
-  	PROFILE_PATH="$HOME_FOLDER/__w/build-iso/build-iso/iso-profiles/${BUILD_DIR}"
-  	PROFILE_PATH_EDITION="$HOME_FOLDER/__w/build-iso/build-iso/iso-profiles/${BUILD_DIR}/$EDITION"
-  	PATH_MANJARO_ISO_PROFILES='/usr/share/manjaro-tools/iso-profiles'
-  	PATH_MANJARO_TOOLS='/usr/share/manjaro-tools'
-  	VAR_CACHE_MANJARO_TOOLS='/var/cache/manjaro-tools'
-  	VAR_CACHE_MANJARO_TOOLS_ISO='/var/cache/manjaro-tools/iso'
-	  RELEASE_TAG=$(date "+%Y-%m-%d_%H-%M")
+		DISTRONAME_ISOPROFILES="$(get_distroname_isoprofiles)"
+		WORK_PATH="$HOME_FOLDER/__w/build-iso/build-iso"
+		WORK_PATH_ISO_PROFILES="$HOME_FOLDER/__w/build-iso/build-iso/iso-profiles"
+		PROFILE_PATH="$HOME_FOLDER/__w/build-iso/build-iso/iso-profiles/${BUILD_DIR}"
+		PROFILE_PATH_EDITION="$HOME_FOLDER/__w/build-iso/build-iso/iso-profiles/${BUILD_DIR}/$EDITION"
+		PATH_MANJARO_ISO_PROFILES='/usr/share/manjaro-tools/iso-profiles'
+		PATH_MANJARO_TOOLS='/usr/share/manjaro-tools'
+		VAR_CACHE_MANJARO_TOOLS='/var/cache/manjaro-tools'
+		VAR_CACHE_MANJARO_TOOLS_ISO='/var/cache/manjaro-tools/iso'
+		RELEASE_TAG=$(date "+%Y-%m-%d_%H-%M")
 		if ! $VALUE_DEFAULT; then
-      sh_readconf
-    fi
-  }
+			sh_readconf
+		fi
+	}
 
 	sh_readconf() {
 		if ! $PARAM_DEFAULT; then
@@ -159,12 +159,12 @@ configure_vars() {
 		fi
 	}
 
-  if ! $IS_ADD_PROFILE; then
-  	sh_get_values
-	  mkdir -p "$WORK_PATH" &>/dev/null
-    pushd "$WORK_PATH" &>/dev/null || false
-    resume_and_build
-  fi
+	if ! $IS_ADD_PROFILE; then
+		sh_get_values
+		mkdir -p "$WORK_PATH" &>/dev/null
+		pushd "$WORK_PATH" &>/dev/null || false
+		resume_and_build
+	fi
 }
 export -f configure_vars
 
@@ -174,8 +174,8 @@ sh_get_all_custom_perfil() {
 	local name
 	local Names
 
-  aCustomPerfilName=()
-  ACustomPerfilKey=()
+	aCustomPerfilName=()
+	ACustomPerfilKey=()
 
 	if [[ ! -z "$last_key" ]]; then
 		for ((i = 1; i <= last_key; i++)); do
@@ -186,36 +186,36 @@ sh_get_all_custom_perfil() {
 			ACustomPerfilKey+=(["$name"]="$i")
 		done
 	fi
-#	echo "$Names"
+	#	echo "$Names"
 }
 
 get_perfil() {
-  sh_get_all_custom_perfil
-  aCustomPerfilName+=("Sair")
+	sh_get_all_custom_perfil
+	aCustomPerfilName+=("Sair")
 	create_menu_with_array "Escolha um ${yellow}PERFIL:" aCustomPerfilName[@]
 	if [[ $MENU_RESULT == "Sair" ]]; then
 		die "${red}" "Seleção de PERFIl cancelado.${reset}"
 	fi
 	PERFIL="${MENU_RESULT}"
-  sh_read_custom_perfil "${ACustomPerfilKey[$PERFIL]}"
+	sh_read_custom_perfil "${ACustomPerfilKey[$PERFIL]}"
 }
 
 sh_read_custom_perfil() {
-  local key="$1"
+	local key="$1"
 
-  DISTRONAME="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 2)"
-  ISO_PROFILES_REPO="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 3)"
-  DISTRONAME_ISOPROFILES="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 4)"
-  BUILD_DIR="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 5)"
-  EDITION="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 6)"
-  MANJARO_BRANCH="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 7)"
-  BIGLINUX_BRANCH="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 8)"
-  BIGCOMMUNITY_BRANCH="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 9)"
-  CHILILINUX_BRANCH="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 10)"
-  KERNEL="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 11)"
-  RELEASE_TAG="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 12)"
-  TMATE="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 13)"
-  DEBUG="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 14)"
+	DISTRONAME="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 2)"
+	ISO_PROFILES_REPO="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 3)"
+	DISTRONAME_ISOPROFILES="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 4)"
+	BUILD_DIR="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 5)"
+	EDITION="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 6)"
+	MANJARO_BRANCH="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 7)"
+	BIGLINUX_BRANCH="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 8)"
+	BIGCOMMUNITY_BRANCH="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 9)"
+	CHILILINUX_BRANCH="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 10)"
+	KERNEL="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 11)"
+	RELEASE_TAG="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 12)"
+	TMATE="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 13)"
+	DEBUG="$(sh_splitarray "$(TIni.Get "$config_file" "perfil" "$key")" 14)"
 }
 
 resume_and_build() {
@@ -242,58 +242,58 @@ resume_and_build() {
 	echo "BASH Debug            : ${orange}$DEBUG ${reset}"
 	echo "${black}$(replicate '=')${reset}"
 
-  if $IS_ADD_PERFIL; then
-    if conf "${YELLOW}Deseja gravar o perfil?"; then
-      local get_perfil_name
-      local def_perfil_name="$DISTRONAME-$BUILD_DIR-$EDITION"
-      local nRow=21
+	if $IS_ADD_PERFIL; then
+		if conf "${YELLOW}Deseja gravar o perfil?"; then
+			local get_perfil_name
+			local def_perfil_name="$DISTRONAME-$BUILD_DIR-$EDITION"
+			local nRow=21
 
-      while true; do
-  	  	setpos $nRow 0
-        replicate " "
-    		printpos $nRow 0 "Nome do perfil [ ] : $def_perfil_name"
-	    	get      $nRow 0 "Nome do perfil [ ] : " get_perfil_name "$def_perfil_name"
-	     	if [[ -z "$get_perfil_name" ]]; then
-	   	  	errorbeep
-          printpos $nRow 15 "${CROSS}"
-	  	  	setpos $nRow 21
-	  	  	if ! conf "${red}Nome do perfil não pode ser em branco. Tentar novamente?${rst}"; then
-	  	  		echo
-	  	  		die "Nome do perfil não pode ser em branco."
-		    	fi
-		    	continue
-  		  fi
-  		  break
-		  done
-      printpos $nRow 15 "${TICK}"
+			while true; do
+				setpos $nRow 0
+				replicate " "
+				printpos $nRow 0 "Nome do perfil [ ] : $def_perfil_name"
+				get $nRow 0 "Nome do perfil [ ] : " get_perfil_name "$def_perfil_name"
+				if [[ -z "$get_perfil_name" ]]; then
+					errorbeep
+					printpos $nRow 15 "${CROSS}"
+					setpos $nRow 21
+					if ! conf "${red}Nome do perfil não pode ser em branco. Tentar novamente?${rst}"; then
+						echo
+						die "Nome do perfil não pode ser em branco."
+					fi
+					continue
+				fi
+				break
+			done
+			printpos $nRow 15 "${TICK}"
 
-	    last_key=$(TIni.Get "$config_file" "perfil" 'keys')
-  		((last_key++))
-      perfil_data="$get_perfil_name|"
-      perfil_data+="$DISTRONAME|"
-      perfil_data+="$ISO_PROFILES_REPO|"
-      perfil_data+="$DISTRONAME_ISOPROFILES|"
-      perfil_data+="$BUILD_DIR|"
-      perfil_data+="$EDITION|"
-      perfil_data+="$MANJARO_BRANCH|"
-      perfil_data+="$BIGLINUX_BRANCH|"
-      perfil_data+="$BIGCOMMUNITY_BRANCH|"
-      perfil_data+="$CHILILINUX_BRANCH|"
-      perfil_data+="$KERNEL|"
-      perfil_data+="$RELEASE_TAG|"
-      perfil_data+="$TMATE|"
-      perfil_data+="$DEBUG"
-      TIni.Set "$config_file" "perfil" "$last_key" "$perfil_data"
-      TIni.Set "$config_file" "perfil" "keys" "$last_key"
- 	  	setpos $((nRow+1)) 0
-      msg_ok "Perfil adicionado com sucesso!"
-    fi
-    exit 0
-  fi
+			last_key=$(TIni.Get "$config_file" "perfil" 'keys')
+			((last_key++))
+			perfil_data="$get_perfil_name|"
+			perfil_data+="$DISTRONAME|"
+			perfil_data+="$ISO_PROFILES_REPO|"
+			perfil_data+="$DISTRONAME_ISOPROFILES|"
+			perfil_data+="$BUILD_DIR|"
+			perfil_data+="$EDITION|"
+			perfil_data+="$MANJARO_BRANCH|"
+			perfil_data+="$BIGLINUX_BRANCH|"
+			perfil_data+="$BIGCOMMUNITY_BRANCH|"
+			perfil_data+="$CHILILINUX_BRANCH|"
+			perfil_data+="$KERNEL|"
+			perfil_data+="$RELEASE_TAG|"
+			perfil_data+="$TMATE|"
+			perfil_data+="$DEBUG"
+			TIni.Set "$config_file" "perfil" "$last_key" "$perfil_data"
+			TIni.Set "$config_file" "perfil" "keys" "$last_key"
+			setpos $((nRow + 1)) 0
+			msg_ok "Perfil adicionado com sucesso!"
+		fi
+		exit 0
+	fi
 
-  if ! conf "${YELLOW}Deseja prosseguir com a construção da ISO?"; then
-	  die "${RED}" "Construção da ISO cancelada."
-  fi
+	if ! conf "${YELLOW}Deseja prosseguir com a construção da ISO?"; then
+		die "${RED}" "Construção da ISO cancelada."
+	fi
 }
 
 printpos() {
@@ -499,8 +499,8 @@ sh_read_custom_repositorys() {
 }
 
 sh_custom_repo_exist_and_print() {
-  local url="$1"
-  awk -F= -v val="$url" '
+	local url="$1"
+	awk -F= -v val="$url" '
     BEGIN { found=1 }
     /^\[custom-repositorys\]/ { inside=1; next }
     /^\[/ { inside=0 }
@@ -510,8 +510,8 @@ sh_custom_repo_exist_and_print() {
 }
 
 sh_custom_repo_exist() {
-  local url="$1"
-  awk -F= -v val="$url" '
+	local url="$1"
+	awk -F= -v val="$url" '
     BEGIN { found=1 }
     /^\[custom-repositorys\]/ { inside=1; next }
     /^\[/ { inside=0 }
@@ -530,44 +530,44 @@ sh_add_iso_profiles() {
 
 	while true; do
 		clear
-    configure_base_vars
+		configure_base_vars
 		sh_show_is_build_iso
 		echo -e "${BLUE}${BOLD}${ccabec}${rst}"
 		echo -e "${BLUE}${BOLD}Entre com o usuario e nome do repositório do iso-profiles no Github:${rst}\n"
 
-		printpos $((nRow+0)) 0 "Github Usuario Repositorio [ ] : $def_user_repo"
-		printpos $((nRow+1)) 0 "Github Nome Repositorio    [ ] : $def_name_repo"
-		get      $((nRow+0)) 0 "Github Usuario Repositorio [ ] : " get_user_repo "$def_user_repo"
+		printpos $((nRow + 0)) 0 "Github Usuario Repositorio [ ] : $def_user_repo"
+		printpos $((nRow + 1)) 0 "Github Nome Repositorio    [ ] : $def_name_repo"
+		get $((nRow + 0)) 0 "Github Usuario Repositorio [ ] : " get_user_repo "$def_user_repo"
 		if [[ -z "$get_user_repo" ]]; then
 			errorbeep
-      printpos $((nRow+0)) 27 "${CROSS}"
-			setpos $((nRow+0)) 33
+			printpos $((nRow + 0)) 27 "${CROSS}"
+			setpos $((nRow + 0)) 33
 			if ! conf "${red}Usuário do repositorio não pode ser em branco. Tentar novamente?${rst}"; then
 				echo
 				die "Usuário Repositorio não pode ser em branco."
 			fi
 			continue
 		fi
-    printpos $((nRow+0)) 27 "${TICK}"
+		printpos $((nRow + 0)) 27 "${TICK}"
 
-		get $((nRow+1)) 0 "Github Nome Repositorio    [ ] : " get_name_repo "$def_name_repo"
+		get $((nRow + 1)) 0 "Github Nome Repositorio    [ ] : " get_name_repo "$def_name_repo"
 		if [[ -z "$get_name_repo" ]]; then
 			errorbeep
-      printpos $((nRow+1)) 27 "${CROSS}"
-			setpos $((nRow+1)) 33
+			printpos $((nRow + 1)) 27 "${CROSS}"
+			setpos $((nRow + 1)) 33
 			if ! conf "${red}Nome Repositorio não pode ser em branco. Tentar novamente?${rst}"; then
 				echo
 				die "Nome Repositorio não pode ser em branco."
 			fi
 			continue
 		fi
-    printpos $((nRow+1)) 27 "${TICK}"
+		printpos $((nRow + 1)) 27 "${TICK}"
 
 		full_url="https://github.com/${get_user_repo}/${get_name_repo}"
 		full_url_api="https://api.github.com/repos/${get_user_repo}/${get_name_repo}/contents/"
 
 		if sh_custom_repo_exist "$full_url"; then
-			setpos $((nRow+2)) 33
+			setpos $((nRow + 2)) 33
 			if ! conf "${red}Repositório já existe no arquivo. Tentar novamente?${rst}"; then
 				echo
 				die "Repositório já existe no arquivo"
@@ -575,27 +575,30 @@ sh_add_iso_profiles() {
 			continue
 		fi
 
-    setpos $((nRow+2)) 0; msg "Aguarde, checando a existência do repositório ==> $full_url ..."
+		setpos $((nRow + 2)) 0
+		msg "Aguarde, checando a existência do repositório ==> $full_url ..."
 		if ! repo_exists "$get_user_repo" "$get_name_repo"; then
-      setpos $((nRow+2)) 0; replicate " "
-      printpos $((nRow+1)) 27 "${CROSS}"
-			setpos $((nRow+2)) 33
+			setpos $((nRow + 2)) 0
+			replicate " "
+			printpos $((nRow + 1)) 27 "${CROSS}"
+			setpos $((nRow + 2)) 33
 			if ! conf "${red}Usuario ou nome repositorio não localizado no Github. Tentar novamente?${rst}"; then
 				echo
 				die "Usuario ou nome repositorio inválido."
 			fi
 		fi
 
-    setpos $((nRow+2)) 0; replicate " "
-    setpos $((nRow+2)) 33
-    if conf "${YELLOW}Deseja gravar o profile?"; then
-  		last_key=$(TIni.Get "$config_file" "custom-repositorys" 'keys')
-  		((last_key++))
-  		TIni.Set "$config_file" "custom-repositorys" "$last_key" "$full_url|$full_url_api"
-  		TIni.Set "$config_file" "custom-repositorys" "keys" "$last_key"
-  		msg_ok "Profile adicionado com sucesso!"
-    fi
-    exit 0
+		setpos $((nRow + 2)) 0
+		replicate " "
+		setpos $((nRow + 2)) 33
+		if conf "${YELLOW}Deseja gravar o profile?"; then
+			last_key=$(TIni.Get "$config_file" "custom-repositorys" 'keys')
+			((last_key++))
+			TIni.Set "$config_file" "custom-repositorys" "$last_key" "$full_url|$full_url_api"
+			TIni.Set "$config_file" "custom-repositorys" "keys" "$last_key"
+			msg_ok "Profile adicionado com sucesso!"
+		fi
+		exit 0
 	done
 }
 
@@ -687,7 +690,7 @@ get_build_list() {
 	fi
 
 	# Faz a requisição e inspeciona a resposta para entender o formato
-#	p_log "${cyan}" "Fazendo requisição na API $api_url ${reset}"
+	#	p_log "${cyan}" "Fazendo requisição na API $api_url ${reset}"
 	response=$(curl -sL "$api_url")
 
 	# Verifica se a resposta está vazia ou se ocorreu um erro 404
@@ -895,8 +898,8 @@ unset_varcolors() {
 #}
 
 print() {
-  local msg="$1"
-  echo -e "${msg}"
+	local msg="$1"
+	echo -e "${msg}"
 }
 
 msg() {
@@ -940,8 +943,8 @@ msg_warning() {
 }
 
 msg_ok() {
-  local msg="$1"
-  printf "==>%b%-10s%s\n" "${green}" "[FEITO]" "${green}$msg${reset}"
+	local msg="$1"
+	printf "==>%b%-10s%s\n" "${green}" "[FEITO]" "${green}$msg${reset}"
 }
 export -f msg_ok
 
@@ -963,12 +966,12 @@ p_log() {
 }
 
 errorbeep() {
-  printf '\a' # beep
+	printf '\a' # beep
 }
 
 # Funções auxiliares
 conf() {
-  read -r -p "$1 [S/n]"
+	read -r -p "$1 [S/n]"
 	[[ ${REPLY^} == "" ]] && return 0
 	[[ ${REPLY^} == N ]] && return 1 || return 0
 }
@@ -1025,7 +1028,7 @@ sh_usage() {
 }
 
 sh_show_is_build_iso() {
-  setpos 0 0
+	setpos 0 0
 	echo '---------------------------------------------------------------------------------'
 	msg_info "Organization       : ${color}$ORGANIZATION${rst}"
 	msg_info "Repo Workflow      : ${color}$REPO_WORKFLOW${rst}"
@@ -1036,7 +1039,7 @@ sh_show_is_build_iso() {
 
 sh_showchoices() {
 	local color="${green}"
-#	tput clear # Limpa a tela
+	#	tput clear # Limpa a tela
 	if $IS_BUILD_ISO || $IS_ADD_PERFIL; then
 		sh_show_is_build_iso
 	fi
@@ -1054,7 +1057,7 @@ sh_showchoices() {
 		msg_info "Release Tag        : ${color}$RELEASE_TAG${rst}"
 		msg_info "TMATE Debug        : ${color}$TMATE${rst}"
 		msg_info "BASH Debug         : ${color}$DEBUG${rst}"
-  	echo '---------------------------------------------------------------------------------'
+		echo '---------------------------------------------------------------------------------'
 	fi
 	echo -e "${BLUE}${BOLD}$ccabec${rst}"
 	echo -e "${BLUE}${BOLD}$title${rst}\n"
@@ -1308,33 +1311,33 @@ add_iso_cleanups() {
 	#adicionar a unção iso_cleanups no fim do arquivo $cleanup_script
 	#Delimitador de EOF_CLEANUPS entre aspas simples (<<-'EOF_CLEANUPS'):
 	#Evita a expansão de variáveis e trata todo o conteúdo como literal.
-	sudo tee -a "$cleanup_script" >/dev/null <<-'EOF_CLEANUPS'
+	sudo tee -a "$cleanup_script" >/dev/null <<EOF_CLEANUPS
 
-		mkiso_build_iso_cleanups() {
-		  # Big cleanups
-		  local cpath="$1"
+mkiso_build_iso_cleanups() {
+  # Big cleanups
+  local cpath="$1"
 
-		  # Remove documentation
-		  rm -rf "$cpath/usr/share/doc"/* 2> /dev/null
+  # Remove documentation
+  rm -rf "$cpath/usr/share/doc"/* 2> /dev/null
 
-		  # Remove man pages
-		  rm -rf "$cpath/usr/share/man"/* 2> /dev/null
+  # Remove man pages
+  rm -rf "$cpath/usr/share/man"/* 2> /dev/null
 
-		  # Clean LibreOffice configs
-		  local libreoffice_path="$cpath/usr/lib/libreoffice/share/config"
-		  if [[ -d "$libreoffice_path" ]]; then
-		    rm -f "$libreoffice_path"/images_{karasa_jaga,elementary,sukapura}* 2> /dev/null
-		    rm -f "$libreoffice_path"/images_{colibre,sifr_dark,sifr,breeze_dark,breeze}_svg.zip 2> /dev/null
-		  fi
+  # Clean LibreOffice configs
+  local libreoffice_path="$cpath/usr/lib/libreoffice/share/config"
+  if [[ -d "$libreoffice_path" ]]; then
+    rm -f "$libreoffice_path"/images_{karasa_jaga,elementary,sukapura}* 2> /dev/null
+    rm -f "$libreoffice_path"/images_{colibre,sifr_dark,sifr,breeze_dark,breeze}_svg.zip 2> /dev/null
+  fi
 
-		  # Clean wallpapers
-		  local wallpapers_path="$cpath/usr/share/wallpapers"
-		  if [[ -d "$wallpapers_path" ]]; then
-		    rm -rf "$wallpapers_path"/{Altai,BytheWater,Cascade,ColdRipple,DarkestHour,EveningGlow,Flow,FlyingKonqui,IceCold,Kokkini,Next,Opal,Patak,SafeLanding,summer_1am,Autumn,Canopee,Cluster,ColorfulCups,Elarun,FallenLeaf,Fluent,Grey,Kite,MilkyWay,OneStandsOut,PastelHills,Path,Shell,Volna}
-		  fi
-		}
-		    export -f mkiso_build_iso_cleanups
-	EOF_CLEANUPS
+  # Clean wallpapers
+  local wallpapers_path="$cpath/usr/share/wallpapers"
+  if [[ -d "$wallpapers_path" ]]; then
+    rm -rf "$wallpapers_path"/{Altai,BytheWater,Cascade,ColdRipple,DarkestHour,EveningGlow,Flow,FlyingKonqui,IceCold,Kokkini,Next,Opal,Patak,SafeLanding,summer_1am,Autumn,Canopee,Cluster,ColorfulCups,Elarun,FallenLeaf,Fluent,Grey,Kite,MilkyWay,OneStandsOut,PastelHills,Path,Shell,Volna}
+  fi
+}
+export -f mkiso_build_iso_cleanups
+EOF_CLEANUPS
 }
 export -f add_iso_cleanups
 
@@ -1402,7 +1405,6 @@ export -f add_community-extra
 add_chili-stable() {
 	{
 		echo '[chili-stable]'
-		echo 'SigLevel = Optional TrustAll'
 		echo 'Server = https://repo.chililinux.com/stable/$arch'
 		echo 'Server = https://repo2.chililinux.com/stable/$arch'
 		echo
@@ -1413,7 +1415,6 @@ export -f add_chili-stable
 add_chili-testing() {
 	{
 		echo '[chili-testing]'
-		echo 'SigLevel = Optional TrustAll'
 		echo 'Server = https://repo.chililinux.com/testing/$arch'
 		echo 'Server = https://repo2.chililinux.com/testing/$arch'
 		echo
@@ -1424,12 +1425,10 @@ export -f add_chili-testing
 add_chili-extra() {
 	{
 		echo '[chili-extra]'
-		echo 'SigLevel = Optional TrustAll'
 		echo 'Server = https://repo.chililinux.com/extra/$arch'
 		echo 'Server = https://repo2.chililinux.com/extra/$arch'
 		echo
 		echo '[chili-aur]'
-		echo 'SigLevel = Optional TrustAll'
 		echo 'Server = https://repo.chililinux.com/aur/$arch'
 		echo 'Server = https://repo2.chililinux.com/aur/$arch'
 		echo
@@ -1440,7 +1439,6 @@ export -f add_chili-extra
 add_chili-aur() {
 	{
 		echo '[chili-aur]'
-		echo 'SigLevel = Optional TrustAll'
 		echo 'Server = https://repo.chililinux.com/aur/$arch'
 		echo 'Server = https://repo2.chililinux.com/aur/$arch'
 		echo
@@ -2269,58 +2267,61 @@ for arg in "$@"; do
 		sh_usage
 		exit $(($# ? 0 : 1))
 	elif [[ "$arg" = @(-a|--auto|--automatic) ]]; then
-    if [[ -t 0 ]]; then
-      die "Rodando interativamente (terminal presente).\n    Esta opção deve ser somente utilizada via Github Actions"
-    fi
+		if [[ -t 0 ]]; then
+			die "Rodando interativamente (terminal presente).\n    Esta opção deve ser somente utilizada via Github Actions"
+		fi
 		IS_AUTO=true
 	elif [[ "$arg" = @(-m|--manual|--standalone) ]]; then
-    ccabec="$APP --manual - Construir ISO localmente escolhendo manualmente os parâmetros"
+		ccabec="$APP --manual - Construir ISO localmente escolhendo manualmente os parâmetros"
 		IS_AUTO=false
 		PARAM_DEFAULT=false
 	elif [[ "$arg" = @(-i|--iso-profiles) ]]; then
-    ccabec="$APP --iso-profiles - Adicionar repositorio iso-profiles customizado do Github"
+		ccabec="$APP --iso-profiles - Adicionar repositorio iso-profiles customizado do Github"
 		IS_AUTO=false
 		VALUE_DEFAULT=true
 		IS_ADD_PERFIL=true
 		IS_ADD_PROFILE=true
 		sh_add_iso_profiles
 	elif [[ "$arg" = @(-c|--create_perfil) ]]; then
-    ccabec="$APP --create_perfil - Adicionar perfil customizado de ISO"
+		ccabec="$APP --create_perfil - Adicionar perfil customizado de ISO"
 		IS_AUTO=false
 		VALUE_DEFAULT=false
 		IS_ADD_PERFIL=true
-	  configure_vars
+		configure_vars
 	elif [[ "$arg" = @(-g|--get_perfil) ]]; then
-	  ccabec="$APP --get_perfil - Selecionar perfil customizado de ISO"
+		ccabec="$APP --get_perfil - Selecionar perfil customizado de ISO"
 		IS_AUTO=false
 		VALUE_DEFAULT=true
-    IS_BUILD_ISO_RESUME=false
+		IS_BUILD_ISO_RESUME=false
 	elif [[ "$arg" = @(-l|--list_perfil) ]]; then
-	  ccabec="$APP --list_perfil - Listar perfis customizados de ISO"
+		ccabec="$APP --list_perfil - Listar perfis customizados de ISO"
 		IS_AUTO=false
 		VALUE_DEFAULT=true
-    IS_BUILD_ISO_RESUME=false
-    sh_get_all_custom_perfil
-    Names="${!ACustomPerfilKey[@]}"
-    [[ -n $Names ]] && printf "${yellow}%s\n${rst}" "${Names}" | nl -s ' - ' || printf "${yellow}%s\n${rst}" "<none>"
-    exit 0
+		IS_BUILD_ISO_RESUME=false
+		sh_get_all_custom_perfil
+		Names="${!ACustomPerfilKey[@]}"
+		[[ -n $Names ]] && printf "${yellow}%s\n${rst}" "${!ACustomPerfilKey[@]}" | nl -s ' - ' || printf "${yellow}%s\n${rst}" "<none>"
+		exit 0
 	elif [[ "$arg" = @(-d|--defa|--default) ]]; then
-	  ccabec="$APP --default"
-    sh_get_all_custom_perfil
-    Names="${!ACustomPerfilKey[*]}"
-    if [[ -n "$2" && "${Names}" =~ "$2" ]]; then
-      var="$2"
-  	  perfil_name="${var%"${var##*[![:space:]]}"}"
-  		IS_AUTO=false
-  		PARAM_DEFAULT=true
-      sh_read_custom_perfil "${ACustomPerfilKey[$perfil_name]}"
-      shift
-    else
-      die "${red}Erro:${rst} Argumento inválido para ${cyan}--default${rst}. $([[ -n $Names ]] && \
-        print "\n    Válidos são: "; printf "${yellow}\t\t%s\n${rst}" "${!ACustomPerfilKey[@]}" || \
-        print "${yellow}nenhum perfil disponível") ${rst}" >&2
+		ccabec="$APP --default"
+		sh_get_all_custom_perfil
+		Names="${!ACustomPerfilKey[*]}"
+		if [[ -n "$2" && "${Names}" =~ "$2" ]]; then
+			var="$2"
+			perfil_name="${var%"${var##*[![:space:]]}"}"
+			IS_AUTO=false
+			PARAM_DEFAULT=true
+			sh_read_custom_perfil "${ACustomPerfilKey[$perfil_name]}"
+			shift
+		else
+			die "${red}Erro:${rst} Argumento inválido para ${cyan}--default${rst}. $(
+				[[ -n $Names ]] &&
+					print "\n    Válidos são: "
+				printf "${yellow}\t\t%s\n${rst}" "${!ACustomPerfilKey[@]}" ||
+					print "${yellow}nenhum perfil disponível"
+			) ${rst}" >&2
 		fi
-    break
+		break
 	else
 		set_varcolors
 		sh_usage
