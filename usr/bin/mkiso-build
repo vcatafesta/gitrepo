@@ -8,7 +8,7 @@
 #
 #  Created: ter 24 set 2024 04:26:12 -04
 #  Altered: dom 08 dez 2024 23:39:02 -04
-#  Updated: sex 21 fev 2025 12:30:58 -04
+#  Updated: qua 26 fev 2025 15:32:55 -04
 #
 #  Copyright (c) 2024-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -35,7 +35,7 @@
 ##############################################################################
 declare APP="${0##*/}"
 declare APPDESC="Wrapper bash para o buildiso"
-declare VERSION="1.02.21" # Versão do script
+declare VERSION="1.02.26"
 export TERM=${TERM:-xterm}
 export TERM=${TERM:-xterm-256color}
 declare IS_AUTO=false
@@ -1620,8 +1620,11 @@ setup_manjaro_tools() {
 	find "$WORK_PATH_ISO_PROFILES/shared/live-overlay/usr/share/grub/cfg/" -name "grub.cfg" -exec sed -i \
 		"s#theme=(\$root)/boot/grub/themes/[^/]*/theme.txt#theme=(\$root)/boot/grub/themes/${DISTRONAME_ISOPROFILES,,}-live/theme.txt#g" {} + || true
 
-	msg "Ajustando o tema no arquivo '/usr/lib/manjaro-tools/util-iso-boot.sh' parar usar DISTRONAME_ISOPROFILES (${DISTRONAME_ISOPROFILES,,})."
+	msg "Ajustando o tema no arquivo '/usr/lib/manjaro-tools/util-iso-boot.sh' para usar DISTRONAME_ISOPROFILES (${DISTRONAME_ISOPROFILES,,})."
 	sudo sed -i "s|\${data_live}/themes/[^ ]*-live \${grub}/themes/|\${data_live}/themes/${DISTRONAME_ISOPROFILES,,}-live \${grub}/themes/|g" /usr/lib/manjaro-tools/util-iso-boot.sh
+
+	msg "Ajustando o memtest-ufi no arquivo '/usr/lib/manjaro-tools/util-iso-boot.sh'"
+  sudo sed -i '/memtest.bin/ a\ cp $1/boot/memtest86+/memtest.efi $2/memtest-efi' /usr/lib/manjaro-tools/util-iso-boot.sh
 
 	# Apply Custom Profile Modifications
 	# Apply edition-specific removals
@@ -2306,7 +2309,7 @@ for arg in "$@"; do
 		ccabec="$APP --default"
 		sh_get_all_custom_perfil
 		Names="${!ACustomPerfilKey[*]}"
-		if [[ -n "$2" && "${Names}" =~ "$2" ]]; then
+    if [[ -n "$2" && "${Names}" =~ " $2 " ]]; then
 			var="$2"
 			perfil_name="${var%"${var##*[![:space:]]}"}"
 			IS_AUTO=false
@@ -2314,12 +2317,13 @@ for arg in "$@"; do
 			sh_read_custom_perfil "${ACustomPerfilKey[$perfil_name]}"
 			shift
 		else
-			die "${red}Erro:${rst} Argumento inválido para ${cyan}--default${rst}. $(
-				[[ -n $Names ]] &&
-					print "\n    Válidos são: "
-				printf "${yellow}\t\t%s\n${rst}" "${!ACustomPerfilKey[@]}" ||
-					print "${yellow}nenhum perfil disponível"
-			) ${rst}" >&2
+#			die "${red}Erro:${rst} Argumento inválido para ${cyan}--default${rst}. $(
+#				[[ -n $Names ]] &&
+#					print "\n    Válidos são: "
+#				printf "${yellow}\t\t%s\n${rst}" "${!ACustomPerfilKey[@]}" ||
+#					print "${yellow}nenhum perfil disponível"
+#			) ${rst}" >&2
+      get_perfil
 		fi
 		break
 	else
