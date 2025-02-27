@@ -245,7 +245,7 @@ resume_and_build() {
 	if $IS_ADD_PERFIL; then
 		if conf "${YELLOW}Deseja gravar o perfil?"; then
 			local get_perfil_name
-			local def_perfil_name="$DISTRONAME-$BUILD_DIR-$EDITION"
+			local def_perfil_name="$DISTRONAME-$EDITION-$KERNEL"
 			local nRow=21
 
 			while true; do
@@ -2309,7 +2309,7 @@ for arg in "$@"; do
 		ccabec="$APP --default"
 		sh_get_all_custom_perfil
 		Names="${!ACustomPerfilKey[*]}"
-    if [[ -n "$2" && "${Names}" =~ " $2 " ]]; then
+    if [[ -n "$2" && "${Names}" =~ "$2" ]]; then
 			var="$2"
 			perfil_name="${var%"${var##*[![:space:]]}"}"
 			IS_AUTO=false
@@ -2324,6 +2324,8 @@ for arg in "$@"; do
 #					print "${yellow}nenhum perfil disponível"
 #			) ${rst}" >&2
       get_perfil
+			PARAM_DEFAULT=true
+      shift
 		fi
 		break
 	else
