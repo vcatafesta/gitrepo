@@ -8,7 +8,7 @@
 #
 #  Created: ter 24 set 2024 04:26:12 -04
 #  Altered: dom 08 dez 2024 23:39:02 -04
-#  Updated: qua 26 fev 2025 15:32:55 -04
+#  Updated: qui 27 fev 2025 23:55:11 -04
 #
 #  Copyright (c) 2024-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -35,7 +35,7 @@
 ##############################################################################
 declare APP="${0##*/}"
 declare APPDESC="Wrapper bash para o buildiso"
-declare VERSION="1.02.26"
+declare VERSION="1.02.27"
 export TERM=${TERM:-xterm}
 export TERM=${TERM:-xterm-256color}
 declare IS_AUTO=false
@@ -189,15 +189,77 @@ sh_get_all_custom_perfil() {
 	#	echo "$Names"
 }
 
-get_perfil() {
+sh_check_is_any_perfil_exist() {
 	sh_get_all_custom_perfil
-	aCustomPerfilName+=("Sair")
-	create_menu_with_array "Escolha um ${yellow}PERFIL:" aCustomPerfilName[@]
-	if [[ $MENU_RESULT == "Sair" ]]; then
-		die "${red}" "Seleção de PERFIl cancelado.${reset}"
+	if [[ "${#aCustomPerfilName[@]}" -eq 0 ]]; then
+		if conf "${YELLOW}Nenhum perfil disponível, deseja incluir?"; then
+			ccabec="$APP --create_perfil - Adicionar perfil customizado de ISO"
+			IS_AUTO=false
+			VALUE_DEFAULT=false
+			PARAM_DEFAULT=false
+			IS_ADD_PERFIL=true
+			configure_vars
+			exit 0
+		fi
+		return 1
 	fi
-	PERFIL="${MENU_RESULT}"
-	sh_read_custom_perfil "${ACustomPerfilKey[$PERFIL]}"
+	return 0
+}
+
+sh_list_perfil() {
+	local ccabec="$APP --list_perfil - Listar perfis customizados de ISO"
+	local count
+	local key
+	local perfil_name
+
+	if sh_check_is_any_perfil_exist; then
+		count=0 # Contador para numerar corretamente
+		for key in "${!ACustomPerfilKey[@]}"; do
+			perfil_name="${ACustomPerfilKey[$key]}"
+
+			# Verifica se o perfil tem um nome válido
+			if [[ -n "$perfil_name" ]]; then
+				((count++))
+				printf "${bold}${white}%02d :: ${yellow}%s\n${rst}" "$count" "$key"
+			fi
+		done
+
+		# Se nenhum perfil válido foi encontrado, exibir "<none>"
+		[[ $count -eq 0 ]] && printf "${yellow}%s\n${rst}" "<none>"
+	fi
+	exit 0
+}
+
+get_perfil() {
+	if sh_check_is_any_perfil_exist; then
+		aCustomPerfilName+=("Sair")
+		create_menu_with_array "Escolha um ${yellow}PERFIL:" aCustomPerfilName[@]
+		if [[ $MENU_RESULT == "Sair" ]]; then
+			die "${red}" "Seleção de PERFIl cancelado.${reset}"
+		fi
+		PERFIL="${MENU_RESULT}"
+		sh_read_custom_perfil "${ACustomPerfilKey[$PERFIL]}"
+		return 0
+	fi
+	return 1
+}
+
+sh_remove_custom_perfil() {
+	if sh_check_is_any_perfil_exist; then
+		aCustomPerfilName+=("Sair")
+		create_menu_with_array "Escolha um ${yellow}PERFIL:" aCustomPerfilName[@]
+		if [[ $MENU_RESULT == "Sair" ]]; then
+			die "${red}" "Seleção de PERFIl cancelado.${reset}"
+		fi
+		PERFIL="${MENU_RESULT}"
+		if conf "${YELLOW}Deseja excluir o perfil selecionado?"; then
+			if TIni.RemoveAndReindex "$config_file" "perfil" "${ACustomPerfilKey[$PERFIL]}"; then
+				msg_ok "Perfil $PERFIL foi para as picas!"
+			else
+				die "Opsss, Deu ruim na remoção do perfil $PERFIL!"
+			fi
+		fi
+	fi
 }
 
 sh_read_custom_perfil() {
@@ -331,6 +393,49 @@ get() {
 	tput sc # Salva a posição atual do cursor
 	echo -e "$reset"
 }
+
+# Função para remover uma chave de um arquivo de configuração INI
+TIni.Remove() { TIni.Delete "$@"; }
+TIni.Delete() {
+	local config_file="$1"
+	local section="$2"
+	local key="$3"
+
+	# Verifica se o arquivo de configuração existe
+	if [ ! -f "$config_file" ]; then
+		return 2
+	fi
+
+	# Usa sed para remover a chave do arquivo de configuração
+	sed -i "/^\[$section\]/,/^$/ { /^\s*$key\s*=/d }" "$config_file"
+}
+export -f TIni.Delete
+export -f TIni.Remove
+
+TIni.RemoveAndReindex() {
+	local config_file="$1"
+	local section="$2"
+	local key="$3"
+
+	awk -v key="$key" -v section="[$section]" '
+    BEGIN { dentro_sessao = 0; n = 1; total = 0 }
+    $0 == section { dentro_sessao = 1; print; next }  # Identifica a seção correta
+    /^\[/ && $0 != section { dentro_sessao = 0 }  # Sai da seção ao encontrar outra
+    dentro_sessao && /^keys=/ { total = $2; next }  # Captura o total de chaves e ignora a linha para recalculá-la depois
+    dentro_sessao && /^[0-9]+=/ {
+      split($1, arr, "=")
+      if (arr[1] != key) {
+        printf "%d=%s\n", n++, substr($0, index($0, "=") + 1)
+      }
+      next
+    }
+    { print }  # Mantém todas as outras linhas intactas
+    END {
+      if (dentro_sessao) print "keys=" (n-1)  # Atualiza keys= com o número correto de chaves
+    }
+  ' "$config_file" | tee "$config_file.tmp" >/dev/null && mv "$config_file.tmp" "$config_file"
+}
+export -f TIni.RemoveAndReindex
 
 TIni.Get() {
 	local config_file="$1"
@@ -1021,6 +1126,7 @@ sh_usage() {
 		      -c|--create_perfil             ${cyan} # Adicionar perfil customizado de ISO${reset}
 		      -g|--get_perfil                ${cyan} # Selecionar perfil customizado de ISO${reset}
 		      -l|--list_perfil               ${cyan} # Listar perfils customizado de ISO${reset}
+		      -r|--remove_perfil             ${cyan} # Remove perfil customizado de ISO${reset}
 		      -n|--nocolor                   ${cyan} # Suprimir impressão de cores ${reset}
 		      -V|--version                   ${cyan} # Imprimir versão do aplicativo ${reset}
 		      -h|--help                      ${cyan} # Exibir este Help ${reset}
@@ -1624,7 +1730,7 @@ setup_manjaro_tools() {
 	sudo sed -i "s|\${data_live}/themes/[^ ]*-live \${grub}/themes/|\${data_live}/themes/${DISTRONAME_ISOPROFILES,,}-live \${grub}/themes/|g" /usr/lib/manjaro-tools/util-iso-boot.sh
 
 	msg "Ajustando o memtest-ufi no arquivo '/usr/lib/manjaro-tools/util-iso-boot.sh'"
-  sudo sed -i '/memtest.bin/ a\ cp $1/boot/memtest86+/memtest.efi $2/memtest-efi' /usr/lib/manjaro-tools/util-iso-boot.sh
+	sudo sed -i '/memtest.bin/ a\ cp $1/boot/memtest86+/memtest.efi $2/memtest-efi' /usr/lib/manjaro-tools/util-iso-boot.sh
 
 	# Apply Custom Profile Modifications
 	# Apply edition-specific removals
@@ -2297,19 +2403,13 @@ for arg in "$@"; do
 		VALUE_DEFAULT=true
 		IS_BUILD_ISO_RESUME=false
 	elif [[ "$arg" = @(-l|--list_perfil) ]]; then
-		ccabec="$APP --list_perfil - Listar perfis customizados de ISO"
-		IS_AUTO=false
-		VALUE_DEFAULT=true
-		IS_BUILD_ISO_RESUME=false
-		sh_get_all_custom_perfil
-		Names="${!ACustomPerfilKey[@]}"
-		[[ -n $Names ]] && printf "${yellow}%s\n${rst}" "${!ACustomPerfilKey[@]}" | nl -s ' - ' || printf "${yellow}%s\n${rst}" "<none>"
+    sh_list_perfil
 		exit 0
 	elif [[ "$arg" = @(-d|--defa|--default) ]]; then
 		ccabec="$APP --default"
 		sh_get_all_custom_perfil
 		Names="${!ACustomPerfilKey[*]}"
-    if [[ -n "$2" && "${Names}" =~ "$2" ]]; then
+		if [[ -n "$2" && "${Names}" =~ "$2" ]]; then
 			var="$2"
 			perfil_name="${var%"${var##*[![:space:]]}"}"
 			IS_AUTO=false
@@ -2317,17 +2417,19 @@ for arg in "$@"; do
 			sh_read_custom_perfil "${ACustomPerfilKey[$perfil_name]}"
 			shift
 		else
-#			die "${red}Erro:${rst} Argumento inválido para ${cyan}--default${rst}. $(
-#				[[ -n $Names ]] &&
-#					print "\n    Válidos são: "
-#				printf "${yellow}\t\t%s\n${rst}" "${!ACustomPerfilKey[@]}" ||
-#					print "${yellow}nenhum perfil disponível"
-#			) ${rst}" >&2
-      get_perfil
+			if ! get_perfil; then
+				exit 0
+			fi
 			PARAM_DEFAULT=true
-      shift
+			shift
 		fi
 		break
+	elif [[ "$arg" = @(-r|--remove_perfil) ]]; then
+		ccabec="$APP --remove_perfil"
+		IS_AUTO=false
+		PARAM_DEFAULT=true
+		sh_remove_custom_perfil
+		exit 0
 	else
 		set_varcolors
 		sh_usage
