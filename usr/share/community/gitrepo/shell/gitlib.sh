@@ -5,6 +5,7 @@
 #  /usr/share/community/gitrepo/shell/gitlib.sh - lib for gitrepo.sh and buildiso.sh
 #  Created: qui 05 set 2024 00:51:12 -04
 #  Altered: seg 23 dez 2024 23:28:25 -04
+#  Updated: sáb 08 mar 2025 17:30:09 -04
 #
 #  Copyright (c) 2024-2024, Tales A. Mendonça <talesam@gmail.com>
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
@@ -113,8 +114,8 @@ gettokengithub_by_key() {
 get_token_release() {
 	declare -g TOKEN_RELEASE
 	if [[ ! -r "$CFILETOKEN" ]]; then
-    #die "$RED" "Erro: Não foi possível ler o arquivo $CFILETOKEN"
-    print_message_and_exit
+		#die "$RED" "Erro: Não foi possível ler o arquivo $CFILETOKEN"
+		print_message_and_exit
 	fi
 
 	#	TOKEN_RELEASE="$(gettokengithub_by_line)"
@@ -159,7 +160,6 @@ log_message() {
 	echo "[$(date '+%Y-%m-%d %H:%M:%S')] $clean_log" >>"${LOG_FILE}"
 }
 
-# p_log
 p_log() {
 	local color="$1"
 	local message="$2"
@@ -445,21 +445,21 @@ get_git_last_commit_url() {
 
 ###############################################################################################################################################
 create_menu_with_array() {
-  local title=$1
-  local -a options=("${!2}") # Recebe o array de opções
-  local default=${3:-}       # Opção padrão, se fornecida
-  local selected=0
-  local key
+	local title=$1
+	local -a options=("${!2}") # Recebe o array de opções
+	local default=${3:-}       # Opção padrão, se fornecida
+	local selected=0
+	local key
 
-  # Define a opção padrão como selecionada inicialmente
-  if [[ -n "$default" ]]; then
-    for i in "${!options[@]}"; do
-      if [[ "${options[$i]}" == "$default" ]]; then
-        selected=$i
-        break
-      fi
-    done
-  fi
+	# Define a opção padrão como selecionada inicialmente
+	if [[ -n "$default" ]]; then
+		for i in "${!options[@]}"; do
+			if [[ "${options[$i]}" == "$default" ]]; then
+				selected=$i
+				break
+			fi
+		done
+	fi
 
 	tput civis # Esconde o cursor
 
@@ -492,33 +492,33 @@ create_menu_with_array() {
 		fi
 
 		if $IS_BUILD_ISO_RESUME; then
-      echo -e "Distroname     : ${cyan}$DISTRONAME ${reset}"
-      echo -e "Iso-Profiles   : ${cyan}$ISO_PROFILES_REPO ${reset}"
-      echo -e "Build dir      : ${cyan}$BUILD_DIR ${reset}"
-      echo -e "Edition        : ${cyan}$EDITION ${reset}"
-      echo -e "Br Manjaro     : ${cyan}$MANJARO_BRANCH ${reset}"
-      echo -e "Br BigLinux    : ${cyan}$BIGLINUX_BRANCH ${reset}"
-      echo -e "Br BigCommunity: ${cyan}$BIGCOMMUNITY_BRANCH ${reset}"
-      echo -e "Br ChiliLinux  : ${cyan}$CHILILINUX_BRANCH ${reset}"
-      echo -e "Kernel         : ${cyan}$KERNEL ${reset}"
+			echo -e "Distroname     : ${cyan}$DISTRONAME ${reset}"
+			echo -e "Iso-Profiles   : ${cyan}$ISO_PROFILES_REPO ${reset}"
+			echo -e "Build dir      : ${cyan}$BUILD_DIR ${reset}"
+			echo -e "Edition        : ${cyan}$EDITION ${reset}"
+			echo -e "Br Manjaro     : ${cyan}$MANJARO_BRANCH ${reset}"
+			echo -e "Br BigLinux    : ${cyan}$BIGLINUX_BRANCH ${reset}"
+			echo -e "Br BigCommunity: ${cyan}$BIGCOMMUNITY_BRANCH ${reset}"
+			echo -e "Br ChiliLinux  : ${cyan}$CHILILINUX_BRANCH ${reset}"
+			echo -e "Kernel         : ${cyan}$KERNEL ${reset}"
 			echo '---------------------------------------------------------------------------------'
-    fi
+		fi
 		echo -e "${BLUE}${BOLD}$title${NC}\n"
 
 		for i in "${!options[@]}"; do
 			if [[ "$i" -eq $selected ]]; then
 				if [[ "${options[$i]}" =~ ^(Sair|Voltar)$ ]]; then
-          if [[ "$ORGANIZATION" =~ ^(chililinux|vcatafesta)$ ]]; then
-  					echo -e "${RED}${BOLD}${reverse}> ${options[$i]}${NC}"
-  				else
-					  echo -e "${RED}${BOLD}> ${options[$i]}${NC}"
-				  fi
+					if [[ "$ORGANIZATION" =~ ^(chililinux|vcatafesta)$ ]]; then
+						echo -e "${RED}${BOLD}${reverse}> ${options[$i]}${NC}"
+					else
+						echo -e "${RED}${BOLD}> ${options[$i]}${NC}"
+					fi
 				else
-          if [[ "$ORGANIZATION" =~ ^(chililinux|vcatafesta)$ ]]; then
-  					echo -e "${GREEN}${BOLD}${reverse}> ${options[$i]}${NC}"
-  				else
-	  				echo -e "${GREEN}${BOLD}> ${options[$i]}${NC}"
-	  			fi
+					if [[ "$ORGANIZATION" =~ ^(chililinux|vcatafesta)$ ]]; then
+						echo -e "${GREEN}${BOLD}${reverse}> ${options[$i]}${NC}"
+					else
+						echo -e "${GREEN}${BOLD}> ${options[$i]}${NC}"
+					fi
 				fi
 			else
 				if [[ "${options[$i]}" =~ ^(Sair|Voltar)$ ]]; then
@@ -551,7 +551,7 @@ create_menu_with_array() {
 
 create_menu() {
 	local title=$1
-  shift # Avança apenas o título
+	shift # Avança apenas o título
 	#	local options=("$@" "Sair")
 	local options=("$@")
 	local selected=0
@@ -588,32 +588,32 @@ create_menu() {
 		fi
 
 		if $IS_BUILD_ISO_RESUME; then
-      echo -e "Distroname     : ${cyan}$DISTRONAME ${reset}"
-      echo -e "Edition        : ${cyan}$EDITION ${reset}"
-      echo -e "Iso-Profiles   : ${cyan}$ISO_PROFILES_REPO ${reset}"
-      echo -e "Br Manjaro     : ${cyan}$MANJARO_BRANCH ${reset}"
-      echo -e "Br BigLinux    : ${cyan}$BIGLINUX_BRANCH ${reset}"
-      echo -e "Br BigCommunity: ${cyan}$BIGCOMMUNITY_BRANCH ${reset}"
-      echo -e "Br ChiliLinux  : ${cyan}$CHILILINUX_BRANCH ${reset}"
-      echo -e "Kernel         : ${cyan}$KERNEL ${reset}"
+			echo -e "Distroname     : ${cyan}$DISTRONAME ${reset}"
+			echo -e "Edition        : ${cyan}$EDITION ${reset}"
+			echo -e "Iso-Profiles   : ${cyan}$ISO_PROFILES_REPO ${reset}"
+			echo -e "Br Manjaro     : ${cyan}$MANJARO_BRANCH ${reset}"
+			echo -e "Br BigLinux    : ${cyan}$BIGLINUX_BRANCH ${reset}"
+			echo -e "Br BigCommunity: ${cyan}$BIGCOMMUNITY_BRANCH ${reset}"
+			echo -e "Br ChiliLinux  : ${cyan}$CHILILINUX_BRANCH ${reset}"
+			echo -e "Kernel         : ${cyan}$KERNEL ${reset}"
 			echo '---------------------------------------------------------------------------------'
-    fi
+		fi
 		echo -e "${BLUE}${BOLD}$title${NC}\n"
 
 		for i in "${!options[@]}"; do
 			if [[ "$i" -eq $selected ]]; then
 				if [[ "${options[$i]}" =~ ^(Sair|Voltar)$ ]]; then
-          if [[ "$ORGANIZATION" =~ ^(chililinux|vcatafesta)$ ]]; then
-  					echo -e "${RED}${BOLD}${reverse}> ${options[$i]}${NC}"
-  				else
-					  echo -e "${RED}${BOLD}> ${options[$i]}${NC}"
-				  fi
+					if [[ "$ORGANIZATION" =~ ^(chililinux|vcatafesta)$ ]]; then
+						echo -e "${RED}${BOLD}${reverse}> ${options[$i]}${NC}"
+					else
+						echo -e "${RED}${BOLD}> ${options[$i]}${NC}"
+					fi
 				else
-          if [[ "$ORGANIZATION" =~ ^(chililinux|vcatafesta)$ ]]; then
-  					echo -e "${GREEN}${BOLD}${reverse}> ${options[$i]}${NC}"
-  				else
-	  				echo -e "${GREEN}${BOLD}> ${options[$i]}${NC}"
-	  			fi
+					if [[ "$ORGANIZATION" =~ ^(chililinux|vcatafesta)$ ]]; then
+						echo -e "${GREEN}${BOLD}${reverse}> ${options[$i]}${NC}"
+					else
+						echo -e "${GREEN}${BOLD}> ${options[$i]}${NC}"
+					fi
 				fi
 			else
 				if [[ "${options[$i]}" =~ ^(Sair|Voltar)$ ]]; then
@@ -668,6 +668,7 @@ update_commit_push() {
 	else
 		[[ -z "$default_commit_message" ]] && default_commit_message=""
 	fi
+
 	p_log "$CYAN" "Mudando para o branch ${mainbranch}"
 	if ! git checkout "$mainbranch"; then
 		die "$RED" "Erro: git checkout ${mainbranch} - Falha ao mudar para o branch ${mainbranch}"
@@ -681,6 +682,10 @@ update_commit_push() {
 
 	if [[ -n "$(git status --short)" ]]; then
 		p_log "$CYAN" "Adicionando todas as mudanças..."
+
+		git config --global http.postBuffer 524288000 #sáb 08 mar 2025 17:27:47 -04
+		git config credential.helper store            #sáb 08 mar 2025 17:27:47 -04
+
 		if ! git add --all .; then
 			die "$RED" "Erro: git add --all - Falha ao adicionar mudanças"
 		fi
@@ -1017,22 +1022,22 @@ clean_all_tags_on_remote() {
 	fi
 
 	p_log "${CYAN}" "Deletando tags..."
-  if git tag -l | xargs -n 1 git push --delete origin; then
-    git tag -l | xargs git tag -d
-    git pull
-    git push
-    p_log "${GREEN}" "Todas tags deletadas com sucesso."
-  else
+	if git tag -l | xargs -n 1 git push --delete origin; then
+		git tag -l | xargs git tag -d
+		git pull
+		git push
+		p_log "${GREEN}" "Todas tags deletadas com sucesso."
+	else
 		p_log "${RED}" "Falha ao deletar tags. Não encontradas"
-  fi
+	fi
 	sleep 5
 	exit 0
 }
 
 replicate() {
-  local char=${1:-'#'}
-  local nsize=${2:-$(tput cols)}
-  local line
-  printf -v line "%*s" "$nsize" && echo "${line// /$char}"
+	local char=${1:-'#'}
+	local nsize=${2:-$(tput cols)}
+	local line
+	printf -v line "%*s" "$nsize" && echo "${line// /$char}"
 }
 export -f replicate
