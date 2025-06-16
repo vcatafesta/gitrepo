@@ -8,7 +8,7 @@
 #
 #  Created: ter 24 set 2024 04:26:12 -04
 #  Altered: dom 08 dez 2024 23:39:02 -04
-#  Updated: qui 27 fev 2025 23:55:11 -04
+#  Updated: seg 16 jun 2025 06:55:04 -04
 #
 #  Copyright (c) 2024-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -35,7 +35,7 @@
 ##############################################################################
 declare APP="${0##*/}"
 declare APPDESC="Wrapper bash para o buildiso"
-declare VERSION="1.02.27"
+declare VERSION="1.06.15"
 export TERM=${TERM:-xterm}
 export TERM=${TERM:-xterm-256color}
 declare IS_AUTO=false
@@ -59,13 +59,13 @@ declare -A ACustomPerfilKey
 configure_base_vars() {
 	# Declare variáveis de ambiente
 	# somente ativada quando rodar manualmente (-m), no github não é necessário
-	aDistros=('bigcommunity' 'biglinux' 'chililinux' 'manjaro' 'Sair')
+	aDistros=('chililinux' 'bigcommunity' 'biglinux' 'manjaro' 'Sair')
 	aBranchs=('stable' 'testing' 'unstable' 'Sair')
 	aKernels=('latest' 'lts' 'oldlts' 'xanmod' 'Sair')
 	aProfiles=(
+		'https://github.com/chililinux/iso-profiles'
 		'https://github.com/communitybig/iso-profiles'
 		'https://github.com/biglinux/iso-profiles'
-		'https://github.com/chililinux/iso-profiles'
 		'https://gitlab.manjaro.org/profiles-and-settings/iso-profiles.git'
 		'https://github.com/vcatafesta/iso-profiles'
 	)
@@ -442,7 +442,10 @@ TIni.Get() {
 	local section="$2"
 	local key="$3"
 
-	[[ ! -e "$config_file" ]] && echo "" >"$config_file"
+  [[ ! -e "$config_file" ]] &&  {
+    mkdir -p $HOME_DIR
+    echo '' >"$config_file"
+  }
 	sed -nr "/^\[$section\]/ { :l /^[[:space:]]*${key}[[:space:]]*=/ { s/[^=]*=[[:space:]]*//; p; q;}; /^;/b; n; b l;}" "$config_file"
 }
 export -f TIni.Get
@@ -1565,63 +1568,78 @@ add_repositorys_only_install() {
 			fi
 		done
 
-		msg "Verificando se o repositório 'biglinux-update-stable' está presente no arquivo $arquivo_conf."
-		# Verifica e insere o repositório antes da seção [core], se necessário
-		if ! grep -q 'biglinux-update-stable' "$arquivo_conf"; then
-			msg_info 'Inserindo o repositório [biglinux-update-stable] antes da seção [core]'
-			sudo sed -i "/\[core\]/i \
-		    [biglinux-update-stable]\
-  		  \nSigLevel = PackageRequired\
-	  	  \nServer = https://repo.biglinux.com.br/update-stable/\$arch\n" "$arquivo_conf"
-		fi
+#		msg "Verificando se o repositório 'biglinux-update-stable' está presente no arquivo $arquivo_conf."
+#		# Verifica e insere o repositório antes da seção [core], se necessário
+#		if ! grep -q 'biglinux-update-stable' "$arquivo_conf"; then
+#			msg_info 'Inserindo o repositório [biglinux-update-stable] antes da seção [core]'
+#			sudo sed -i "/\[core\]/i \
+#		    [biglinux-update-stable]\
+#  		  \nSigLevel = PackageRequired\
+#	  	  \nServer = https://repo.biglinux.com.br/update-stable/\$arch\n" "$arquivo_conf"
+#		fi
+
 	fi
 
-	msg "Configurando repositórios do Manjaro"
+	#msg "Configurando repositórios do Manjaro"
 	branch="$MANJARO_BRANCH"
-	servers=('irltoolkit.mm.fcix.net'
-		'mirror.fcix.net'
-		'opencolo.mm.fcix.net'
-		'mirrors.ocf.berkeley.edu'
-		'ridgewireless.mm.fcix.net'
-		'codingflyboy.mm.fcix.net'
-		'mirrors.sonic.net'
-		'repo.ialab.dsu.edu'
-		'volico.mm.fcix.net'
-		'forksystems.mm.fcix.net'
-		'mnvoip.mm.fcix.net'
-		'coresite.mm.fcix.net'
-		'uvermont.mm.fcix.net'
-		'ohioix.mm.fcix.net'
-		'southfront.mm.fcix.net'
-		'nnenix.mm.fcix.net'
-		'mirror.math.princeton.edu'
-		'mirrors.gigenet.com'
-		'ask4.mm.fcix.net'
-	)
+  #	servers=('irltoolkit.mm.fcix.net'
+  #		'mirror.fcix.net'
+  #		'opencolo.mm.fcix.net'
+  #		'mirrors.ocf.berkeley.edu'
+  #		'ridgewireless.mm.fcix.net'
+  #		'codingflyboy.mm.fcix.net'
+  #		'mirrors.sonic.net'
+  #		'repo.ialab.dsu.edu'
+  #		'volico.mm.fcix.net'
+  #		'forksystems.mm.fcix.net'
+  #		'mnvoip.mm.fcix.net'
+  #		'coresite.mm.fcix.net'
+  #		'uvermont.mm.fcix.net'
+  #		'ohioix.mm.fcix.net'
+  #		'southfront.mm.fcix.net'
+  #		'nnenix.mm.fcix.net'
+  #		'mirror.math.princeton.edu'
+  #		'mirrors.gigenet.com'
+  #		'ask4.mm.fcix.net'
+  #	)
+  #echo "Server = https://manjaro.c3sl.ufpr.br/$branch/\$repo/\$arch" | sudo tee -a "$arquivo_conf" >/dev/null
+  #echo "Server = https://mirror.ufam.edu.br/manjaro/$branch/\$repo/\$arch" | sudo tee -a "$arquivo_conf" >/dev/null
+  #echo "Server = https://linorg.usp.br/manjaro/$branch/\$repo/\$arch" | sudo tee -a "$arquivo_conf" >/dev/null
 
-	echo "Server = https://manjaro.c3sl.ufpr.br/$branch/\$repo/\$arch" | sudo tee -a "$arquivo_conf" >/dev/null
-	echo "Server = https://mirror.ufam.edu.br/manjaro/$branch/\$repo/\$arch" | sudo tee -a "$arquivo_conf" >/dev/null
-	echo "Server = https://linorg.usp.br/manjaro/$branch/\$repo/\$arch" | sudo tee -a "$arquivo_conf" >/dev/null
+  #	for server in "${servers[@]}"; do
+  #		msg_info "Incluindo $server no arquivo $arquivo_conf"
+  #		echo "Server = https://$server/manjaro/$branch/\$repo/\$arch" | sudo tee -a "$arquivo_conf" >/dev/null
+  #	done
+  #	echo '' | sudo tee -a "$arquivo_conf" >/dev/null
 
-	for server in "${servers[@]}"; do
-		msg_info "Incluindo $server no arquivo $arquivo_conf"
-		echo "Server = https://$server/manjaro/$branch/\$repo/\$arch" | sudo tee -a "$arquivo_conf" >/dev/null
-	done
-	echo '' | sudo tee -a "$arquivo_conf" >/dev/null
+  msg "Configurando repositórios do ArchLinux"
+  echo 'Server = http://archlinux.c3sl.ufpr.br/$repo/os/$arch' | sudo tee -a "$arquivo_conf" >/dev/null
+  echo 'Server = https://archlinux.c3sl.ufpr.br/$repo/os/$arch' | sudo tee -a "$arquivo_conf" >/dev/null
+  echo 'Server = http://www.caco.ic.unicamp.br/archlinux/$repo/os/$arch' | sudo tee -a "$arquivo_conf" >/dev/null
+  echo 'Server = https://www.caco.ic.unicamp.br/archlinux/$repo/os/$arch' | sudo tee -a "$arquivo_conf" >/dev/null
+  echo 'Server = http://br.mirrors.cicku.me/archlinux/$repo/os/$arch' | sudo tee -a "$arquivo_conf" >/dev/null
+  echo 'Server = https://br.mirrors.cicku.me/archlinux/$repo/os/$arch' | sudo tee -a "$arquivo_conf" >/dev/null
+  echo 'Server = http://linorg.usp.br/archlinux/$repo/os/$arch' | sudo tee -a "$arquivo_conf" >/dev/null
+  echo 'Server = http://archlinux.pop-es.rnp.br/$repo/os/$arch' | sudo tee -a "$arquivo_conf" >/dev/null
+  echo 'Server = http://mirror.ufam.edu.br/archlinux/$repo/os/$arch' | sudo tee -a "$arquivo_conf" >/dev/null
+  echo 'Server = http://mirror.ufscar.br/archlinux/$repo/os/$arch' | sudo tee -a "$arquivo_conf" >/dev/null
+  echo 'Server = https://mirror.ufscar.br/archlinux/$repo/os/$arch' | sudo tee -a "$arquivo_conf" >/dev/null
+  echo 'Server = http://mirrors.ic.unicamp.br/archlinux/$repo/os/$arch' | sudo tee -a "$arquivo_conf" >/dev/null
+  echo 'Server = https://mirrors.ic.unicamp.br/archlinux/$repo/os/$arch' | sudo tee -a "$arquivo_conf" >/dev/null
 
-	msg 'Configurando repositórios do BigCommunity'
-	case "$BIGCOMMUNITY_BRANCH" in
-	stable)
-		add_community-stable | sudo tee -a "$arquivo_conf" >/dev/null
-		add_community-testing | sudo tee -a "$arquivo_conf" >/dev/null
-		add_community-extra | sudo tee -a "$arquivo_conf" >/dev/null
-		;;
-	testing | unstable)
-		add_community-testing | sudo tee -a "$arquivo_conf" >/dev/null
-		add_community-stable | sudo tee -a "$arquivo_conf" >/dev/null
-		add_community-extra | sudo tee -a "$arquivo_conf" >/dev/null
-		;;
-	esac
+#	msg 'Configurando repositórios do BigCommunity'
+#	case "$BIGCOMMUNITY_BRANCH" in
+#	stable)
+#		add_community-stable | sudo tee -a "$arquivo_conf" >/dev/null
+#		add_community-testing | sudo tee -a "$arquivo_conf" >/dev/null
+#		add_community-extra | sudo tee -a "$arquivo_conf" >/dev/null
+#		;;
+#	testing | unstable)
+#		add_community-testing | sudo tee -a "$arquivo_conf" >/dev/null
+#		add_community-stable | sudo tee -a "$arquivo_conf" >/dev/null
+#		add_community-extra | sudo tee -a "$arquivo_conf" >/dev/null
+#		;;
+#	esac
 
 	msg 'Configurando repositórios do ChiliLinux'
 	case "$CHILILINUX_BRANCH" in
@@ -1629,29 +1647,29 @@ add_repositorys_only_install() {
 		add_chili-stable | sudo tee -a "$arquivo_conf" >/dev/null
 		add_chili-testing | sudo tee -a "$arquivo_conf" >/dev/null
 		add_chili-extra | sudo tee -a "$arquivo_conf" >/dev/null
-		add_community-stable | sudo tee -a "$arquivo_conf" >/dev/null
-		add_community-extra | sudo tee -a "$arquivo_conf" >/dev/null
+		#add_community-stable | sudo tee -a "$arquivo_conf" >/dev/null
+		#add_community-extra | sudo tee -a "$arquivo_conf" >/dev/null
 		;;
 	*)
 		add_chili-testing | sudo tee -a "$arquivo_conf" >/dev/null
 		add_chili-stable | sudo tee -a "$arquivo_conf" >/dev/null
 		add_chili-extra | sudo tee -a "$arquivo_conf" >/dev/null
-		add_community-stable | sudo tee -a "$arquivo_conf" >/dev/null
-		add_community-extra | sudo tee -a "$arquivo_conf" >/dev/null
+		#add_community-stable | sudo tee -a "$arquivo_conf" >/dev/null
+		#add_community-extra | sudo tee -a "$arquivo_conf" >/dev/null
 		;;
 	esac
 
-	msg 'Configurando repositórios do BigLinux'
-	case "$BIGLINUX_BRANCH" in
-	stable)
-		add_biglinux-stable | sudo tee -a "$arquivo_conf" >/dev/null
-		add_biglinux-testing | sudo tee -a "$arquivo_conf" >/dev/null
-		;;
-	testing)
-		add_biglinux-testing | sudo tee -a "$arquivo_conf" >/dev/null
-		add_biglinux-stable | sudo tee -a "$arquivo_conf" >/dev/null
-		;;
-	esac
+  #	msg 'Configurando repositórios do BigLinux'
+  #	case "$BIGLINUX_BRANCH" in
+  #	stable)
+  #		add_biglinux-stable | sudo tee -a "$arquivo_conf" >/dev/null
+  #		add_biglinux-testing | sudo tee -a "$arquivo_conf" >/dev/null
+  #		;;
+  #	testing)
+  #		add_biglinux-testing | sudo tee -a "$arquivo_conf" >/dev/null
+  #		add_biglinux-stable | sudo tee -a "$arquivo_conf" >/dev/null
+  #		;;
+  #	esac
 }
 export -f add_repositorys_only_install
 
@@ -2077,12 +2095,12 @@ add_repos_to_pacman_conf_into_iso_distro() {
 		fi
 	fi
 
-	if [[ "$biglinux_branch" == "testing" ]]; then
-		add_biglinux-testing | sudo tee -a "$config_file" >/dev/null
-		add_biglinux-stable | sudo tee -a "$config_file" >/dev/null
-	else
-		add_biglinux-stable | sudo tee -a "$config_file" >/dev/null
-	fi
+  #	if [[ "$biglinux_branch" == "testing" ]]; then
+  #		add_biglinux-testing | sudo tee -a "$config_file" >/dev/null
+  #		add_biglinux-stable | sudo tee -a "$config_file" >/dev/null
+  #	else
+  #		add_biglinux-stable | sudo tee -a "$config_file" >/dev/null
+  #	fi
 }
 export -f add_repos_to_pacman_conf_into_iso_distro
 
@@ -2221,7 +2239,6 @@ build_iso() {
 	if $DEBUG; then
 		LC_ALL=C sudo -u "$USERNAME" bash -c "buildiso -d zstd ${SCOPE:+-f} -p $EDITION -b $MANJARO_BRANCH -k linux${KERNEL_NAME} ${OFFICE:+-o};exit \$?"
 	else
-		#LC_ALL=C sudo -u "$USERNAME" bash -c "buildiso -d zstd ${SCOPE:+-f} -p $EDITION -b $MANJARO_BRANCH -k linux${KERNEL_NAME} ${OFFICE:+-o} > /dev/null 2>&1; exit \$?"
 		LC_ALL=C sudo -u "$USERNAME" bash -c "buildiso -d zstd ${SCOPE:+-f} -p $EDITION -b $MANJARO_BRANCH -k linux${KERNEL_NAME} ${OFFICE:+-o} 1>/dev/null; exit \$?"
 	fi
 	BUILD_EXIT_CODE=$?
