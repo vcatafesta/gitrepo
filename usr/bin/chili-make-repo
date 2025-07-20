@@ -5,7 +5,7 @@
 #  chili-make-repo
 #  Created: 2024/08/21 - 19:07
 #  Altered: dom 27 out 2024 09:19:14 -04
-#  Updated: sex 24 jan 2025 22:36:25 -04
+#  Updated: dom 20 jul 2025 11:35:17 -04
 #
 #  Copyright (c) 2024-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -48,7 +48,7 @@ shopt -s extglob
 
 #system
 declare APP="${0##*/}"
-declare VERSION="1.1.24-20250124"
+declare VERSION="1.07.20-20250720"
 declare APPDESC="Wrapper para gerenciamento de repositorios like arch"
 declare nocolor=false
 declare verbose=false
@@ -601,6 +601,13 @@ sign_package() {
 	local passphrase="$secret_key"
 	local default_key="$gpg_key"
 
+  [[ -e $HOME/.gnupg/public-keys.d/pubring.db.lock ]] && {
+    msg_info "Removendo: $HOME/.gnupg/public-keys.d/pubring.db.lock"
+    rm -f $HOME/.gnupg/public-keys.d/pubring.db.lock
+  }
+
+  msg_info "Assinando pacote: $package"
+
 	# Assina o pacote
 	gpg --pinentry-mode loopback \
 		--passphrase "$passphrase" \
@@ -664,7 +671,6 @@ search_for_sign_package() {
 				((total_processed++)) # Incrementa o contador de pacotes processados
 				if [[ ! -e "$pkg.sig" ]]; then
 					((total_unsigned++)) # Incrementa o contador de pacotes sem assinatura
-					msg_info "Assinando pacote: $pkg"
 					sign_package "$pkg"
 					((total_signed++)) # Incrementa o contador de pacotes assinados
 				else
