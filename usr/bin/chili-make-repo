@@ -5,7 +5,7 @@
 #  chili-make-repo
 #  Created: 2024/08/21 - 19:07
 #  Altered: dom 27 out 2024 09:19:14 -04
-#  Updated: dom 20 jul 2025 11:35:17 -04
+#  Updated: ter 22 jul 2025 01:24:27 -04
 #
 #  Copyright (c) 2024-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -36,9 +36,36 @@ export TEXTDOMAIN=chili-make-repo
 export TERM=${TERM:-xterm}
 export TERM=${TERM:-xterm-256color}
 
+# Definir a variável de controle para restaurar a formatação original
 reset=$(tput sgr0)
+
+# Definir os estilos de texto como variáveis
+bold=$(tput bold)
+underline=$(tput smul)   # Início do sublinhado
+nounderline=$(tput rmul) # Fim do sublinhado
+reverse=$(tput rev)      # Inverte as cores de fundo e texto
+
+# Definir as cores ANSI como variáveis
+black=$(tput bold)$(tput setaf 0)
+red=$(tput bold)$(tput setaf 196)
 green=$(tput bold)$(tput setaf 2)
+yellow=$(tput bold)$(tput setaf 3)
+blue=$(tput setaf 4)
 pink=$(tput setaf 5)
+magenta=$(tput setaf 5)
+cyan=$(tput setaf 6)
+white=$(tput setaf 7)
+gray=$(tput setaf 8)
+orange=$(tput setaf 202)
+purple=$(tput setaf 125)
+violet=$(tput setaf 61)
+light_red=$(tput setaf 9)
+light_green=$(tput setaf 10)
+light_yellow=$(tput setaf 11)
+light_blue=$(tput setaf 12)
+light_magenta=$(tput setaf 13)
+light_cyan=$(tput setaf 14)
+bright_white=$(tput setaf 15)
 
 #debug
 export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset}'
@@ -48,7 +75,7 @@ shopt -s extglob
 
 #system
 declare APP="${0##*/}"
-declare VERSION="1.07.20-20250720"
+declare VERSION="1.07.22-20250722"
 declare APPDESC="Wrapper para gerenciamento de repositorios like arch"
 declare nocolor=false
 declare verbose=false
@@ -345,7 +372,8 @@ msg_raw() {
 		local before_colon="${msg%%:*}:"
 		local after_colon="${msg#*: }"
 		# Aplica as cores
-		msg="${cyan}${before_colon} ${red}${after_colon}${reset}"
+#		msg="${cyan}${before_colon} ${red}${after_colon}${reset}"
+		msg="${cyan}${before_colon} ${black}${after_colon}${reset}"
 	else
 		# Se não houver ':', aplica apenas a cor padrão
 		msg="${cyan}${msg}${reset}"
@@ -590,9 +618,9 @@ read_file_sign_conf() {
 	gpg_key="$GPGKEY"
 
 	# Exibe informações para depuração
-	msg_raw "organization    : ${organization}"
+	msg_raw "    organization: ${organization}"
 	msg_raw "Usando SECRETKEY: $secret_key"
-	msg_raw "Usando GPGKEY   : $gpg_key"
+	msg_raw "   Usando GPGKEY: $gpg_key"
 	return 0
 }
 
@@ -763,8 +791,8 @@ sh_remote_pull() {
 
 		pushd "$local_PATH" >/dev/null 2>&- || exit 1
 		msg_info "${cyan}Sincronizando... Puxando branch ${orange}${branch} ${cyan}do remoto para local ${reset}"
-		msg_raw "    Local : ${local_PATH}"
-		msg_raw "   Remoto : ${remote_PATH}"
+		msg_raw "           Local: ${local_PATH}"
+		msg_raw "          Remoto: ${remote_PATH}"
 		if $verbose; then
 			echo -n "$black"
 			rsync --itemize-changes --info=skip0 -Craz -e "ssh -p ${remote_PORT}" "${remote_USER}"@"${remote_HOST}":"${remote_PATH}"/ "${local_PATH}"/
@@ -897,7 +925,7 @@ sh_setup() {
 	replicate '-'
 
 	while true; do
-		get 11 10 "Organization  : " get_organization "$organization"
+		get 11 10 "Organization: " get_organization "$organization"
 		if [[ -z "$get_organization" ]]; then
 			setpos 22 10
 			errorbeep
