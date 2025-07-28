@@ -48,39 +48,43 @@ depends+=(
 groups_list=()
 post_install_pkgs=()
 
-# Automatically detect and use the correct install file
-if [ -e "${pkgname}.install" ]; then
-	install=${pkgname}.install
-elif [ -e "pkgbuild.install" ]; then
-	install=pkgbuild.install
-fi
-
 package() {
-	cd "${srcdir}/${pkgname}"
+  cd "${srcdir}/${pkgname}"
 
-	# Instala todos os arquivos em /usr/share/${pkgname} no momento da criação do pacote
-	install -dm755 "${pkgdir}/usr/share/${pkgname}"
-	# Lista de pacotes instalados automaticamente via post_install
-	# (não confundir com optdepends do PKGBUILD)
-	if ((${#post_install_pkgs[@]})); then
-		printf "%s\n" "${post_install_pkgs[@]}" >"${pkgdir}/usr/share/${pkgname}/optdepends"
-	fi
+  # Instala todos os arquivos em /usr/share/${pkgname} no momento da criação do pacote
+  install -dm755 "${pkgdir}/usr/share/${pkgname}"
+  # Lista de pacotes instalados automaticamente via post_install
+  # (não confundir com optdepends do PKGBUILD)
+  if ((${#post_install_pkgs[@]})); then
+    printf "%s\n" "${post_install_pkgs[@]}" >"${pkgdir}/usr/share/${pkgname}/optdepends"
+  fi
 
-	# Copiar a estrutura de /etc, /usr e /opt para /usr/share/${pkgname}
-	local dirs=("usr" "etc" "opt")
-	for dir in "${dirs[@]}"; do
-		if [ -d "${srcdir}/${pkgname}/${dir}" ]; then
-			cp -a "${srcdir}/${pkgname}/${dir}" "${pkgdir}/usr/share/${pkgname}/"
-		fi
-	done
+  # Copiar a estrutura de /etc, /usr e /opt para /usr/share/${pkgname}
+  local dirs=("usr" "etc" "opt")
+  for dir in "${dirs[@]}"; do
+    if [ -d "${srcdir}/${pkgname}/${dir}" ]; then
+      cp -a "${srcdir}/${pkgname}/${dir}" "${pkgdir}/usr/share/${pkgname}/"
+    fi
+  done
 
-	# Install license file if present
-	if [ -f "LICENSE" ]; then
-		install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
-	fi
+  # Define o diretório interno
+  InternalDir="${srcdir}/${pkgname}"
+  [ -d "${InternalDir}/${pkgname}" ] && InternalDir="${InternalDir}/${pkgname}"
 
-	# Install documentation if present
-	if [ -f "README.md" ]; then
-		install -Dm644 README.md "${pkgdir}/usr/share/doc/${pkgname}/README.md"
-	fi
+  # Lista de diretórios para copiar
+  for dir in usr etc opt; do
+    [ -d "${InternalDir}/${dir}" ] && cp -r "${InternalDir}/${dir}" "${pkgdir}/"
+  done
+
+  # Install license file if present
+  if [ -f "LICENSE" ]; then
+    install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+  fi
+
+  # Install documentation if present
+  if [ -f "README.md" ]; then
+    install -Dm644 README.md "${pkgdir}/usr/share/doc/${pkgname}/README.md"
+  fi
 }
+
+
