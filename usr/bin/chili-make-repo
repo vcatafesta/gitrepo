@@ -5,7 +5,7 @@
 #  chili-make-repo
 #  Created: 2024/08/21 - 19:07
 #  Altered: dom 27 out 2024 09:19:14 -04
-#  Updated: ter 22 jul 2025 01:24:27 -04
+#  Updated: seg 28 jul 2025 05:08:05 -04
 #
 #  Copyright (c) 2024-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -75,7 +75,7 @@ shopt -s extglob
 
 #system
 declare APP="${0##*/}"
-declare VERSION="1.07.22-20250722"
+declare VERSION="1.07.28-20250728"
 declare APPDESC="Wrapper para gerenciamento de repositorios like arch"
 declare nocolor=false
 declare verbose=false
@@ -694,17 +694,19 @@ search_for_sign_package() {
 			AllPackages=()
 			readarray -d '' AllPackages < <(find . -type f -iname "*.$PKG_EXT" -print0)
 
-			# Itera sobre os pacotes
-			for pkg in "${AllPackages[@]}"; do
-				((total_processed++)) # Incrementa o contador de pacotes processados
-				if [[ ! -e "$pkg.sig" ]]; then
-					((total_unsigned++)) # Incrementa o contador de pacotes sem assinatura
-					sign_package "$pkg"
-					((total_signed++)) # Incrementa o contador de pacotes assinados
-				else
-					((total_already_signed++)) # Incrementa o contador de pacotes já assinados
-				fi
-			done
+      # Itera sobre os pacotes
+      for pkg in "${AllPackages[@]}"; do
+        ((total_processed++)) # Incrementa o contador de pacotes processados
+
+        if [[ ! -s "$pkg.sig" ]]; then
+          [[ -e "$pkg.sig" ]] && rm -f "$pkg.sig"
+          ((total_unsigned++))   # Arquivo inexistente ou vazio
+          sign_package "$pkg"
+          ((total_signed++))     # Assinado agora
+        else
+          ((total_already_signed++)) # Já estava assinado
+        fi
+      done
 
 			# Marca o branch como processado
 			processed_branches[$branch]=1
@@ -713,7 +715,7 @@ search_for_sign_package() {
 				msg_warn "Falha ao retornar ao diretório original."
 				return 1
 			}
-			msg_info "Concluído o processamento do branch: $branch"
+			msg_info "Concluído o processamento do branch: ${red}$branch${reset}"
 		done
 
 		# Garante retorno ao diretório original em caso de falhas
@@ -795,10 +797,12 @@ sh_remote_pull() {
 		msg_raw "          Remoto: ${remote_PATH}"
 		if $verbose; then
 			echo -n "$black"
-			rsync --itemize-changes --info=skip0 -Craz -e "ssh -p ${remote_PORT}" "${remote_USER}"@"${remote_HOST}":"${remote_PATH}"/ "${local_PATH}"/
+			#rsync --itemize-changes --info=skip0 -Craz -e "ssh -p ${remote_PORT}" "${remote_USER}"@"${remote_HOST}":"${remote_PATH}"/ "${local_PATH}"/
+      rsync --itemize-changes --info=skip0 -Crau -e "ssh -p ${remote_PORT}" "${remote_USER}"@"${remote_HOST}":"${remote_PATH}/" "${local_PATH}/"
 			echo -n "$reset"
 		else
-			rsync --info=skip0 -Craz -e "ssh -p ${remote_PORT}" "${remote_USER}"@"${remote_HOST}":"${remote_PATH}"/ "${local_PATH}"/
+			#rsync --info=skip0 -Craz -e "ssh -p ${remote_PORT}" "${remote_USER}"@"${remote_HOST}":"${remote_PATH}"/ "${local_PATH}"/
+      rsync --info=skip0 -Crau -e "ssh -p ${remote_PORT}" "${remote_USER}"@"${remote_HOST}":"${remote_PATH}/" "${local_PATH}/"
 		fi
 	done
 }
