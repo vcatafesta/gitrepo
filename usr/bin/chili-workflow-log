@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # shellcheck shell=bash disable=SC1091,SC2039,SC2166
 #
-#  workflow-log - Maneira eficiente de acompanhar a execução dos seus workflows
+#  chili-workflow-log - Maneira eficiente de acompanhar a execução dos seus workflows
 #  diretamente do terminal, permitindo uma visualização rápida e conveniente dos logs.
 #  Created: 2024/12/20 - 01:48
 #  Altered: 2024/12/20 - 01:48

@@ -36,7 +36,7 @@ declare APPDESC="Wrapper buildiso para construção de ISO"
 declare VERSION="1.2.6" # Versão do script
 : "${reset=$(tput sgr0)}"
 : "${red=$(tput bold)$(tput setaf 196)}"
-LIBRARY=${LIBRARY:-"/usr/share/community/gitrepo/shell"}
+LIBRARY=${LIBRARY:-"/usr/share/chililinux/gitrepo/shell"}
 [[ -s "$LIBRARY/gitlib.sh" ]] && source "$LIBRARY"/gitlib.sh || {
 	echo "${red}=> ERRO FATAL: Não foi possível ler a biblioteca $LIBRARY/gitlib.sh ${reset}"
 	exit 1

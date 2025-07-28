@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # shellcheck shell=bash disable=SC1091,SC2039,SC2166,SC2317,SC2155,SC2034,SC2229,SC2076,SC2199,SC2015
 #
-#  /usr/share/community/gitrepo/shell/gitlib.sh - lib for gitrepo.sh and buildiso.sh
+#  /usr/share/chililinux/gitrepo/shell/gitlib.sh - lib for gitrepo.sh and buildiso.sh
 #  Created: qui 05 set 2024 00:51:12 -04
 #  Altered: seg 23 dez 2024 23:28:25 -04
 #  Updated: sáb 08 mar 2025 17:30:09 -04

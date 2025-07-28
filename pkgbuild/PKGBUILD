@@ -1,3 +1,34 @@
+#!/usr/bin/env bash
+# -*- coding: utf-8 -*-
+# shellcheck shell=bash disable=SC1091,SC2039,SC2166
+#
+#  PKGBUILD
+#  Created: 2025/04/15 - 07:48
+#  Altered: qua 07 mai 2025 22:07:21 -04
+#
+#  Copyright (c) 2025-2025, Vilmar Catafesta <vcatafesta@gmail.com>
+#  All rights reserved.
+#
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions
+#  are met:
+#  1. Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#  2. Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AS IS'' AND ANY EXPRESS OR
+#  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+#  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+#  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+#  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+#  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+#  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+#  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+#  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+##############################################################################
 # Maintainer: Vilmar Catafesta <vcatafesta@gmail.com>
 
 pkgname=gitrepo
@@ -9,9 +40,13 @@ license=('MIT')
 url="https://github.com/vcatafesta/${pkgname}"
 source=("git+${url}.git")
 md5sums=('SKIP')
-depends=('git')
-depends+=('ncurses') # tput
-depends+=('jq')
+depends+=(
+	git
+	jq
+	ncurses # tput
+)
+groups_list=()
+post_install_pkgs=()
 
 # Automatically detect and use the correct install file
 if [ -e "${pkgname}.install" ]; then
@@ -23,18 +58,19 @@ fi
 package() {
 	cd "${srcdir}/${pkgname}"
 
-	# Determine the correct source directory
-	if [ -d "${pkgname}" ]; then
-		srcdir="${srcdir}/${pkgname}/${pkgname}"
-	else
-		srcdir="${srcdir}/${pkgname}"
+	# Instala todos os arquivos em /usr/share/${pkgname} no momento da criação do pacote
+	install -dm755 "${pkgdir}/usr/share/${pkgname}"
+	# Lista de pacotes instalados automaticamente via post_install
+	# (não confundir com optdepends do PKGBUILD)
+	if ((${#post_install_pkgs[@]})); then
+		printf "%s\n" "${post_install_pkgs[@]}" >"${pkgdir}/usr/share/${pkgname}/optdepends"
 	fi
 
-	# Install files
+	# Copiar a estrutura de /etc, /usr e /opt para /usr/share/${pkgname}
 	local dirs=("usr" "etc" "opt")
 	for dir in "${dirs[@]}"; do
-		if [ -d "${srcdir}/${dir}" ]; then
-			cp -a "${srcdir}/${dir}" "${pkgdir}/"
+		if [ -d "${srcdir}/${pkgname}/${dir}" ]; then
+			cp -a "${srcdir}/${pkgname}/${dir}" "${pkgdir}/usr/share/${pkgname}/"
 		fi
 	done
 
