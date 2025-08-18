@@ -431,10 +431,10 @@ msg_warning() {
 	local msg="$1"
 	local caller_function="${FUNCNAME[1]}" # Nome da função que chamou a função atual
 	local caller_line="${BASH_LINENO[1]}"  # Número da linha que chamou a função atual
-	msg="$(sed 's/<[^>]*>//g' <<<"$msg")"  # Remove as tags HTML
+  #msg="$(sed 's/<[^>]*>//g' <<<"$msg")"  # Remove as tags HTML
 	#echo -e "${caller_function}=>${red}warning: ${orange}${msg}${reset}"
 	#echo -e "==>${red}warning: ${orange}${msg}${reset}"
-	printf "==>%b%-10s%s\n" "${red}" "[WARNING]" "${orange}$msg${reset}"
+	printf "==>%b%-10s%s\n" "${red}" "[WARNING]" "${red}${msg}${reset}"
 }
 export -f msg_warning
 
@@ -442,10 +442,10 @@ msg_warn() {
 	local msg="$1"
 	local caller_function="${FUNCNAME[1]}" # Nome da função que chamou a função atual
 	local caller_line="${BASH_LINENO[1]}"  # Número da linha que chamou a função atual
-	msg="$(sed 's/<[^>]*>//g' <<<"$msg")"  # Remove as tags HTML
+  #msg="$(sed 's/<[^>]*>//g' <<<"$msg")"  # Remove as tags HTML
 	#echo -e "${caller_function}=>${red}warning: ${orange}${msg}${reset}"
 	#echo -e "==>${red}warning: ${orange}${msg}${reset}"
-	printf "==>%b%-10s%s\n" "${red}" "[WARNING]" "${orange}$msg${reset}"
+	printf "==>%b%-10s%s\n" "${red}" "[WARNING]" "${red}$msg${reset}"
 }
 export -f msg_warn
 
@@ -562,23 +562,30 @@ unset_varcolors() {
 touch_config_file() {
 	TIni.Set "$config_file" "$organization" "SECRETKEY" "minha_senha_secreta_gpg"
 	TIni.Set "$config_file" "$organization" "GPGKEY" "A0D5A8312A83940ED8B04B0F4BAC871802E960F1"
-	TIni.Set "$config_file" "$organization" "local_PATH" "/home/user/pacotes"
+	TIni.Set "$config_file" "$organization" "local_PATH" "$HOME/.chili-make-repo/Repo${organization}"
 	TIni.Set "$config_file" "$organization" "prefix_DB" "chili"
 	TIni.Set "$config_file" "$organization" "remote_USER" "$USER"
 	TIni.Set "$config_file" "$organization" "remote_PORT" "22"
 	TIni.Set "$config_file" "$organization" "remote_HOST" "192.168.10.22"
-	TIni.Set "$config_file" "$organization" "remote_PATH" "/home/$USER/domains/public/repo"
+	TIni.Set "$config_file" "$organization" "remote_PATH" "/home/$USER/domains/chililinux.com/public_html/repo"
 	msg_info "Adicionado entradas em ${yellow}${config_file} ${reset}como exemplo, edite e faça ajustes necessários!"
+	msg_info "OU use a opção ${pink}-c|--config ${cyan}e faça ajustes necessários!"
 }
 
 msg_erro_config_file() {
-	msg_warn "Erro: Arquivo de configuração não encontrado.
-  ${yellow}Exemplo do caminho esperado:${reset}
-$config_file${reset}
-  ${yellow}Exemplo do conteúdo do arquivo:${reset}
+  msg_warn "Arquivo de configuração ${yellow}'$config_file' ${red}não encontrado.
+$(replicate '-')
+${cyan}==>Exemplo do conteúdo do arquivo: ${yellow}$config_file ${reset}
 [$organization]
-SECRETKEY=minha_senha_secreta
-GPGKEY=A0D5A8312A83940ED8B04B0F4BAC871802E960F1${reset}"
+SECRETKEY=minha_senha_secreta_gpg
+GPGKEY=A0D5A8312A83940ED8B04B0F4BAC871802E960F1
+local_PATH=$HOME/.chili-make-repo/Repo${organization}
+prefix_DB=chili
+remote_USER=$USER
+remote_PORT=22
+remote_HOST=192.168.10.22
+remote_PATH=/home/$USER/domains/chililinux.com/public_html/repo"
+replicate '-'
 }
 
 check_config_file() {
