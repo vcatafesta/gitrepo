@@ -132,15 +132,21 @@ get_organization_conf() {
 	SECRETKEY=$(TIni.Get "$config_file" "$organization" 'SECRETKEY')
 	GPGKEY=$(TIni.Get "$config_file" "$organization" 'GPGKEY')
 
+  if [[ -z "$root_PATH" ]]; then
+    return 1
+  fi
+
   [[ ! -d "$root_PATH" ]] && msg_run "mkdir -p $root_PATH 1>/dev/null" || true
   get_branchs
 	for dir in "${aBranchs[@]}"; do
     [[ ! -d "$root_PATH/$dir/x86_64" ]] && msg_run "mkdir -p $root_PATH/$dir/x86_64 1>/dev/null" || true
   done
+  return 0
 }
 
 dbseek_conf() {
 	get_organization_conf "$@"
+	return $?
 }
 
 function row() { echo "$Prow"; }
@@ -558,10 +564,10 @@ touch_config_file() {
 	TIni.Set "$config_file" "$organization" "GPGKEY" "A0D5A8312A83940ED8B04B0F4BAC871802E960F1"
 	TIni.Set "$config_file" "$organization" "local_PATH" "/home/user/pacotes"
 	TIni.Set "$config_file" "$organization" "prefix_DB" "chili"
-	TIni.Set "$config_file" "$organization" "remote_USER" "username"
+	TIni.Set "$config_file" "$organization" "remote_USER" "$USER"
 	TIni.Set "$config_file" "$organization" "remote_PORT" "22"
 	TIni.Set "$config_file" "$organization" "remote_HOST" "192.168.10.22"
-	TIni.Set "$config_file" "$organization" "remote_PATH" "/home/username/domains/public/repo"
+	TIni.Set "$config_file" "$organization" "remote_PATH" "/home/$USER/domains/public/repo"
 	msg_info "Adicionado entradas em ${yellow}${config_file} ${reset}como exemplo, edite e faça ajustes necessários!"
 }
 
@@ -921,7 +927,7 @@ sh_usage() {
 
 sh_setup() {
 	clear
-	get_organization_conf
+  get_organization_conf
 	setpos 9 00
 	print 9 10 "$APP - CONFIGURAÇÃO de organization" "$red"
 	setpos 10 00
@@ -939,7 +945,7 @@ sh_setup() {
 	replicate '-'
 
 	while true; do
-		get 11 10 "Organization: " get_organization "$organization"
+		get 11 10 "Organization  : " get_organization "$organization"
 		if [[ -z "$get_organization" ]]; then
 			setpos 22 10
 			errorbeep
@@ -953,6 +959,16 @@ sh_setup() {
 		dbseek_conf "$organization"
 		break
 	done
+
+
+  [[ -z "$prefix_DB"   ]] && prefix_DB="$organization"
+  [[ -z "$local_PATH"  ]] && local_PATH="$HOME/.chili-make-repo/Repo${organization}"
+  [[ -z "$remote_HOST" ]] && remote_HOST="repo.chililinux.com"
+  [[ -z "$remote_PORT" ]] && remote_PORT="22"
+  [[ -z "$remote_PATH" ]] && remote_PATH="/home/$USER/domains/chililinux.com/public_html/repo"
+  [[ -z "$remote_USER" ]] && remote_USER="$USER"
+  [[ -z "$SECRETKEY"   ]] && SECRETKEY="seu_secret_key_aqui"
+  [[ -z "$GPGKEY"      ]] && GPGKEY="A0D5A8312A83940ED8B04B0F4BAC871802E960F1"
 
 	while true; do
 		get 12 10 "prefix_DB     : " get_prefix_DB "$prefix_DB"
