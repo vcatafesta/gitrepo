@@ -1,0 +1,20 @@
+_make_common_bootmode_systemd-boot_conf() {
+    local _conf
+
+    install -d -m 0755 -- "${work_dir}/loader" "${work_dir}/loader/entries"
+
+    install -m 0644 -- "${profile}/efiboot/loader/loader.conf" "${work_dir}/loader"
+
+    # Copia temas se existirem
+    if [[ -d "${profile}/efiboot/loader/themes" ]]; then
+      cp -r --no-preserve=ownership,mode "${profile}/efiboot/loader/themes" "${work_dir}/loader/"
+    fi
+
+    for _conf in "${profile}/efiboot/loader/entries/"*".conf"; do
+        sed "s|%ARCHISO_LABEL%|${iso_label}|g;
+             s|%ARCHISO_UUID%|${iso_uuid}|g;
+             s|%INSTALL_DIR%|${install_dir}|g;
+             s|%ARCH%|${arch}|g" \
+            "${_conf}" >"${work_dir}/loader/entries/${_conf##*/}"
+    done
+}

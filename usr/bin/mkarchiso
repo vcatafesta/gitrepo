@@ -2,6 +2,42 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+# Definir a variável de controle para restaurar a formatação original
+reset=$(tput sgr0)
+
+# Definir os estilos de texto como variáveis
+bold=$(tput bold)
+underline=$(tput smul)   # Início do sublinhado
+nounderline=$(tput rmul) # Fim do sublinhado
+reverse=$(tput rev)      # Inverte as cores de fundo e texto
+
+# Definir as cores ANSI como variáveis
+black=$(tput bold)$(tput setaf 0)
+red=$(tput bold)$(tput setaf 196)
+green=$(tput bold)$(tput setaf 2)
+yellow=$(tput bold)$(tput setaf 3)
+blue=$(tput setaf 4)
+pink=$(tput setaf 5)
+magenta=$(tput setaf 5)
+cyan=$(tput setaf 6)
+white=$(tput setaf 7)
+gray=$(tput setaf 8)
+orange=$(tput setaf 202)
+purple=$(tput setaf 125)
+violet=$(tput setaf 61)
+light_red=$(tput setaf 9)
+light_green=$(tput setaf 10)
+light_yellow=$(tput setaf 11)
+light_blue=$(tput setaf 12)
+light_magenta=$(tput setaf 13)
+light_cyan=$(tput setaf 14)
+bright_white=$(tput setaf 15)
+
+#debug
+export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset}'
+#set -x
+#set -e
+
 set -e -u
 shopt -s extglob
 
@@ -55,14 +91,14 @@ declare -i need_external_ucodes=0
 # $1: message string
 _msg_info() {
     local _msg="${1}"
-    [[ "${quiet}" == "y" ]] || printf '[%s] INFO: %s\n' "${app_name}" "${_msg}"
+    [[ "${quiet}" == "y" ]] || printf "${cyan}[%s]${yellow} INFO: ${black}%s\n${reset}" "${app_name}" "${_msg}"
 }
 
 # Show a WARNING message
 # $1: message string
 _msg_warning() {
     local _msg="${1}"
-    printf '[%s] WARNING: %s\n' "${app_name}" "${_msg}" >&2
+    printf "${red}[%s] WARNING: %s\n${reset}" "${app_name}" "${_msg}" >&2
 }
 
 # Show an ERROR message then exit with status
@@ -1280,7 +1316,9 @@ _export_netboot_artifacts() {
     rm -f -- "${out_dir}/${install_dir}/grubenv"
 
     _msg_info "Done!"
+    echo -e "$red"
     du -hs -- "${out_dir}/${install_dir}"
+    echo -e "${reset}"
 }
 
 _cms_sign_artifact() {
@@ -1709,7 +1747,9 @@ _build_bootstrap_image() {
     rm -f -- "${out_dir:?}/${image_name:?}"
     bsdtar -cf - "root.${arch}" "pkglist.${arch}.txt" | "${bootstrap_tarball_compression[@]}" >"${out_dir}/${image_name}"
     _msg_info "Done!"
+    echo "$red"
     du -h -- "${out_dir}/${image_name}"
+    echo "$reset"
     cd -- "${OLDPWD}"
 }
 
