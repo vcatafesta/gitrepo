@@ -5,7 +5,7 @@
 #  chili-make-repo
 #  Created: 2024/08/21 - 19:07
 #  Altered: dom 27 out 2024 09:19:14 -04
-#  Updated: seg 28 jul 2025 05:08:05 -04
+#  Updated: dom 17 ago 2025 23:38:57 -04
 #
 #  Copyright (c) 2024-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -75,13 +75,15 @@ shopt -s extglob
 
 #system
 declare APP="${0##*/}"
-declare VERSION="1.07.28-20250728"
-declare APPDESC="Wrapper para gerenciamento de repositorios like arch"
+declare VERSION="1.08.17-20250817"
+declare APPDESC="Wrapper para manutenção e gerenciamento de banco de dados de pacotes/repositório like arch"
 declare nocolor=false
 declare verbose=false
 declare signonly=false
-declare organization=
+declare organization='chili'
 declare aOrganizations=()
+        aOrganizations+=("chili")
+				aOrganizations+=("chililinux")
 declare FETCH_RE='-[^-]+[0-9]+[^.]*.pkg[^.]*.tar.zst$'
 declare PKG_EXT='pkg.tar.zst'
 declare -A AVps=([communitybig]="oracle" [chili]="hostinger|oracle")
@@ -871,27 +873,31 @@ sh_version() {
 	cat <<-EOF
 		    ${BOLD}${CYAN}${0##*/} v${VERSION}${RESET}
 		    ${APPDESC}
-		    ${BOLD}${black}Copyright (C) 2024-2024 ${reset}ChiliLinux Team${black}
+    ${BOLD}${orange}Copyright (c) 2019-2025, ${reset}ChiliLinux Development Team <https://chililinux.com> <https://github.com/chililinux>${reset}
+    ${BOLD}${orange}Copyright (c) 2019-2025, ${reset}Vilmar Catafesta <vcatafesta@gmail.com>${black}
 
 		    Este é um software livre: você é livre para alterá-lo e redistribuí-lo.
 		    O $APP é disponibilizado para você sob a ${yellow}Licença MIT${black}, e
 		    inclui software de código aberto sob uma variedade de outras licenças.
 		    Você pode ler instruções sobre como baixar e criar para você mesmo
 		    o código fonte específico usado para criar esta cópia.
-		    ${red}Este programa vem com absolutamente NENHUMA garantia.
-		    ${reset}
+		    ${red}Este programa vem com absolutamente NENHUMA garantia.${reset}
 	EOF
 }
 
 sh_usage() {
 	cat <<-EOF
-		    ${reset}${APP} v${VERSION} - ${APPDESC}${reset}
-		    ${red}Uso: ${reset}$APP ${cyan}[opções]${reset}
+    ${reset}${APP} v${VERSION} - ${APPDESC}${reset}
+    ${BOLD}${orange}Copyright (c) 2019-2025, ${reset}ChiliLinux Development Team <https://chililinux.com> <https://github.com/chililinux>${reset}
+    ${BOLD}${orange}Copyright (c) 2019-2025, ${reset}Vilmar Catafesta <vcatafesta@gmail.com>${black}
+
+    ${red}Uso: ${reset}$APP ${cyan}[opções]${reset}
 
 		        ${cyan}Opções:${reset}
-		          -o|--org|--organization ${orange}<name> ${cyan} # Configura organização no Github ${reset}válidos: ${yellow}chili,chililinux,communitybig,biglinux ${reset}
+		          -o|--org|--organization ${orange}<name> ${cyan} # Configura organização no Github ${reset}válidos: ${yellow}chili,chililinux,all ${reset}
 		          -c|--config ${orange}[organization]     ${cyan} # configurar ambiente da organization ${reset}default: ${yellow}nova ${reset}
-		          -s|--synchronize               ${cyan} # sincronizar local com remoto (puxar/empurrar) ${reset}
+		          -s|--synchronize               ${cyan} # sincronizar local com remoto (puxar/empurrar) ${reset}válidos: ${yellow}stable,aur,extra,testing,all ${reset}
+		          -A|--syncall   l               ${cyan} # sincronizar automaticamente local com remoto (puxar/empurrar) ${reset}válidos: ${yellow}stable,aur,extra,testing,all ${reset}
 		          -S|--sign                      ${cyan} # assinar pacote faltantes ${reset}
 		          -n|--nocolor                   ${cyan} # Suprime a impressão de cores ${reset}
 		          -v|--verbose                   ${cyan} # ativa modo verboso ${reset}
@@ -899,12 +905,16 @@ sh_usage() {
 		          -h|--help                      ${cyan} # imprime este Help ${reset}
 
 		    ${red}ex: ${cyan}${APP} -o chili -s testing         ${rst}
-		        ${red}${APP} -o chili -o chililinux -s all      ${rst}
+		        ${yellow}${cyan}${APP} -o chili -o chililinux -s all      ${rst}
 		        ${black}${APP} -o chili -o chililinux -s stable ${rst}
 		        ${black}${APP} -o chili -s aur                  ${rst}
-		        ${green}${APP} -o chili -s all                  ${rst}
+		        ${black}${APP} -o chili -s all                  ${rst}
+		        ${orange}${APP} -o all -s all                   ${rst}
+		        ${orange}${APP} -o all -s stable                ${rst}
 		        ${yellow}${APP} -o chili --sign testing         ${rst}
-		        ${orange}${APP} -o chili --sign all             ${rst}
+		        ${yellow}${APP} -A all                          ${rst}
+		        ${cyan}${APP} -A stable                       ${rst}
+		        ${cyan}${APP} -A aur                          ${rst}
 	EOF
 	exit 0
 }
@@ -986,6 +996,7 @@ while [[ $# -gt 0 ]]; do
 		msg_info "Detectado parâmetro -v - modo verbose ativado!"
 		shift
 		;;
+
 	-n | --nocolor)
 		nocolor=true
 		if [[ "$nocolor" == "true" ]]; then
@@ -996,17 +1007,21 @@ while [[ $# -gt 0 ]]; do
 		fi
 		shift
 		;;
+
 	-V | --version)
 		sh_version
 		exit 0
 		;;
+
 	-h | --help)
 		sh_usage
 		;;
+
 	-o | --org | --organization)
 		next_arg="${2:-}"
 		if [[ "$next_arg" =~ ^(chili|chililinux|communitybig|biglinux|all)?$ ]]; then
 			organization="$next_arg"
+			aOrganizations=()
 			if [[ "$next_arg" == 'all' ]]; then
 				aOrganizations+=("chili")
 				aOrganizations+=("chililinux")
@@ -1018,6 +1033,7 @@ while [[ $# -gt 0 ]]; do
 			die "${red} organização invãlida. Válidas: ${yellow}chili,chililinux,communitybig,biglinux ${reset}"
 		fi
 		;;
+
 	-S | --sign)
 		next_arg="${2:-}"
 		if [[ "$next_arg" =~ ^(stable|testing|extra|aur|all)$ ]]; then
@@ -1033,6 +1049,23 @@ while [[ $# -gt 0 ]]; do
 			die "Opção inválida para --sign: $next_arg. Use ${yellow}'stable', 'testing', 'extra', 'aur' ou 'all'${reset}"
 		fi
 		;;
+
+	-A | --syncall)
+		next_arg="${2:-}"
+		if [[ "$next_arg" =~ ^(stable|testing|extra|aur|all)$ ]]; then
+			arg_branch="$next_arg"
+			shift 2
+			if [[ -z "$organization" ]]; then
+				errorbeep
+				die "${cyan}Nenhuma organização definida. (Use -h para ajuda)${reset}"
+			fi
+			sh_synchronize_remote_with_local "$arg_branch"
+			exit 0
+		else
+			die "Opção inválida para --syncall: $next_arg. Use ${yellow}'stable', 'testing', 'extra', 'aur' ou 'all'${reset}"
+		fi
+		;;
+
 	-s | --synchronize)
 		next_arg="${2:-}"
 		if [[ "$next_arg" =~ ^(stable|testing|extra|aur|all)$ ]]; then
@@ -1048,10 +1081,12 @@ while [[ $# -gt 0 ]]; do
 			die "Opção inválida para --synchronize: $next_arg. Use ${yellow}'stable', 'testing', 'extra', 'aur' ou 'all'${reset}"
 		fi
 		;;
+
 	-c | --config)
 		sh_setup
 		break
 		;;
+
 	*)
 		die "Opção inválida! (Use -h para ajuda)"
 		;;

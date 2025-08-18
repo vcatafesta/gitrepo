@@ -2,12 +2,11 @@
 # -*- coding: utf-8 -*-
 # shellcheck shell=bash disable=SC1091,SC2039,SC2166,SC2317,SC2155,SC2034,SC2229,SC2076,SC2199,SC2015
 #
-#  build-package - Wrapper git para o BigCommunity
+#  build-package - Wrapper git para o ChiliLinux
 #  Created: qui 05 set 2024 00:51:12 -04
 #  Altered: sex 24 jan 2025 21:11:42 -04
 #
-#  Copyright (c) 2024-2024, Tales A. Mendonça <talesam@gmail.com>
-#  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
+#  Copyright (c) 2024-2025, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -49,7 +48,7 @@ sh_usage() {
 		${red}Uso: ${reset}$APP ${cyan}[opções]${reset}
 
 		    ${cyan}Opções:${reset}
-		      -o|--org|--organization ${orange}<name> ${cyan} # Configura organização no Github ${reset}válidos: communitybig, biglinux, chililinux ${yellow}(default: communitybig)${reset}
+		      -o|--org|--organization ${orange}<name> ${cyan} # Configura organização no Github ${reset}válidos: communitybig, biglinux, chililinux ${yellow}(default: chililinux)${reset}
 		      -b|--build            ${orange}<branch> ${cyan} # Realizar commit/push e gerar pacote ${reset} branch válidos: ${yellow}testing, stable ${cyan}ou ${yellow}extra ${reset}
 		      -c|--commit          ${orange}<message> ${cyan} # Apenas fazer commit/push ${yellow}obrigátorio mensagem do commit ${reset}
 		      -a|--aur              ${orange}<pacote> ${cyan} # Construir pacote do AUR ${yellow}obrigátorio nome do pacote para construir ${reset}
@@ -140,7 +139,7 @@ parse_parameters() {
 
 	if $param_organization_was_supplied; then
 		REPO_WORKFLOW="${value_organization}/build-package" # Repositório que contém os workflows
-		ORGANIZATION="${REPO_WORKFLOW%%/*}"                 # default=communitybig
+		ORGANIZATION="${REPO_WORKFLOW%%/*}"                 # default=chililinux
 	fi
 
 	get_token_release # Obtem o TOKEN_RELEASE utilizando a função get_token_release
@@ -276,8 +275,8 @@ sh_configure_environment() {
 	#set -x
 	#set -e
 
-	declare -g REPO_WORKFLOW="communitybig/build-package" # Repositório que contém os workflows
-	declare -g ORGANIZATION="${REPO_WORKFLOW%%/*}"        # communitybig
+	declare -g REPO_WORKFLOW="chililinux/build-package" # Repositório que contém os workflows
+	declare -g ORGANIZATION="${REPO_WORKFLOW%%/*}"        # chililinux
 	declare -g CFILETOKEN="$HOME/.GITHUB_TOKEN"           # path do arquivo que contem os tokens do github
 	declare -g GITHUB_USER_NAME
 

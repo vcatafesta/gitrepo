@@ -81,8 +81,8 @@ declare -aG manjaro_build_list=(community manjaro oem)
 declare -aG talesam_build_list=(bigcommunity)
 declare -aG vcatafesta_build_list=(chililinux)
 #
-declare -g ORGANIZATION='communitybig'
-declare -g DISTRONAME='bigcommunity'
+declare -g ORGANIZATION='chililinux'
+declare -g DISTRONAME='chililinux'
 declare -g EDITION='xfce'
 declare -g KERNEL='lts'
 declare -g TMATE='Não'
@@ -94,8 +94,8 @@ sh_usage() {
 		    ${red}Uso: ${reset}$APP ${cyan}[opções]${reset}
 
 		    ${cyan}Opções:${reset}
-		    -o|--org|--organization ${orange}<name> ${cyan} # Configura organização de trabalho no Github ${yellow}(default: communitybig)${reset}
-		    -a|--auto|--automatic          ${cyan} # Modo automatico ${yellow}(default: communitybig) ${reset}
+		    -o|--org|--organization ${orange}<name> ${cyan} # Configura organização de trabalho no Github ${yellow}(default: chililinux)${reset}
+		    -a|--auto|--automatic          ${cyan} # Modo automatico ${yellow}(default: chililinux) ${reset}
 		    -V|--version                   ${cyan} # Imprime a versão do aplicativo ${reset}
 		    -h|--help                      ${cyan} # Mostra este Help ${reset}
 	EOF
@@ -204,7 +204,7 @@ resume_and_build() {
 sh_set_organization() {
   local xvalue_organization="$1"
   REPO_WORKFLOW="${Aorganization[$xvalue_organization]}/build-iso"  # Repositório que contém os workflows
-  ORGANIZATION="${REPO_WORKFLOW%%/*}"                               # default communitybig
+  ORGANIZATION="${REPO_WORKFLOW%%/*}"                               # default chililinux
 }
 
 get_organization() {
@@ -455,8 +455,8 @@ sh_configure_environment() {
 
   #sh_set_organization "$ORGANIZATION"
 
-	#declare -g REPO_WORKFLOW="communitybig/build-iso"  # Repositório que contém os workflows
-	#declare -g ORGANIZATION="${REPO_WORKFLOW%%/*}"     # communitybig
+	#declare -g REPO_WORKFLOW="chililinux/build-iso"    # Repositório que contém os workflows
+	#declare -g ORGANIZATION="${REPO_WORKFLOW%%/*}"     # chililinux
 	declare -g CFILETOKEN="$HOME/.GITHUB_TOKEN"         # path do arquivo que contem os tokens do github
 
 	declare -g REPO_NAME="$(get_repo_name)"             # Obtém o nome do repositório utilizando a função get_repo_name
