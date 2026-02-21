@@ -188,6 +188,7 @@ create_menu() {
 			echo -e "Distroname     : ${cyan}voidBR ${reset}"
 			echo -e "Edition        : ${cyan}$EDITION ${reset}"
 			echo -e "Iso name       : ${cyan}$DISTRONAME ${reset}"
+			echo -e "TAG            : ${cyan}$TAG ${reset}"
 			echo -e "Vol_ID         : ${cyan}$VOL_ID ${reset}"
 			echo -e "Debug tmate    : ${cyan}$DEBUG_TMATE ${reset}"
 			echo -e "Somente Teste  : ${cyan}$ONLY_TEST ${reset}"
@@ -279,7 +280,6 @@ trigger_workflow() {
 	local event_type
 	local data
 	local current_datetime
-	TAG=$(date "+%Y-%m-%d_%H-%M")
 
 	#	data='{
 	#  "ref": "main",
@@ -309,6 +309,7 @@ trigger_workflow() {
     \"teste_input\": \"$ONLY_TEST\", \
     \"vol_id\": \"$VOL_ID\", \
     \"edition\": \"$EDITION\", \
+    \"release_tag\": \"$TAG\", \
     \"tmate\": $DEBUG_TMATE \
   }}"
 
@@ -374,7 +375,8 @@ main() {
 	check_valid_token
 
 	while :; do
-		create_menu "Escolha a ${yellow}DE ${reset}da ISO:" base awesome cinnamon enlightnment fluxbox gnome kde xfce all Sair
+        TAG=$(date "+%Y%m%d-%H%M")
+		create_menu "Escolha a ${yellow}DE ${reset}da ISO:" base awesome cinnamon enlightnment fluxbox gnome plasma xfce mate all Sair
 		if [[ "$MENU_RESULT" == "Sair" ]]; then
 			die "$yellow" "Saindo do script. Nenhuma ação foi realizada."
 		fi
