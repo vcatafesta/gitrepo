@@ -169,7 +169,7 @@ create_menu() {
 		if $IS_GIT_REPO; then
 			echo '---------------------------------------------------------------------------------'
 			echo -e "Organization  : ${cyan}$ORGANIZATION${reset}"
-      echo -e "User Name     : ${cyan}$GITHUB_USER_NAME${reset}"
+			echo -e "User Name     : ${cyan}$GITHUB_USER_NAME${reset}"
 			echo -e "Repo Name     : ${cyan}$REPO_NAME${reset}"
 			echo -e "Repo Workflow : ${cyan}$REPO_WORKFLOW${reset}"
 			echo -e "Local Path    : ${cyan}$REPO_PATH${reset}"
@@ -184,6 +184,7 @@ create_menu() {
 			echo '---------------------------------------------------------------------------------'
 		fi
 		if $IS_BUILD_ISO_RESUME; then
+            echo -e "Organization   : ${cyan}$ORGANIZATION ${reset}"
 			echo -e "Distroname     : ${cyan}voidBR ${reset}"
 			echo -e "Edition        : ${cyan}$EDITION ${reset}"
 			echo -e "Iso name       : ${cyan}$DISTRONAME ${reset}"
@@ -237,18 +238,18 @@ gettokengithub_by_key() {
 }
 
 check_valid_token() {
-  # Verificar o token
-  #echo $TOKEN_RELEASE
-  p_log "${cyan}" "Verificando permissões do token GitHub..."
-  token_check=$(curl -s -H "Authorization: token $TOKEN_RELEASE" https://api.github.com/user)
-  GITHUB_USER_NAME="$(echo "$token_check" | jq -r .login)"
-  p_log "$cyan" "Token verificado: ${yellow}$GITHUB_USER_NAME"
+	# Verificar o token
+	#echo $TOKEN_RELEASE
+	p_log "${cyan}" "Verificando permissões do token GitHub..."
+	token_check=$(curl -s -H "Authorization: token $TOKEN_RELEASE" https://api.github.com/user)
+	GITHUB_USER_NAME="$(echo "$token_check" | jq -r .login)"
+	p_log "$cyan" "Token verificado: ${yellow}$GITHUB_USER_NAME"
 
-  if [[ -z "$(echo "$token_check" | jq .login)" ]]; then
-    if ! conf "=>${red}Token inválido ou sem permissões necessárias. Deseja prosseguir mesmo assim?"; then
-      die "${red}" "Erro fatal: Token inválido ou sem permissões necessárias."
-    fi
-  fi
+	if [[ -z "$(echo "$token_check" | jq .login)" ]]; then
+		if ! conf "=>${red}Token inválido ou sem permissões necessárias. Deseja prosseguir mesmo assim?"; then
+			die "${red}" "Erro fatal: Token inválido ou sem permissões necessárias."
+		fi
+	fi
 }
 
 resume_and_build() {
@@ -275,35 +276,35 @@ resume_and_build() {
 }
 
 trigger_workflow() {
-  local event_type
-  local data
-  local current_datetime
-  TAG=$(date "+%Y-%m-%d_%H-%M")
+	local event_type
+	local data
+	local current_datetime
+	TAG=$(date "+%Y-%m-%d_%H-%M")
 
-#	data='{
-#  "ref": "main",
-#  "inputs": {
-#    "teste_input": "'$ONLY_TEST'",
-#    "vol_id": "'$VOL_ID'",
-#    "edition": "'$EDITION'",
-#    "tmate": "'$DEBUG_TMATE'"
-#  }
-# }'
-#	response=$(curl -s -X POST \
-#		-H "Accept: application/vnd.github.v3+json" \
-#		-H "Authorization: token $TOKEN_RELEASE" \
-#		--data "$data" \
-#		-w "%{http_code}" \
-#		-o /dev/null \
-#		"https://api.github.com/repos/$REPO_WORKFLOW/actions/workflows/create-iso.yml/dispatches")
+	#	data='{
+	#  "ref": "main",
+	#  "inputs": {
+	#    "teste_input": "'$ONLY_TEST'",
+	#    "vol_id": "'$VOL_ID'",
+	#    "edition": "'$EDITION'",
+	#    "tmate": "'$DEBUG_TMATE'"
+	#  }
+	# }'
+	#	response=$(curl -s -X POST \
+	#		-H "Accept: application/vnd.github.v3+json" \
+	#		-H "Authorization: token $TOKEN_RELEASE" \
+	#		--data "$data" \
+	#		-w "%{http_code}" \
+	#		-o /dev/null \
+	#		"https://api.github.com/repos/$REPO_WORKFLOW/actions/workflows/create-iso.yml/dispatches")
 
-  current_datetime="$TAG"
+	current_datetime="$TAG"
 	if $ONLY_TEST; then
-    event_type="ISO-(test)${DISTRONAME}_${current_datetime}"
-  else
-    event_type="ISO-${DISTRONAME}_${current_datetime}"
-  fi
-  data="{\"event_type\": \"$event_type\", \
+		event_type="ISO-(test)${DISTRONAME}_${current_datetime}"
+	else
+		event_type="ISO-${DISTRONAME}_${current_datetime}"
+	fi
+	data="{\"event_type\": \"$event_type\", \
     \"client_payload\": { \
     \"teste_input\": \"$ONLY_TEST\", \
     \"vol_id\": \"$VOL_ID\", \
@@ -311,14 +312,14 @@ trigger_workflow() {
     \"tmate\": $DEBUG_TMATE \
   }}"
 
-  p_log "${cyan}" "Disparando workflow para $event_type${reset}"
-  response=$(curl -s -X POST \
-    -H "Accept: application/vnd.github.v3+json" \
-    -H "Authorization: token $TOKEN_RELEASE" \
-    --data "$data" \
-    -w "%{http_code}" \
-    -o /dev/null \
-    "https://api.github.com/repos/${REPO_WORKFLOW}/dispatches")
+	p_log "${cyan}" "Disparando workflow para $event_type${reset}"
+	response=$(curl -s -X POST \
+		-H "Accept: application/vnd.github.v3+json" \
+		-H "Authorization: token $TOKEN_RELEASE" \
+		--data "$data" \
+		-w "%{http_code}" \
+		-o /dev/null \
+		"https://api.github.com/repos/${REPO_WORKFLOW}/dispatches")
 
 	if [ "$response" == "422" ]; then
 		die "${red}" "Erro $response ao acionar o workflow. Não pode ter mais de 10 entradas no evento ${reset}"
@@ -360,7 +361,7 @@ get_url_actions() {
 }
 
 main() {
-	declare -g ORGANIZATION='chililinux'
+	declare -g ORGANIZATION='voidlinuxbr'
 	declare -g REPO_NAME=$(git config --get remote.origin.url | sed 's/.*[:/]\([^/]*\/[^.]*\).*/\1/')
 	declare -g REPO_WORKFLOW='voidlinuxbr/voidbr-build-iso'
 	declare -g REPO_PATH="$(get_repo_root_path)"
@@ -370,7 +371,7 @@ main() {
 	declare -g LOG_FILE="${LOG_DIR}/${APP}.log"
 	[[ ! -d "$LOG_DIR" ]] && mkdir -p "$LOG_DIR"
 
-  check_valid_token
+	check_valid_token
 
 	while :; do
 		create_menu "Escolha a ${yellow}DE ${reset}da ISO:" base awesome cinnamon enlightnment fluxbox gnome kde xfce all Sair
@@ -378,7 +379,7 @@ main() {
 			die "$yellow" "Saindo do script. Nenhuma ação foi realizada."
 		fi
 		EDITION=$MENU_RESULT
-    DISTRONAME="void-live-${EDITION}-x86_64"
+		DISTRONAME="void-live-${EDITION}-x86_64"
 
 		create_menu "Escolha nome do volume da iso:" "VOIDBR_LIVE_${EDITION^^}" "VOIDBR_LIVE" "Voltar"
 		if [[ "$MENU_RESULT" == "Voltar" ]]; then
@@ -391,13 +392,13 @@ main() {
 			continue
 		fi
 		DEBUG_TMATE=$MENU_RESULT
-    DEBUG_TMATE=$([ "$MENU_RESULT" == "Sim" ] && echo "true" || echo "false")
+		DEBUG_TMATE=$([ "$MENU_RESULT" == "Sim" ] && echo "true" || echo "false")
 
 		create_menu "Rodar somente teste:" "Não" "Sim" "Voltar"
 		if [[ "$MENU_RESULT" == "Voltar" ]]; then
 			continue
 		fi
-    ONLY_TEST=$([ "$MENU_RESULT" == "Sim" ] && echo "true" || echo "false")
+		ONLY_TEST=$([ "$MENU_RESULT" == "Sim" ] && echo "true" || echo "false")
 
 		resume_and_build
 	done
