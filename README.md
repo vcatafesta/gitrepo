@@ -1,6 +1,6 @@
 # GitRepo Documentation
 
-GitRepo is a comprehensive tool designed for managing package builds and ISO creation for the BigCommunity project. It consists of two main components: `build-package` and `build-iso`.
+GitRepo is a comprehensive tool designed for managing package builds and ISO creation for the Chililinux project. It consists of two main components: `build-package` and `build-iso`.
 
 ## Table of Contents
 
@@ -18,13 +18,13 @@ GitRepo is a comprehensive tool designed for managing package builds and ISO cre
 
 ## Overview
 
-GitRepo simplifies the process of building packages and ISOs for the BigCommunity project. It offers both interactive and command-line interfaces, allowing for flexibility in various development scenarios.
+GitRepo simplifies the process of building packages and ISOs for the Chililinux project. It offers both interactive and command-line interfaces, allowing for flexibility in various development scenarios.
 
 ## Installation
 
 The GitRepo tools are typically installed in the following locations:
 
-- Common library (`gitlib.sh`): `/usr/share/community/gitrepo/shell/gitlib.sh`
+- Common library (`gitlib.sh`): `/usr/share/chililinux/gitrepo/shell/gitlib.sh`
 - Executable scripts (`build-package`, `build-iso`): `/usr/bin/`
 
 Ensure these locations are in your system's PATH.
@@ -52,7 +52,7 @@ For non-interactive use, `build-package` accepts the following options:
 build-package [options]
 
 Options:
-  -o, --org, --organization <name>  Configure GitHub organization (default: communitybig)
+  -o, --org, --organization <name>  Configure GitHub organization (default: chililinux)
   -c, --commit <message>            Commit and push changes
   -b, --build <branch>              Commit, push, and generate package (testing, stable, or extra)
   -a, --aur <package>               Build an AUR package
@@ -109,7 +109,7 @@ build-package
 
 ### Building a package with command-line options
 ```bash
-build-package -o communitybig -c "Update package version" -b testing
+build-package -o chiililinux -c "Update package version" -b testing
 ```
 
 ### Building an ISO interactively
