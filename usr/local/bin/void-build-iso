@@ -380,7 +380,7 @@ main() {
 		EDITION=$MENU_RESULT
     DISTRONAME="void-live-${EDITION}-x86_64"
 
-		create_menu "Escolha nome do volume da iso:" "VOID_LIVE_${EDITION^^}" "VOID_LIVE" "Voltar"
+		create_menu "Escolha nome do volume da iso:" "VOIDBR_LIVE_${EDITION^^}" "VOIDBR_LIVE" "Voltar"
 		if [[ "$MENU_RESULT" == "Voltar" ]]; then
 			continue
 		fi
