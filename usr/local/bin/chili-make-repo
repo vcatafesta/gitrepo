@@ -76,18 +76,25 @@ shopt -s extglob
 #system
 declare APP="${0##*/}"
 declare VERSION="1.08.17-20250817"
-declare APPDESC="Wrapper para manutenção e gerenciamento de banco de dados de pacotes/repositório like arch"
+declare APPDESC="Wrapper para manutenção e gerenciamento de banco de dados de pacotes/repositório like Arch/Void Linux"
 declare nocolor=false
 declare verbose=false
 declare signonly=false
 declare organization='chili'
 declare aOrganizations=()
-        aOrganizations+=("chili")
-				aOrganizations+=("chililinux")
+aOrganizations+=("biglinux")
+aOrganizations+=("chili")
+aOrganizations+=("chililinux")
+aOrganizations+=("community")
+aOrganizations+=("void")
+aOrganizations+=("all")
+
 declare FETCH_RE='-[^-]+[0-9]+[^.]*.pkg[^.]*.tar.zst$'
 declare PKG_EXT='pkg.tar.zst'
 declare -A AVps=([communitybig]="oracle" [chili]="hostinger|oracle")
 declare config_file="$HOME/.chili-make-repo.conf"
+declare void=false
+declare PACKAGER='Vilmar Catafesta <vcatafestagmail.com>'
 
 sh_config() {
 	declare -gA Acores=(
@@ -121,6 +128,26 @@ errorbeep() {
 	printf '\a' # beep
 }
 
+get_branchs() {
+	if [[ -z "$arg_branch" ]]; then
+		aBranchs=('testing')
+	elif [[ "$arg_branch" == 'stable' ]]; then
+		aBranchs=('stable')
+	elif [[ "$arg_branch" == 'testing' ]]; then
+		aBranchs=('testing')
+	elif [[ "$arg_branch" == 'extra' ]]; then
+		aBranchs=('extra')
+	elif [[ "$arg_branch" == 'aur' ]]; then
+		aBranchs=('aur')
+	elif [[ "$arg_branch" == 'all' ]]; then
+		if [[ "$organization" == 'void' ]]; then
+			aBranchs=("$arg_branch")
+		else
+			aBranchs=('stable' 'testing' 'extra' 'aur')
+		fi
+	fi
+}
+
 get_organization_conf() {
 	root_PATH=$(TIni.Get "$config_file" "$organization" 'local_PATH')
 	local_PATH=$(TIni.Get "$config_file" "$organization" 'local_PATH')
@@ -131,17 +158,20 @@ get_organization_conf() {
 	remote_PATH=$(TIni.Get "$config_file" "$organization" 'remote_PATH')
 	SECRETKEY=$(TIni.Get "$config_file" "$organization" 'SECRETKEY')
 	GPGKEY=$(TIni.Get "$config_file" "$organization" 'GPGKEY')
+	PACKAGER=$(TIni.Get "$config_file" "$organization" 'PACKAGER')
 
-  if [[ -z "$root_PATH" ]]; then
-    return 1
-  fi
+	if [[ -z "$root_PATH" ]]; then
+		return 1
+	fi
 
-  [[ ! -d "$root_PATH" ]] && msg_run "mkdir -p $root_PATH 1>/dev/null" || true
-  get_branchs
+	[[ ! -d "$root_PATH" ]] && msg_run "mkdir -p $root_PATH 1>/dev/null" || true
+	get_branchs
 	for dir in "${aBranchs[@]}"; do
-    [[ ! -d "$root_PATH/$dir/x86_64" ]] && msg_run "mkdir -p $root_PATH/$dir/x86_64 1>/dev/null" || true
-  done
-  return 0
+		if ! $void; then
+			[[ ! -d "$root_PATH/$dir/x86_64" ]] && msg_run "mkdir -p $root_PATH/$dir/x86_64 1>/dev/null" || true
+		fi
+	done
+	return 0
 }
 
 dbseek_conf() {
@@ -380,7 +410,7 @@ msg_raw() {
 		local before_colon="${msg%%:*}:"
 		local after_colon="${msg#*: }"
 		# Aplica as cores
-#		msg="${cyan}${before_colon} ${red}${after_colon}${reset}"
+		#		msg="${cyan}${before_colon} ${red}${after_colon}${reset}"
 		msg="${cyan}${before_colon} ${black}${after_colon}${reset}"
 	else
 		# Se não houver ':', aplica apenas a cor padrão
@@ -431,7 +461,7 @@ msg_warning() {
 	local msg="$1"
 	local caller_function="${FUNCNAME[1]}" # Nome da função que chamou a função atual
 	local caller_line="${BASH_LINENO[1]}"  # Número da linha que chamou a função atual
-  #msg="$(sed 's/<[^>]*>//g' <<<"$msg")"  # Remove as tags HTML
+	#msg="$(sed 's/<[^>]*>//g' <<<"$msg")"  # Remove as tags HTML
 	#echo -e "${caller_function}=>${red}warning: ${orange}${msg}${reset}"
 	#echo -e "==>${red}warning: ${orange}${msg}${reset}"
 	printf "==>%b%-10s%s\n" "${red}" "[WARNING]" "${red}${msg}${reset}"
@@ -442,7 +472,7 @@ msg_warn() {
 	local msg="$1"
 	local caller_function="${FUNCNAME[1]}" # Nome da função que chamou a função atual
 	local caller_line="${BASH_LINENO[1]}"  # Número da linha que chamou a função atual
-  #msg="$(sed 's/<[^>]*>//g' <<<"$msg")"  # Remove as tags HTML
+	#msg="$(sed 's/<[^>]*>//g' <<<"$msg")"  # Remove as tags HTML
 	#echo -e "${caller_function}=>${red}warning: ${orange}${msg}${reset}"
 	#echo -e "==>${red}warning: ${orange}${msg}${reset}"
 	printf "==>%b%-10s%s\n" "${red}" "[WARNING]" "${red}$msg${reset}"
@@ -573,7 +603,7 @@ touch_config_file() {
 }
 
 msg_erro_config_file() {
-  msg_warn "Arquivo de configuração ${yellow}'$config_file' ${red}não encontrado.
+	msg_warn "Arquivo de configuração ${yellow}'$config_file' ${red}não encontrado.
 $(replicate '-')
 ${cyan}==>Exemplo do conteúdo do arquivo: ${yellow}$config_file ${reset}
 [$organization]
@@ -585,7 +615,7 @@ remote_USER=$USER
 remote_PORT=22
 remote_HOST=192.168.10.22
 remote_PATH=/home/$USER/domains/chililinux.com/public_html/repo"
-replicate '-'
+	replicate '-'
 }
 
 check_config_file() {
@@ -639,17 +669,22 @@ read_file_sign_conf() {
 	return 0
 }
 
+sh_sign_package_void() {
+	local pkg_to_sign="$1"
+   msg_run "xbps-rindex -v --privkey private.pem --sign-pkg "${pkg_to_sign}" 1>/dev/null"
+}
+
 sign_package() {
 	local package="$1"
 	local passphrase="$secret_key"
 	local default_key="$gpg_key"
 
-  [[ -e $HOME/.gnupg/public-keys.d/pubring.db.lock ]] && {
-    msg_info "Removendo: $HOME/.gnupg/public-keys.d/pubring.db.lock"
-    rm -f $HOME/.gnupg/public-keys.d/pubring.db.lock
-  }
+	[[ -e $HOME/.gnupg/public-keys.d/pubring.db.lock ]] && {
+		msg_info "Removendo: $HOME/.gnupg/public-keys.d/pubring.db.lock"
+		rm -f $HOME/.gnupg/public-keys.d/pubring.db.lock
+	}
 
-  msg_info "Assinando pacote: $package"
+	msg_info "Assinando pacote: $package"
 
 	# Assina o pacote
 	gpg --pinentry-mode loopback \
@@ -661,6 +696,68 @@ sign_package() {
 	}
 	msg_warn "Erro: Falha ao assinar o pacote '$package'."
 	return 1
+}
+
+search_for_sign_package_void() {
+	local AllPackages
+	local original_dir
+	local -A processed_branches=() # Associative array para rastrear branches processados
+	local total_processed=0        # Contador de pacotes processados
+	local total_signed=0           # Contador de pacotes assinados
+	local total_unsigned=0         # Contador de pacotes sem assinatura
+	local total_already_signed=0   # Contador de pacotes já assinados
+
+	# Salva o diretório original para garantir retorno
+	original_dir=$(pwd)
+	sh_config
+
+	# Verifica se o diretório existe
+	if [[ ! -d "$local_PATH" ]]; then
+		msg_warn "Diretório não encontrado: $local_PATH"
+		continue
+	fi
+
+	pushd "$local_PATH" >/dev/null || {
+		msg_warn "Falha ao acessar o diretório: $local_PATH"
+		return 1
+	}
+
+	# Gera um array de pacotes encontrados
+	AllPackages=()
+	readarray -d '' AllPackages < <(find . -type f -iname "*.$PKG_EXT" -print0)
+
+	# Itera sobre os pacotes
+	for pkg in "${AllPackages[@]}"; do
+		((total_processed++)) # Incrementa o contador de pacotes processados
+		if [[ ! -e "$pkg.sig2" ]]; then
+			((total_unsigned++)) # Incrementa o contador de pacotes sem assinatura
+			msg_info "Assinando pacote: $pkg"
+			sh_sign_package_void "$pkg"
+			((total_signed++)) # Incrementa o contador de pacotes assinados
+		else
+			((total_already_signed++)) # Incrementa o contador de pacotes já assinados
+		fi
+	done
+
+	popd >/dev/null || {
+		msg_warn "Falha ao retornar ao diretório original."
+		return 1
+	}
+
+	# Garante retorno ao diretório original em caso de falhas
+	cd "$original_dir" || {
+		msg_warn "Não foi possível retornar ao diretório original."
+		return 1
+	}
+
+	# Exibe o resumo final
+	replicate '-'
+	msg_info "Resumo Final:"
+	msg_raw "Pacotes processados    : $total_processed"
+	msg_raw "Pacotes já assinados   : $total_already_signed"
+	msg_raw "Pacotes sem assinatura : $total_unsigned"
+	msg_raw "Pacotes agora assinados: $total_signed"
+	replicate '-'
 }
 
 search_for_sign_package() {
@@ -709,19 +806,19 @@ search_for_sign_package() {
 			AllPackages=()
 			readarray -d '' AllPackages < <(find . -type f -iname "*.$PKG_EXT" -print0)
 
-      # Itera sobre os pacotes
-      for pkg in "${AllPackages[@]}"; do
-        ((total_processed++)) # Incrementa o contador de pacotes processados
+			# Itera sobre os pacotes
+			for pkg in "${AllPackages[@]}"; do
+				((total_processed++)) # Incrementa o contador de pacotes processados
 
-        if [[ ! -s "$pkg.sig" ]]; then
-          [[ -e "$pkg.sig" ]] && rm -f "$pkg.sig"
-          ((total_unsigned++))   # Arquivo inexistente ou vazio
-          sign_package "$pkg"
-          ((total_signed++))     # Assinado agora
-        else
-          ((total_already_signed++)) # Já estava assinado
-        fi
-      done
+				if [[ ! -s "$pkg.sig" ]]; then
+					[[ -e "$pkg.sig" ]] && rm -f "$pkg.sig"
+					((total_unsigned++)) # Arquivo inexistente ou vazio
+					sign_package "$pkg"
+					((total_signed++)) # Assinado agora
+				else
+					((total_already_signed++)) # Já estava assinado
+				fi
+			done
 
 			# Marca o branch como processado
 			processed_branches[$branch]=1
@@ -752,37 +849,27 @@ search_for_sign_package() {
 	get_branchs
 	if $signonly; then
 		for organization in "${aOrganizations[@]}"; do
-	    process_sign
+			process_sign
 		done
-  else
-    process_sign
-	fi
-}
-
-get_branchs() {
-	if [[ -z "$arg_branch" ]]; then
-		aBranchs=('testing')
-	elif [[ "$arg_branch" == 'stable' ]]; then
-		aBranchs=('stable')
-	elif [[ "$arg_branch" == 'testing' ]]; then
-		aBranchs=('testing')
-	elif [[ "$arg_branch" == 'extra' ]]; then
-		aBranchs=('extra')
-	elif [[ "$arg_branch" == 'aur' ]]; then
-		aBranchs=('aur')
-	elif [[ "$arg_branch" == 'all' ]]; then
-		aBranchs=('stable' 'testing' 'extra' 'aur')
+	else
+		process_sign
 	fi
 }
 
 sh_synchronize_remote_with_local() {
-  get_branchs
+	get_branchs
+
 	for organization in "${aOrganizations[@]}"; do
 		sh_config
 		sh_remote_pull
-  done
+      replicate '-'
+	done
 
-  search_for_sign_package
+	if $void; then
+		search_for_sign_package_void
+	else
+		search_for_sign_package
+	fi
 	sh_create_databases
 
 	for organization in "${aOrganizations[@]}"; do
@@ -793,90 +880,125 @@ sh_synchronize_remote_with_local() {
 sh_remote_pull() {
 	for branch in "${aBranchs[@]}"; do
 		sh_config
-		remote_PATH+="/${branch,,}/x86_64"
-		local_PATH+="/${branch,,}/x86_64"
-		db_name="${prefix_DB}-${branch,,}"
-		msg_raw "organization: ${organization}"
-		msg_raw "   prefix_DB: ${prefix_DB}"
-		msg_raw "     db_name: ${db_name}"
-		msg_raw "      branch: ${branch}"
-		msg_raw "  local_PATH: ${local_PATH}"
-		msg_raw " remote_PATH: ${remote_PATH}"
-		msg_raw " remote_USER: ${remote_USER}"
-		msg_raw " remote_HOST: ${remote_HOST}"
-		msg_raw " remote_PORT: ${remote_PORT}"
+
+		if ! $void; then
+			remote_PATH+="/${branch,,}/x86_64"
+			local_PATH+="/${branch,,}/x86_64"
+		fi
+
+      if $verbose; then
+   		db_name="${prefix_DB}-${branch,,}"
+   		msg_raw "      distro: ${distro}"
+   		msg_raw "organization: ${organization}"
+   		msg_raw "   prefix_DB: ${prefix_DB}"
+   		msg_raw "     db_name: ${db_name}"
+   		msg_raw "      branch: ${branch}"
+   		msg_raw "  local_PATH: ${local_PATH}"
+   		msg_raw " remote_PATH: ${remote_PATH}"
+   		msg_raw " remote_USER: ${remote_USER}"
+   		msg_raw " remote_HOST: ${remote_HOST}"
+   		msg_raw " remote_PORT: ${remote_PORT}"
+      fi
 
 		pushd "$local_PATH" >/dev/null 2>&- || exit 1
 		msg_info "${cyan}Sincronizando... Puxando branch ${orange}${branch} ${cyan}do remoto para local ${reset}"
+		msg_raw "    organization: ${organization}"
 		msg_raw "           Local: ${local_PATH}"
 		msg_raw "          Remoto: ${remote_PATH}"
 		if $verbose; then
 			echo -n "$black"
 			#rsync --itemize-changes --info=skip0 -Craz -e "ssh -p ${remote_PORT}" "${remote_USER}"@"${remote_HOST}":"${remote_PATH}"/ "${local_PATH}"/
-      rsync --itemize-changes --info=skip0 -Crau -e "ssh -p ${remote_PORT}" "${remote_USER}"@"${remote_HOST}":"${remote_PATH}/" "${local_PATH}/"
+			rsync --itemize-changes --info=skip0 -Crau -e "ssh -p ${remote_PORT} -o LogLevel=ERROR" "${remote_USER}"@"${remote_HOST}":"${remote_PATH}/" "${local_PATH}/"
 			echo -n "$reset"
 		else
 			#rsync --info=skip0 -Craz -e "ssh -p ${remote_PORT}" "${remote_USER}"@"${remote_HOST}":"${remote_PATH}"/ "${local_PATH}"/
-      rsync --info=skip0 -Crau -e "ssh -p ${remote_PORT}" "${remote_USER}"@"${remote_HOST}":"${remote_PATH}/" "${local_PATH}/"
+			rsync --info=skip0 -Crau -e "ssh -p ${remote_PORT} -o LogLevel=ERROR" "${remote_USER}"@"${remote_HOST}":"${remote_PATH}/" "${local_PATH}/"
 		fi
 	done
 }
 
 sh_create_databases() {
-  get_branchs
+	get_branchs
 	for branch in "${aBranchs[@]}"; do
 		sh_config
-		local_PATH+="/${branch,,}/x86_64"
+      if ! $void; then
+   		local_PATH+="/${branch,,}/x86_64"
+	   fi
 		db_name="${prefix_DB}-${branch,,}"
 
 		pushd "$local_PATH" >/dev/null 2>&- || exit 1
 		rm -f -- *.md5 >/dev/null 2>&-
 
-		AllOldPackages=$(find "$PWD" -type f -iname "*.$PKG_EXT" | sort -Vr | awk -F "$FETCH_RE" 'lista[$1]++')
-		for old in "${AllOldPackages[@]}"; do
-			msg_info "${red}=>Removendo pacote antigo: [$((++count))] => $(basename "${old}") ${reset}"
-			rm -f "${old}" "${old}".sig "${old}".md5 "${old}".sig.md5 >/dev/null 2>&-
-		done
-		rm -f "${db_name}"* >/dev/null 2>&-
-		msg_info "${cyan}Recriando database ${orange}'${db_name}.db.tar.gz' ${cyan}localmente ${reset}"
-		msg_run "repo-add -q -p -n -R ${db_name}.db.tar.gz *.pkg.tar.zst"
+		if $void; then
+			AllOldPackages=$(find "$PWD" -type f -iname "*.$PKG_EXT" | sort -Vr | awk -F "$FETCH_RE" 'lista[$1]++')
+			for old in ${AllOldPackages[*]}; do
+				msg_info "${red}=>Removendo pacote antigo: [$((++count))] => $(basename "${old}") ${reset}"
+				msg_info "${red}=>Removendo pacote antigo: [$((count))] => $(basename "${old}.sig2") ${reset}"
+				msg_info "${red}=>Removendo pacote antigo: [$((count))] => $(basename "${old}.md5") ${reset}"
+				rm -f "${old}" "${old}".sig2 "${old}".md5 >/dev/null 2>&-
+			done
 
-		if [[ "$organization" == 'chili' ]]; then
-			msg_info "${cyan}Recriando link for ${orange}'chililinux-${branch}.db.tar.gz' ${cyan}localmente ${reset}"
-			msg_run "cp -f ${db_name}.db.tar.gz chililinux-${branch}.db.tar.gz"
-			msg_run "cp -f ${db_name}.files.tar.gz chililinux-${branch}.files.tar.gz"
-			msg_run "ln -sf chililinux-${branch}.db.tar.gz chililinux-${branch}.db"
-			msg_run "ln -sf chililinux-${branch}.files.tar.gz chililinux-${branch}.files"
+			#cria x86_repodata
+			msg_info "${cyan}Recriando database ${orange}'x86_repodata' ${cyan}localmente ${reset}"
+			msg_run 'xbps-rindex -v --add --force $local_PATH/*.xbps 1>/dev/null'
+
+			# Once the key is generated, the public part of the private key has to be added to the repository metadata. This step is required only once.
+			msg_info "${cyan}Assinando database ${orange}'x86_repodata' ${cyan}localmente ${reset}"
+			msg_run 'xbps-rindex -v --privkey private.pem --sign --signedby "$PACKAGER" "$local_PATH" 1>/dev/null'
+
+			popd >/dev/null 2>&- || exit 1
+			replicate '-'
 		else
-			msg_info "${cyan}Recriando link for ${orange}'chili-${branch}.db.tar.gz' ${cyan}localmente ${reset}"
-			msg_run "cp -f ${db_name}.db.tar.gz chili-${branch}.db.tar.gz"
-			msg_run "cp -f ${db_name}.files.tar.gz chili-${branch}.files.tar.gz"
-			msg_run "ln -sf chili-${branch}.db.tar.gz chili-${branch}.db"
-			msg_run "ln -sf chili-${branch}.files.tar.gz chili-${branch}.files"
+			AllOldPackages=$(find "$PWD" -type f -iname "*.$PKG_EXT" | sort -Vr | awk -F "$FETCH_RE" 'lista[$1]++')
+			for old in "${AllOldPackages[@]}"; do
+				msg_info "${red}=>Removendo pacote antigo: [$((++count))] => $(basename "${old}") ${reset}"
+				rm -f "${old}" "${old}".sig "${old}".md5 "${old}".sig.md5 >/dev/null 2>&-
+			done
+			rm -f "${db_name}"* >/dev/null 2>&-
+			msg_info "${cyan}Recriando database ${orange}'${db_name}.db.tar.gz' ${cyan}localmente ${reset}"
+			msg_run "repo-add -q -p -n -R ${db_name}.db.tar.gz *.pkg.tar.zst"
+
+			if [[ "$organization" == 'chili' ]]; then
+				msg_info "${cyan}Recriando link for ${orange}'chililinux-${branch}.db.tar.gz' ${cyan}localmente ${reset}"
+				msg_run "cp -f ${db_name}.db.tar.gz chililinux-${branch}.db.tar.gz"
+				msg_run "cp -f ${db_name}.files.tar.gz chililinux-${branch}.files.tar.gz"
+				msg_run "ln -sf chililinux-${branch}.db.tar.gz chililinux-${branch}.db"
+				msg_run "ln -sf chililinux-${branch}.files.tar.gz chililinux-${branch}.files"
+			else
+				msg_info "${cyan}Recriando link for ${orange}'chili-${branch}.db.tar.gz' ${cyan}localmente ${reset}"
+				msg_run "cp -f ${db_name}.db.tar.gz chili-${branch}.db.tar.gz"
+				msg_run "cp -f ${db_name}.files.tar.gz chili-${branch}.files.tar.gz"
+				msg_run "ln -sf chili-${branch}.db.tar.gz chili-${branch}.db"
+				msg_run "ln -sf chili-${branch}.files.tar.gz chili-${branch}.files"
+			fi
+			popd >/dev/null 2>&- || exit 1
+			replicate '-'
 		fi
-		popd >/dev/null 2>&- || exit 1
-		replicate '-'
 	done
 }
 
 sh_remote_push() {
 	for branch in "${aBranchs[@]}"; do
 		sh_config
-		remote_PATH+="/${branch,,}/x86_64"
-		local_PATH+="/${branch,,}/x86_64"
+		if ! $void; then
+			remote_PATH+="/${branch,,}/x86_64"
+			local_PATH+="/${branch,,}/x86_64"
+		fi
 
 		pushd "$local_PATH" >/dev/null 2>&- || exit 1
 		msg_info "${cyan}Empurrando para o remoto: ${orange}${branch}/${organization} ${reset}"
+
 		if $verbose; then
 			echo -n "$black"
-			rsync --itemize-changes --info=skip0 --delete -Craz -e "ssh -p ${remote_PORT}" "${local_PATH}"/ "${remote_USER}"@"${remote_HOST}":"${remote_PATH}"/
+			rsync --itemize-changes --info=skip0 --delete -Craz -e "ssh -p ${remote_PORT} -o LogLevel=ERROR" "${local_PATH}"/ "${remote_USER}"@"${remote_HOST}":"${remote_PATH}"/
 			echo -n "$reset"
 		else
-			rsync --info=skip0 --delete -Craz -e "ssh -p ${remote_PORT}" "${local_PATH}"/ "${remote_USER}"@"${remote_HOST}":"${remote_PATH}"/
+			rsync --info=skip0 --delete -Craz -e "ssh -p ${remote_PORT} -o LogLevel=ERROR" "${local_PATH}"/ "${remote_USER}"@"${remote_HOST}":"${remote_PATH}"/
 		fi
 		popd >/dev/null 2>&- || exit 1
 		#replicate '-'
 	done
+
 	msg_ok "Tudo sincronizado!"
 	replicate '='
 	return
@@ -886,8 +1008,8 @@ sh_version() {
 	cat <<-EOF
 		    ${BOLD}${CYAN}${0##*/} v${VERSION}${RESET}
 		    ${APPDESC}
-    ${BOLD}${orange}Copyright (c) 2019-2025, ${reset}ChiliLinux Development Team <https://chililinux.com> <https://github.com/chililinux>${reset}
-    ${BOLD}${orange}Copyright (c) 2019-2025, ${reset}Vilmar Catafesta <vcatafesta@gmail.com>${black}
+		    ${BOLD}${orange}Copyright (c) 2019-2025, ${reset}ChiliLinux Development Team <https://chililinux.com> <https://github.com/chililinux>${reset}
+		    ${BOLD}${orange}Copyright (c) 2019-2025, ${reset}Vilmar Catafesta <vcatafesta@gmail.com>${black}
 
 		    Este é um software livre: você é livre para alterá-lo e redistribuí-lo.
 		    O $APP é disponibilizado para você sob a ${yellow}Licença MIT${black}, e
@@ -900,41 +1022,42 @@ sh_version() {
 
 sh_usage() {
 	cat <<-EOF
-    ${reset}${APP} v${VERSION} - ${APPDESC}${reset}
-    ${BOLD}${orange}Copyright (c) 2019-2025, ${reset}ChiliLinux Development Team <https://chililinux.com> <https://github.com/chililinux>${reset}
-    ${BOLD}${orange}Copyright (c) 2019-2025, ${reset}Vilmar Catafesta <vcatafesta@gmail.com>${black}
+		    ${reset}${APP} v${VERSION} - ${APPDESC}${reset}
+		    ${BOLD}${orange}Copyright (c) 2019-2025, ${reset}ChiliLinux Development Team <https://chililinux.com> <https://github.com/chililinux>${reset}
+		    ${BOLD}${orange}Copyright (c) 2019-2025, ${reset}Vilmar Catafesta <vcatafesta@gmail.com>${black}
 
-    ${red}Uso: ${reset}$APP ${cyan}[opções]${reset}
+		    ${red}Uso: ${reset}$APP ${cyan}[opções]${reset}
 
-		        ${cyan}Opções:${reset}
-		          -o|--org|--organization ${orange}<name> ${cyan} # Configura organização no Github ${reset}válidos: ${yellow}chili,chililinux,all ${reset}
-		          -c|--config ${orange}[organization]     ${cyan} # configurar ambiente da organization ${reset}default: ${yellow}nova ${reset}
-		          -s|--synchronize               ${cyan} # sincronizar local com remoto (puxar/empurrar) ${reset}válidos: ${yellow}stable,aur,extra,testing,all ${reset}
-		          -A|--syncall   l               ${cyan} # sincronizar automaticamente local com remoto (puxar/empurrar) ${reset}válidos: ${yellow}stable,aur,extra,testing,all ${reset}
-		          -S|--sign                      ${cyan} # assinar pacote faltantes ${reset}
-		          -n|--nocolor                   ${cyan} # Suprime a impressão de cores ${reset}
-		          -v|--verbose                   ${cyan} # ativa modo verboso ${reset}
-		          -V|--version                   ${cyan} # Imprime a versão do aplicativo ${reset}
-		          -h|--help                      ${cyan} # imprime este Help ${reset}
+				        ${cyan}Opções:${reset}
+				          -o|--org|--organization ${orange}<name> ${cyan} # Configura organização no Github ${reset}válidos: ${yellow}${aOrganizations[*]} all ${reset}
+				          -c|--config ${orange}[organization]     ${cyan} # configurar ambiente da organization ${reset}default: ${yellow}nova ${reset}
+				          -s|--synchronize               ${cyan} # sincronizar local com remoto (puxar/empurrar) ${reset}válidos: ${yellow}stable,aur,extra,testing,all ${reset}
+				          -A|--all|--syncall             ${cyan} # sincronizar automaticamente local com remoto (puxar/empurrar) ${reset}válidos: ${yellow}stable,aur,extra,testing,all ${reset}
+				          -S|--sign                      ${cyan} # assinar pacote faltantes ${reset}
+				          -n|--nocolor                   ${cyan} # Suprime a impressão de cores ${reset}
+				          -v|--verbose                   ${cyan} # ativa modo verboso ${reset}
+				          -V|--version                   ${cyan} # Imprime a versão do aplicativo ${reset}
+				          -h|--help                      ${cyan} # imprime este Help ${reset}
 
-		    ${red}ex: ${cyan}${APP} -o chili -s testing         ${rst}
-		        ${yellow}${cyan}${APP} -o chili -o chililinux -s all      ${rst}
-		        ${black}${APP} -o chili -o chililinux -s stable ${rst}
-		        ${black}${APP} -o chili -s aur                  ${rst}
-		        ${black}${APP} -o chili -s all                  ${rst}
-		        ${orange}${APP} -o all -s all                   ${rst}
-		        ${orange}${APP} -o all -s stable                ${rst}
-		        ${yellow}${APP} -o chili --sign testing         ${rst}
-		        ${yellow}${APP} -A all                          ${rst}
-		        ${cyan}${APP} -A stable                       ${rst}
-		        ${cyan}${APP} -A aur                          ${rst}
+				    ${red}ex: ${cyan}${APP} -o chili -s testing         ${rst}
+				        ${yellow}${cyan}${APP} -o chili -o chililinux -s all      ${rst}
+				        ${black}${APP} -o chili -o chililinux -s stable ${rst}
+				        ${black}${APP} -o chili -s aur                  ${rst}
+				        ${black}${APP} -o chili -s all                  ${rst}
+				        ${orange}${APP} -o all -s all                   ${rst}
+				        ${orange}${APP} -o all -s stable                ${rst}
+				        ${yellow}${APP} -o chili --sign testing         ${rst}
+				        ${yellow}${APP} -A all                          ${rst}
+				        ${cyan}${APP} -A stable                       ${rst}
+				        ${cyan}${APP} -A aur                          ${rst}
+				        ${white}${APP} -o void -A all                 ${rst}
 	EOF
 	exit 0
 }
 
 sh_setup() {
 	clear
-  get_organization_conf
+	get_organization_conf
 	setpos 9 00
 	print 9 10 "$APP - CONFIGURAÇÃO de organization" "$red"
 	setpos 10 00
@@ -967,15 +1090,14 @@ sh_setup() {
 		break
 	done
 
-
-  [[ -z "$prefix_DB"   ]] && prefix_DB="$organization"
-  [[ -z "$local_PATH"  ]] && local_PATH="$HOME/.chili-make-repo/Repo${organization}"
-  [[ -z "$remote_HOST" ]] && remote_HOST="repo.chililinux.com"
-  [[ -z "$remote_PORT" ]] && remote_PORT="22"
-  [[ -z "$remote_PATH" ]] && remote_PATH="/home/$USER/domains/chililinux.com/public_html/repo"
-  [[ -z "$remote_USER" ]] && remote_USER="$USER"
-  [[ -z "$SECRETKEY"   ]] && SECRETKEY="seu_secret_key_aqui"
-  [[ -z "$GPGKEY"      ]] && GPGKEY="A0D5A8312A83940ED8B04B0F4BAC871802E960F1"
+	[[ -z "$prefix_DB" ]] && prefix_DB="$organization"
+	[[ -z "$local_PATH" ]] && local_PATH="$HOME/.chili-make-repo/Repo${organization}"
+	[[ -z "$remote_HOST" ]] && remote_HOST="repo.chililinux.com"
+	[[ -z "$remote_PORT" ]] && remote_PORT="22"
+	[[ -z "$remote_PATH" ]] && remote_PATH="/home/$USER/domains/chililinux.com/public_html/repo"
+	[[ -z "$remote_USER" ]] && remote_USER="$USER"
+	[[ -z "$SECRETKEY" ]] && SECRETKEY="seu_secret_key_aqui"
+	[[ -z "$GPGKEY" ]] && GPGKEY="A0D5A8312A83940ED8B04B0F4BAC871802E960F1"
 
 	while true; do
 		get 12 10 "prefix_DB     : " get_prefix_DB "$prefix_DB"
@@ -1006,10 +1128,28 @@ sh_setup() {
 	return 0
 }
 
+detect_distro() {
+	if [[ -r /etc/os-release ]]; then
+		. /etc/os-release
+		echo "${ID:-unknown}"
+	else
+		echo "unknown"
+	fi
+}
+
 set_varcolors
 if test $# -lt 1; then
 	sh_usage
 fi
+
+distro="$(detect_distro)"
+case "$distro" in
+void)
+	void=true
+	FETCH_RE='-[^-]+[0-9]+[^.]*.xbps$'
+	PKG_EXT='xbps'
+	;;
+esac
 
 while [[ $# -gt 0 ]]; do
 	arg="$1"
@@ -1042,7 +1182,7 @@ while [[ $# -gt 0 ]]; do
 
 	-o | --org | --organization)
 		next_arg="${2:-}"
-		if [[ "$next_arg" =~ ^(chili|chililinux|communitybig|biglinux|all)?$ ]]; then
+		if [[ "$next_arg" =~ ^(chili|chililinux|communitybig|biglinux|void|all)?$ ]]; then
 			organization="$next_arg"
 			aOrganizations=()
 			if [[ "$next_arg" == 'all' ]]; then
@@ -1053,7 +1193,7 @@ while [[ $# -gt 0 ]]; do
 			fi
 			shift 2
 		else
-			die "${red} organização invãlida. Válidas: ${yellow}chili,chililinux,communitybig,biglinux ${reset}"
+			die "${red} organização invãlida. Válidas: ${yellow}${aOrganizations[*]} ${reset}"
 		fi
 		;;
 
@@ -1065,28 +1205,45 @@ while [[ $# -gt 0 ]]; do
 			if [[ ${#aOrganizations[@]} -eq 0 ]]; then
 				die "${cyan}Nenhuma organização definida. (Use -h para ajuda)${reset}"
 			fi
-		  signonly=true
-    	search_for_sign_package
+			signonly=true
+			search_for_sign_package
 			exit 0
 		else
 			die "Opção inválida para --sign: $next_arg. Use ${yellow}'stable', 'testing', 'extra', 'aur' ou 'all'${reset}"
 		fi
 		;;
 
-	-A | --syncall)
-		next_arg="${2:-}"
-		if [[ "$next_arg" =~ ^(stable|testing|extra|aur|all)$ ]]; then
+	-A | --all | --syncall)
+      next_arg="${2:-}"
+      next_arg="${next_arg,,}"
+		if [[ "$next_arg" =~ ^(stable|testing|extra|aur|void|all)$ ]]; then
+			if [[ "$next_arg" == 'void' ]]; then
+				void=true
+				arg_branch="all"
+				organization='void'
+				aOrganizations=('void')
+				sh_synchronize_remote_with_local "$arg_branch"
+				exit 0
+			fi
+
 			arg_branch="$next_arg"
 			shift 2
-			if [[ -z "$organization" ]]; then
-				errorbeep
-				die "${cyan}Nenhuma organização definida. (Use -h para ajuda)${reset}"
-			fi
-			sh_synchronize_remote_with_local "$arg_branch"
-			exit 0
 		else
-			die "Opção inválida para --syncall: $next_arg. Use ${yellow}'stable', 'testing', 'extra', 'aur' ou 'all'${reset}"
+			die "Opção inválida para --syncall: $next_arg. Use ${yellow}stable testing extra aaur void all${reset}"
 		fi
+
+		if [[ -z "$organization" ]]; then
+			errorbeep
+			die "${cyan}Nenhuma organização definida. (Use -h para ajuda)${reset}"
+		fi
+
+		if [[ "$organization" == 'chili' ]]; then
+         aOrganizations=()
+         aOrganizations+=("chili")
+         aOrganizations+=("chililinux")
+      fi
+		sh_synchronize_remote_with_local "$arg_branch"
+		exit 0
 		;;
 
 	-s | --synchronize)
