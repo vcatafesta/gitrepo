@@ -1,0 +1,406 @@
+#!/usr/bin/env bash
+# -*- coding: utf-8 -*-
+# shellcheck shell=bash disable=SC1091,SC2039,SC2166
+#
+#  void-build-iso
+#  Created: 2024/09/22 - 07:39
+#  Altered: 2024/09/22 - 07:39
+#  Updated: sex 20 fev 2026 21:38:45 -04
+#
+#  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
+#  All rights reserved.
+#
+#  redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions
+#  are met:
+#  1. redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#  2. redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AS IS'' AND ANY EXPRESS OR
+#  IMPLIED WARRANTIES, IresetLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+#  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+#  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+#  IresetIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (IresetLUDING, BUT
+#  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+#  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+#  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (IresetLUDING NEGLIGEresetE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+#  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+##############################################################################
+#export LANGUAGE=pt_BR
+export TEXTDOMAINDIR=/usr/share/locale
+export TEXTDOMAIN=void-build-iso
+
+# Definir a variável de controle para restaurar a formatação original
+reset=$(tput sgr0)
+
+# Definir os estilos de texto como variáveis
+bold=$(tput bold)
+underline=$(tput smul)   # Início do sublinhado
+nounderline=$(tput rmul) # Fim do sublinhado
+reverse=$(tput rev)      # Inverte as cores de fundo e texto
+
+# Definir as cores ANSI como variáveis
+black=$(tput bold)$(tput setaf 0)
+red=$(tput bold)$(tput setaf 196)
+green=$(tput bold)$(tput setaf 2)
+yellow=$(tput bold)$(tput setaf 3)
+blue=$(tput setaf 4)
+pink=$(tput setaf 5)
+magenta=$(tput setaf 5)
+cyan=$(tput setaf 6)
+white=$(tput setaf 7)
+gray=$(tput setaf 8)
+orange=$(tput setaf 202)
+purple=$(tput setaf 125)
+violet=$(tput setaf 61)
+light_red=$(tput setaf 9)
+light_green=$(tput setaf 10)
+light_yellow=$(tput setaf 11)
+light_blue=$(tput setaf 12)
+light_magenta=$(tput setaf 13)
+light_cyan=$(tput setaf 14)
+bright_white=$(tput setaf 15)
+branco_azul=$(tput setaf 7)$(tput setab 4)
+: "${COL_NC='\e[0m'}" # No Color
+: "${COL_LIGHT_GREEN='\e[1;32m'}"
+: "${COL_LIGHT_RED='\e[1;31m'}"
+: "${DONE="${COL_LIGHT_GREEN} done!${COL_NC}"}"
+: "${OVER="\\r\\033[K"}"
+: "${DOTPREFIX="  ${black}::${reset} "}"
+: "${TICK="${white}[${green}✓${rst}${white}]${rst}"}"
+: "${CROSS="${white}[${red}✗${rst}${white}]${rst}"}"
+: "${INFO="${white}[${gray}i${rst}${white}]${rst}"}"
+
+#debug
+export PS4='${red}${0##*/}${green}[$FUresetNAME]${pink}[$LINENO]${reset}'
+#set -x
+#set -e
+shopt -s extglob
+
+#system
+declare APP="${0##*/}"
+declare _VERSION_="1.0.0-20240922"
+declare distro="$(uname -n)"
+declare DEPENDEresetIES=(tput)
+source /usr/share/fetch/core.sh
+
+MostraErro() {
+	echo "erro: ${red}$1${reset} => comando: ${cyan}'$2'${reset} => result=${yellow}$3${reset}"
+}
+trap 'MostraErro "$APP[$FUresetNAME][$LINENO]" "$BASH_COMMAND" "$?"; exit 1' ERR
+
+# Funções auxiliares
+conf() {
+	read -r -p "$1 [S/n]"
+	[[ ${REPLY^} == "" ]] && return 0
+	[[ ${REPLY^} == N ]] && return 1 || return 0
+}
+
+# p_log
+p_log() {
+	local color="$1"
+	local message="$2"
+	local died="$3"
+
+	[[ -z "$died" ]] && died=false
+	# echo -e "${color}=> ${message}${RESET}"
+	if $died; then
+		printf "${CROSS} => ${color}%s\n\033[m" "$message"
+	else
+		printf "${TICK} => ${color}%s\n\033[m" "$message"
+	fi
+	# Remover códigos de escape ANSI do log
+	clean_log=$(sed -E 's/\x1b\[[0-9;]*[a-zA-Z]//g; s/\x1b\(B//g' <<<"$message")
+	echo "[$(date '+%Y-%m-%d %H:%M:%S')] ${clean_log}" >>"${LOG_FILE}"
+}
+
+die() {
+	local color="$1"
+	local message="$2"
+	p_log "$color" "$message" true
+	checkout_and_exit 1
+}
+
+checkout_and_exit() {
+	local exit_status="$1"
+	if $IS_GIT_REPO; then
+		git checkout "$(get_main_branch)" >/dev/null 2>&-
+	fi
+	if ! ((exit_status)); then
+		p_log "$black" "Processo concluído com sucesso."
+	fi
+	exit "$exit_status"
+}
+
+get_main_branch() {
+	local branch
+	# Check if 'main' branch exists
+	if git rev-parse --verify origin/main >/dev/null 2>&1; then
+		branch="main"
+	elif git rev-parse --verify origin/master >/dev/null 2>&1; then
+		branch="master"
+	fi
+	echo "$branch"
+}
+
+get_repo_root_path() {
+	local repo_path
+	repo_path=$(git rev-parse --show-toplevel 2>/dev/null)
+	[[ -z "$repo_path" ]] && repo_path="$PWD"
+	echo "$repo_path"
+}
+
+create_menu() {
+	local title=$1
+	shift
+	#	local options=("$@" "Sair")
+	local options=("$@")
+	local selected=0
+	local key
+
+	tput civis # Esconde o cursor
+
+	while true; do
+		tput clear # Limpa a tela
+		if $IS_GIT_REPO; then
+			echo '---------------------------------------------------------------------------------'
+			echo -e "Organization  : ${cyan}$ORGANIZATION${reset}"
+      echo -e "User Name     : ${cyan}$GITHUB_USER_NAME${reset}"
+			echo -e "Repo Name     : ${cyan}$REPO_NAME${reset}"
+			echo -e "Repo Workflow : ${cyan}$REPO_WORKFLOW${reset}"
+			echo -e "Local Path    : ${cyan}$REPO_PATH${reset}"
+			echo
+			git remote -v 2>/dev/null
+			echo '---------------------------------------------------------------------------------'
+		elif $IS_BUILD_ISO; then
+			echo '---------------------------------------------------------------------------------'
+			echo -e "Organization  : ${cyan}$ORGANIZATION${reset}"
+			echo -e "Repo Workflow : ${cyan}$REPO_WORKFLOW${reset}"
+			echo -e "Local Path    : ${cyan}$REPO_PATH${reset}"
+			echo '---------------------------------------------------------------------------------'
+		fi
+		if $IS_BUILD_ISO_RESUME; then
+			echo -e "Distroname     : ${cyan}voidlinux ${reset}"
+			echo -e "Edition        : ${cyan}$EDITION ${reset}"
+			echo -e "Iso name       : ${cyan}$DISTRONAME ${reset}"
+			echo -e "Vol_ID         : ${cyan}$VOL_ID ${reset}"
+			echo -e "Debug tmate    : ${cyan}$DEBUG_TMATE ${reset}"
+			echo -e "Somente Teste  : ${cyan}$ONLY_TEST ${reset}"
+			echo '---------------------------------------------------------------------------------'
+		fi
+		echo -e "${blue}${bold}$title${reset}\n"
+		for i in "${!options[@]}"; do
+			if [[ "$i" -eq $selected ]]; then
+				if [[ "${options[$i]}" =~ ^(Sair|Voltar)$ ]]; then
+					echo -e "${red}${bold}${reverse}> ${options[$i]}${reset}"
+				else
+					echo -e "${green}${bold}> ${reverse}${options[$i]}${reset}"
+				fi
+			else
+				if [[ "${options[$i]}" =~ ^(Sair|Voltar)$ ]]; then
+					echo -e "${red}  ${options[$i]}${reset}"
+				else
+					echo "  ${bold}${options[$i]} ${reset}"
+				fi
+			fi
+		done
+
+		read -rsn1 key
+		case "$key" in
+		A)
+			((selected--))
+			[ $selected -lt 0 ] && selected=$((${#options[@]} - 1))
+			;;
+		B)
+			((selected++))
+			[ $selected -eq ${#options[@]} ] && selected=0
+			;;
+		'') break ;;
+		esac
+	done
+
+	tput cnorm # Mostra o cursor novamente
+	echo -e "\nVocê selecionou: ${green}${bold}${options[$selected]}${reset}"
+	MENU_RESULT=${options[$selected]}
+	#	return $((selected+1))
+}
+
+gettokengithub_by_key() {
+	local CFILETOKEN=$HOME/.GITHUB_TOKEN
+	#sed -n "/^$ORGANIZATION=/s/.*=//p" "$CFILETOKEN"
+	#sed -n "/^$ORGANIZATION=/s/^[^=]*=\(.*\)$/\1/p" "$CFILETOKEN" | head -n 1
+	sed -n "/^$ORGANIZATION=/s/.*=//p" "$CFILETOKEN" | awk 'NR==1'
+}
+
+check_valid_token() {
+  # Verificar o token
+  #echo $TOKEN_RELEASE
+  p_log "${cyan}" "Verificando permissões do token GitHub..."
+  token_check=$(curl -s -H "Authorization: token $TOKEN_RELEASE" https://api.github.com/user)
+  GITHUB_USER_NAME="$(echo "$token_check" | jq -r .login)"
+  p_log "$cyan" "Token verificado: ${yellow}$GITHUB_USER_NAME"
+
+  if [[ -z "$(echo "$token_check" | jq .login)" ]]; then
+    if ! conf "=>${red}Token inválido ou sem permissões necessárias. Deseja prosseguir mesmo assim?"; then
+      die "${red}" "Erro fatal: Token inválido ou sem permissões necessárias."
+    fi
+  fi
+}
+
+resume_and_build() {
+	# Confirmar as escolhas
+	clear
+	echo "${black}$(replicate '=')${reset}"
+	echo -e "${cyan}Resumo das escolhas:${reset}"
+	echo "${black}$(replicate '=')${reset}"
+	echo "Organization     : ${orange}$ORGANIZATION ${reset}"
+	echo "Repo Workflow    : ${orange}$REPO_WORKFLOW ${reset}"
+	echo "User Name        : ${orange}$GITHUB_USER_NAME ${reset}"
+	echo "Distroname       : ${orange}$DISTRONAME ${reset}"
+	echo "Edition          : ${orange}$EDITION ${reset}"
+	echo "Release Tag      : ${orange}$TAG ${reset}"
+	echo "TMATE Debug      : ${orange}$DEBUG_TMATE ${reset}"
+	echo "Test Mode        : ${orange}$ONLY_TEST ${reset}"
+	echo "${black}$(replicate '=')${reset}"
+
+	if conf "${yellow}Deseja prosseguir com a construção da ISO?"; then
+		trigger_workflow
+	else
+		die "${red}" "Construção da ISO cancelada."
+	fi
+}
+
+trigger_workflow() {
+  local event_type
+  local data
+  local current_datetime
+  TAG=$(date "+%Y-%m-%d_%H-%M")
+
+#	data='{
+#  "ref": "main",
+#  "inputs": {
+#    "teste_input": "'$ONLY_TEST'",
+#    "vol_id": "'$VOL_ID'",
+#    "edition": "'$EDITION'",
+#    "tmate": "'$DEBUG_TMATE'"
+#  }
+# }'
+#	response=$(curl -s -X POST \
+#		-H "Accept: application/vnd.github.v3+json" \
+#		-H "Authorization: token $TOKEN_RELEASE" \
+#		--data "$data" \
+#		-w "%{http_code}" \
+#		-o /dev/null \
+#		"https://api.github.com/repos/$REPO_WORKFLOW/actions/workflows/create-iso.yml/dispatches")
+
+  current_datetime="$TAG"
+	if $ONLY_TEST; then
+    event_type="ISO-(test)${DISTRONAME}_${current_datetime}"
+  else
+    event_type="ISO-${DISTRONAME}_${current_datetime}"
+  fi
+  data="{\"event_type\": \"$event_type\", \
+    \"client_payload\": { \
+    \"teste_input\": \"$ONLY_TEST\", \
+    \"vol_id\": \"$VOL_ID\", \
+    \"edition\": \"$EDITION\", \
+    \"tmate\": $DEBUG_TMATE \
+  }}"
+
+  p_log "${cyan}" "Disparando workflow para $event_type${reset}"
+  response=$(curl -s -X POST \
+    -H "Accept: application/vnd.github.v3+json" \
+    -H "Authorization: token $TOKEN_RELEASE" \
+    --data "$data" \
+    -w "%{http_code}" \
+    -o /dev/null \
+    "https://api.github.com/repos/${REPO_WORKFLOW}/dispatches")
+
+	if [ "$response" == "422" ]; then
+		die "${red}" "Erro $response ao acionar o workflow. Não pode ter mais de 10 entradas no evento ${reset}"
+	fi
+
+	if [ "$response" != "204" ]; then
+		die "${red}" "Erro ao acionar o workflow. Código de resposta: $response${reset}"
+	fi
+
+	p_log "${green}" "Workflow de build da ISO $event_type acionado com sucesso.${reset}"
+	p_log "${yellow}" "Por favor, verifique a aba 'Actions' no GitHub para acompanhar o progresso do build.${reset}"
+	if $DEBUG_TMATE; then
+		p_log "${yellow}" "A sessão TMATE será ativada. Fique atento às informações de conexão nos logs do GitHub Actions.${reset}"
+	fi
+	p_log "$orange" "Aguardando '3s' para a API acionar a Action e podermos pegar o 'id'."
+	sleep 3
+	p_log "$red" "$(get_url_actions)"
+	checkout_and_exit 0
+}
+
+get_url_actions() {
+	# Requisição para listar as execuções da workflow
+	runs=$(curl -s -X GET \
+		-H "Accept: application/vnd.github.v3+json" \
+		-H "Authorization: token $TOKEN_RELEASE" \
+		"https://api.github.com/repos/${REPO_WORKFLOW}/actions/runs")
+
+	# Obter o ID da execução mais recente
+	run_id=$(echo "$runs" | jq '.workflow_runs | sort_by(.id) | last | .id')
+
+	if [[ -z "$run_id" ]]; then
+		echo "Nenhuma execução encontrada."
+		return 1
+	fi
+
+	# Construir a URL da action
+	action_url="https://github.com/${REPO_WORKFLOW}/actions/runs/$run_id"
+	echo "URL da Action: $action_url"
+}
+
+main() {
+	declare -g ORGANIZATION='chililinux'
+	declare -g REPO_NAME=$(git config --get remote.origin.url | sed 's/.*[:/]\([^/]*\/[^.]*\).*/\1/')
+	declare -g REPO_WORKFLOW='voidlinuxbr/voidbr-build-iso'
+	declare -g REPO_PATH="$(get_repo_root_path)"
+	declare -g TOKEN_RELEASE="$(gettokengithub_by_key)"
+	declare -g IS_BUILD_ISO_RESUME=true
+	declare -g LOG_DIR="/tmp/${APP}/${REPO_NAME}"
+	declare -g LOG_FILE="${LOG_DIR}/${APP}.log"
+	[[ ! -d "$LOG_DIR" ]] && mkdir -p "$LOG_DIR"
+
+  check_valid_token
+
+	while :; do
+		create_menu "Escolha a ${yellow}DE ${reset}da ISO:" base awesome cinnamon enlightnment fluxbox gnome kde xfce all Sair
+		if [[ "$MENU_RESULT" == "Sair" ]]; then
+			die "$yellow" "Saindo do script. Nenhuma ação foi realizada."
+		fi
+		EDITION=$MENU_RESULT
+    DISTRONAME="void-live-${EDITION}-x86_64"
+
+		create_menu "Escolha nome do volume da iso:" "VOID_LIVE_${EDITION^^}" "VOID_LIVE" "Voltar"
+		if [[ "$MENU_RESULT" == "Voltar" ]]; then
+			continue
+		fi
+		VOL_ID=$MENU_RESULT
+
+		create_menu "Ativar Debug Tmate?" "Não" "Sim" "Voltar"
+		if [[ "$MENU_RESULT" == "Voltar" ]]; then
+			continue
+		fi
+		DEBUG_TMATE=$MENU_RESULT
+    DEBUG_TMATE=$([ "$MENU_RESULT" == "Sim" ] && echo "true" || echo "false")
+
+		create_menu "Rodar somente teste:" "Não" "Sim" "Voltar"
+		if [[ "$MENU_RESULT" == "Voltar" ]]; then
+			continue
+		fi
+    ONLY_TEST=$([ "$MENU_RESULT" == "Sim" ] && echo "true" || echo "false")
+
+		resume_and_build
+	done
+}
+
+main
