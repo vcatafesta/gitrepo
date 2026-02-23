@@ -376,7 +376,7 @@ main() {
 
 	while :; do
         TAG=$(date "+%Y%m%d-%H%M")
-		create_menu "Escolha a ${yellow}DE ${reset}da ISO:" base awesome cinnamon enlightnment fluxbox gnome plasma xfce mate all Sair
+		create_menu "Escolha a ${yellow}DE ${reset}da ISO:" teste base awesome cinnamon enlightnment fluxbox gnome plasma xfce mate fullx all Sair
 		if [[ "$MENU_RESULT" == "Sair" ]]; then
 			die "$yellow" "Saindo do script. Nenhuma ação foi realizada."
 		fi
