@@ -521,10 +521,22 @@ while true; do
 		"Comparar pacotes" \
 		"Verificar pacotes exclusivos" \
 		"Remover pacote" \
-		"Mover pacote"
+		"Mover pacote" \
+		"Listar Releases" \
+		"Apagar Releases"
 	ACTION=$MENU_RESULT
 
 	case "$ACTION" in
+	"Listar Releases")
+	    gh repo set-default
+	    gh release list
+	    ;;
+	"Apagar Releases")
+	    gh repo set-default
+	    gh release list
+	    gh release list --limit 100 | awk '{print $1}' | xargs -n1 gh release delete -y
+        gh release list --limit 100 | grep Draft | awk '{print $1}' | xargs -n1 gh release delete -y
+	    ;;
 	"Sincronizar bancos de dados")
 		createMenu "Selecione o repositório para sincronizar:" "false" "${repositories[@]}" "Todos"
 		if [ "$MENU_RESULT" != "Voltar" ]; then
