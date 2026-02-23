@@ -206,9 +206,9 @@ p_log() {
 	[[ -z "$died" ]] && died=false
 	# echo -e "${color}=> ${message}${reset}"
 	if $died; then
-		printf "${CROSS} mkiso=>${red}Error: ${color}%s\n\033[m" "$message"
+		printf "${CROSS} $APP=>${red}Error: ${color}%s\n\033[m" "$message"
 	else
-		printf "${TICK} mkiso=> ${color}%s\n\033[m" "$message"
+		printf "${TICK} $APP=> ${color}%s\n\033[m" "$message"
 	fi
 	# Remover códigos de escape ANSI do log
 	#clean_log=$(sed -E 's/\x1b\[[0-9;]*[a-zA-Z]//g; s/\x1b\(B//g' <<<"$message")
@@ -227,6 +227,10 @@ die() {
 	local message="$2"
 	p_log "$color" "$message" true
 	exit 1
+}
+
+log_err() {
+  echo -e "${CROSS} ${*}${reset}";
 }
 
 replicate() {
@@ -262,20 +266,31 @@ sh_usage() {
     ${cyan}Opções:${reset}
       -b|build|--build ${orange}<image> ${cyan} # Build docker image${reset}
       -r|run|--run     ${orange}<image> ${cyan} # Run docker image${reset}
+      -p|push|--push           ${cyan} # Push docker images into dockerhub ${reset}
       -l|list|--list           ${cyan} # List docker images${reset}
       -d|delete|--delete       ${cyan} # List docker images with <none>${reset}
-      -p|push|--push           ${cyan} # Push docker images into dockerhub ${reset}
+      -y|history|--history     ${cyan} # Historia da image${reset}
       -V|--version             ${cyan} # Imprime a versão do aplicativo ${reset}
       -h|--help                ${cyan} # Mostra este Help ${reset}
 EOF_USAGE
 }
 
 sh_checkroot() {
-	[[ $1 = "-Qq" ]] && return
-	if [ "$(id -u)" != "0" ]; then
-		printf "${red} error: You cannot perform this operation unless you are root!\n"
-		exit 1
-	fi
+  (( EUID != 0 )) && elevate_to_root "$@" || return 0
+}
+
+elevate_to_root() {
+  log_err "This script must be run as root. Elevating privileges..."
+  ccabec+='root [elevated]'
+  # Tenta usar sudo primeiro (caso esteja configurado)
+  if command -v sudo >/dev/null 2>&1; then
+    exec sudo bash "$0" "$@"
+  fi
+  # Se sudo falhar, tenta su
+  if command -v su >/dev/null 2>&1; then
+    exec su -c "$0 $*"
+  fi
+  die "Error: Unable to elevate privileges. Run manually as root."
 }
 
 ## start script
@@ -285,14 +300,16 @@ if test $# -lt 1; then
 	exit $(($# ? 0 : 1))
 fi
 
-sh_checkroot
+sh_checkroot "$@"
+
 if [[ -e Dockerfile ]]; then
   msg 'loading source Dockerfile...'
   # Caminho do Dockerfile
-  dockerfile="Dockerfile"
+  Dockerfile="Dockerfile"
   # Use grep para localizar as linhas com 'LABEL' e awk para extrair os valores
-  version=$(grep -i 'LABEL version=' "$dockerfile" | awk -F'"' '{print $2}')
-  imagename=$(grep -i 'LABEL imagename=' "$dockerfile" | awk -F'"' '{print $2}')
+  version=$(grep -i 'LABEL version=' "$Dockerfile" | awk -F'"' '{print $2}')
+  #imagename=$(grep -i 'LABEL imagename=' "$Dockerfile" | awk -F'"' '{print $2}')
+  imagename=$(awk -F'"' '/LABEL imagename=/ {print $2; exit}' "$Dockerfile")
   image_docker="$imagename:$version"
 else
   #image_docker="voidlinux-docker:1.4"
@@ -317,7 +334,13 @@ for arg in "$@"; do
     msg "docker build --no-cache -t $image_docker ."
     #docker buildx build -t $image_docker .
     #docker build --no-cache -t $image_docker .
-    docker build -t $image_docker .
+    if docker build -t $image_docker . ; then
+      docker history $image_docker
+    fi
+	elif [[ "$arg" = @(-y|history|--history) ]]; then
+		set_varcolors
+    msg "docker history $image_docker"
+    docker history $image_docker
 	elif [[ "$arg" = @(-r|run|--run) ]]; then
 		set_varcolors
     msg "docker run -it $image_docker"
