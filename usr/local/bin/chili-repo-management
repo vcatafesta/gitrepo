@@ -1,4 +1,53 @@
-#!/usr/bin/env bash
+
+# -*- coding: utf-8 -*-
+# shellcheck shell=bash disable=SC1091,SC2039,SC2166,SC2034
+#
+#  t
+#  Created: seg 23 fev 2026 12:48:15 -04
+#  Altered: seg 23 fev 2026 12:48:15 -04
+#  Updated: seg 23 fev 2026 12:48:15 -04
+#
+#  Copyright (c) 2019-2026, Vilmar Catafesta <vcatafesta@gmail.com>
+#  Copyright (c) 2019-2026, ChiliLinux Development Team <https://chililinux.com> <https://github.com/chililinux>
+#  Assembled By Vilmar Catafesta for the ChiliLinux project.
+#  All rights reserved.
+#
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions
+#  are met:
+#  1. Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#  2. Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution.
+#
+#  THIS SOFTWARE IS PROVIDED BY Vilmar Catafesta ''AS IS'' AND ANY EXPRESS OR
+#  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+#  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+#  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+#  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+#  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+#  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+#  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+#  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+##############################################################################
+export LANGUAGE="${LANGUAGE:-pt_BR}"
+export TEXTDOMAINDIR=/usr/share/locale
+export TEXTDOMAIN=chili-repo-management
+
+#debug
+export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset}'
+#set -x
+#set -e
+#set -euo pipefail
+shopt -s extglob
+
+#system
+declare APP="${0##*/}"
+declare _VERSION_="0.02.23-20260223"
+declare APPDESC="Script de Gerenciamento de Repositório local/remoto (versão $version)"
+declare distro="$(uname -n)"
 
 # Cores e estilos
 red='\033[0;31m'
@@ -17,12 +66,117 @@ version="1.3.0"
 repoDir="/home/big/Docker/RepoCommunity/html"
 repositories=("testing" "stable" "extra")
 
+set_varcolors() {
+  # does the terminal support true-color?
+  if [[ -n "$(command -v "tput")" ]]; then
+    #tput setaf 127 | cat -v  #capturar saida
+    : "${RED=$(tput bold)$(tput setaf 196)}"
+    : "${GREEN=$(tput bold)$(tput setaf 2)}"
+    : "${YELLOW=$(tput bold)$(tput setaf 3)}"
+    : "${BLUE=$(tput setaf 4)}"
+    : "${PURPLE=$(tput setaf 125)}"
+    : "${CYAN=$(tput setaf 6)}"
+    : "${NC=$(tput sgr0)}"
+    : "${RESET=$(tput sgr0)}"
+    : "${BOLD=$(tput bold)}"
+    : "${black=$(tput bold)$(tput setaf 0)}"
+    : "${reverse=$(tput rev)}"
+    : "${branca=${black}$(tput setab 7)}"
+
+    : "${reset=$(tput sgr0)}"
+    : "${rst=$(tput sgr0)}"
+    : "${bold=$(tput bold)}"
+    : "${underline=$(tput smul)}"
+    : "${nounderline=$(tput rmul)}"
+    : "${reverse=$(tput rev)}"
+
+    : "${black=$(tput bold)$(tput setaf 0)}"
+    : "${red=$(tput bold)$(tput setaf 196)}"
+    : "${green=$(tput bold)$(tput setaf 2)}"
+    : "${yellow=$(tput bold)$(tput setaf 3)}"
+    : "${blue=$(tput setaf 27)}"
+    : "${pink=$(tput setaf 5)}"
+    : "${magenta=$(tput setaf 5)}"
+    : "${cyan=$(tput setaf 6)}"
+    : "${white=$(tput setaf 7)}"
+    : "${gray=$(tput setaf 8)}"
+    : "${light_red=$(tput setaf 9)}"
+    : "${light_green=$(tput setaf 10)}"
+    : "${light_yellow=$(tput setaf 11)}"
+    : "${light_blue=$(tput setaf 12)}"
+    : "${light_magenta=$(tput setaf 13)}"
+    : "${light_cyan=$(tput setaf 14)}"
+    : "${light_white=$(tput setaf 15)}"
+    : "${orange=$(tput setaf 202)}"
+    : "${purple=$(tput setaf 125)}"
+    : "${violet=$(tput setaf 61)}"
+
+    # Definir cores de fundo
+    : "${preto=$(tput setab 0)}"
+    : "${vermelho=$(tput setab 196)}"
+    : "${verde=$(tput setab 2)}"
+    : "${amarelo=$(tput setab 3)}"
+    : "${azul=$(tput setab 20)}"
+    : "${roxo=$(tput setab 5)}"
+    : "${ciano=$(tput setab 6)}"
+    : "${branca="${black}$(tput setab 7)"}"
+    : "${cinza=$(tput setab 8)}"
+    : "${laranja=$(tput setab 202)}"
+    : "${roxa=$(tput setab 125)}"
+    : "${violeta=$(tput setab 61)}"
+
+    : "${COL_NC='\e[0m'}" # No Color
+    : "${COL_LIGHT_GREEN='\e[1;32m'}"
+    : "${COL_LIGHT_RED='\e[1;31m'}"
+    : "${DONE="${COL_LIGHT_GREEN} done!${COL_NC}"}"
+    : "${OVER="\\r\\033[K"}"
+    : "${DOTPREFIX="  ${black}::${reset} "}"
+    : "${clrkey=${light_white}}"
+    : "${TICK="${clrkey}[${green}✓✓✓${clrkey}]${rst}"}"
+    : "${CROSS="${clrkey}[${red}✗✗✗${clrkey}]${rst}"}"
+    : "${MID="${clrkey}[${red}✗✗${green}✓${clrkey}]${rst}"}"
+    : "${WARN="${clrkey}[${yellow}⚠  ${clrkey}]${yellow}"}"
+    : "${INFO="${clrkey}[${yellow}➡  ${clrkey}]${rst}"}"
+
+    # dialog colors
+    REVERSE="\Zr"
+    UNDERLINE="\Zu"
+    BOLD="\Zb"
+    RESET="\Zn"
+    BLACK="\Z0"
+    YELLOW="\Z3"
+    AMARELO="\Zb\Z3"
+    WHITE="\Z7"
+    BLUE="\Z4"
+    AZUL="\Zb\Z4"
+    CYAN="\Z6"
+    RED="\Z1"
+    GREEN="\Z2"
+    MAGENTA="\Z5"
+  else
+    unset_varcolors
+  fi
+}
+
+unset_varcolors() {
+  unset RED GREEN YELLOW BLUE PURPLE CYAN NC RESET BOLD
+  unset reset rst bold underline nounderline reverse
+  unset black red green yellow blue magenta cyan white gray orange purple violet
+  unset light_red light_green light_yellow light_blue light_magenta light_cyan light_white
+  unset preto vermelho verde amarelo azul roxo ciano branca cinza laranja roxa violeta
+  TICK="${white}[${verde}✓${rst}${white}]${rst}"
+  CROSS="${white}[${roxa}✗${rst}${white}]${rst}"
+  INFO="${white}[${cinza}i${rst}${white}]${rst}"
+}
+
+
 # Funções auxiliares
 printMessage() {
 	local color=$1
-	local message=$2
+	shift
+	local message=$*
 	echo -e "${color}${message}${nc}"
-	echo ""
+#	echo ""
 }
 
 checkError() {
@@ -42,13 +196,21 @@ createMenu() {
 	local options=("$@" "$exitOption")
 	local selected=0
 	local key
+  local gh_repo_view="$(git remote -v)"
 
 	tput civis # Esconde o cursor
 
 	while true; do
-		tput clear # Limpa a tela
-		echo -e "${blue}${bold}$title${nc}\n"
+		#tput clear # Limpa a tela
+		clear
+  	printMessage "$orange" "$APP"
+  	printMessage "$green" "$APPDESC"
+    echo
+    printMessage "${white}" "Repositorio:"
+    printMessage "${yellow}$gh_repo_view${reset}"
 
+		echo
+		echo -e "${blue}${bold}$title${nc}\n"
 		for i in "${!options[@]}"; do
 			if [ $i -eq $selected ]; then
 				if [ "${options[$i]}" == "$exitOption" ]; then
@@ -511,20 +673,43 @@ checkExclusivePackages() {
 	esac
 }
 
+set_varcolors
+
 # Menu principal
 while true; do
-	printMessage "$blue" "Script de Gerenciamento de Repositório no Servidor (versão $version)"
-
 	createMenu "Escolha uma ação:" "true" \
 		"Sincronizar bancos de dados" \
 		"Limpar pacotes antigos" \
 		"Comparar pacotes" \
 		"Verificar pacotes exclusivos" \
 		"Remover pacote" \
-		"Mover pacote"
+		"Mover pacote" \
+		"Listar Releases" \
+		"Apagar Releases" \
+		"Listar Tags" \
+		"Apagar Tags"
 	ACTION=$MENU_RESULT
 
 	case "$ACTION" in
+	"Listar Tags")
+		gh repo set-default
+		git ls-remote --tags origin
+		sleep 2
+		;;
+	"Apagar Tags")
+		gh repo set-default
+		git tag | xargs -I {} sh -c 'git tag -d {} && git push origin --delete {}'
+		;;
+	"Listar Releases")
+		gh repo set-default
+		gh release list
+		;;
+	"Apagar Releases")
+		gh repo set-default
+		gh release list
+		gh release list --limit 100 | grep Draft | awk '{print $1}' | xargs -I {} sh -c 'gh release delete -y {} && git tag -d {} && git push origin --delete {}'
+		gh release list --limit 100 | awk '{print $1}' | xargs -I {} sh -c 'gh release delete -y {} && git tag -d {} && git push origin --delete {}'
+		;;
 	"Sincronizar bancos de dados")
 		createMenu "Selecione o repositório para sincronizar:" "false" "${repositories[@]}" "Todos"
 		if [ "$MENU_RESULT" != "Voltar" ]; then
