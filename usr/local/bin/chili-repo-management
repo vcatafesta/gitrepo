@@ -1,11 +1,10 @@
-
 # -*- coding: utf-8 -*-
 # shellcheck shell=bash disable=SC1091,SC2039,SC2166,SC2034
 #
-#  t
-#  Created: seg 23 fev 2026 12:48:15 -04
-#  Altered: seg 23 fev 2026 12:48:15 -04
-#  Updated: seg 23 fev 2026 12:48:15 -04
+#  chili-repo-management
+#  Created: 2024/12/20 - 01:48
+#  Altered: 2024/12/20 - 01:48
+#  Updated: ter 24 fev 2026 01:37:40 -04
 #
 #  Copyright (c) 2019-2026, Vilmar Catafesta <vcatafesta@gmail.com>
 #  Copyright (c) 2019-2026, ChiliLinux Development Team <https://chililinux.com> <https://github.com/chililinux>
@@ -67,108 +66,107 @@ repoDir="/home/big/Docker/RepoCommunity/html"
 repositories=("testing" "stable" "extra")
 
 set_varcolors() {
-  # does the terminal support true-color?
-  if [[ -n "$(command -v "tput")" ]]; then
-    #tput setaf 127 | cat -v  #capturar saida
-    : "${RED=$(tput bold)$(tput setaf 196)}"
-    : "${GREEN=$(tput bold)$(tput setaf 2)}"
-    : "${YELLOW=$(tput bold)$(tput setaf 3)}"
-    : "${BLUE=$(tput setaf 4)}"
-    : "${PURPLE=$(tput setaf 125)}"
-    : "${CYAN=$(tput setaf 6)}"
-    : "${NC=$(tput sgr0)}"
-    : "${RESET=$(tput sgr0)}"
-    : "${BOLD=$(tput bold)}"
-    : "${black=$(tput bold)$(tput setaf 0)}"
-    : "${reverse=$(tput rev)}"
-    : "${branca=${black}$(tput setab 7)}"
+	# does the terminal support true-color?
+	if [[ -n "$(command -v "tput")" ]]; then
+		#tput setaf 127 | cat -v  #capturar saida
+		: "${RED=$(tput bold)$(tput setaf 196)}"
+		: "${GREEN=$(tput bold)$(tput setaf 2)}"
+		: "${YELLOW=$(tput bold)$(tput setaf 3)}"
+		: "${BLUE=$(tput setaf 4)}"
+		: "${PURPLE=$(tput setaf 125)}"
+		: "${CYAN=$(tput setaf 6)}"
+		: "${NC=$(tput sgr0)}"
+		: "${RESET=$(tput sgr0)}"
+		: "${BOLD=$(tput bold)}"
+		: "${black=$(tput bold)$(tput setaf 0)}"
+		: "${reverse=$(tput rev)}"
+		: "${branca=${black}$(tput setab 7)}"
 
-    : "${reset=$(tput sgr0)}"
-    : "${rst=$(tput sgr0)}"
-    : "${bold=$(tput bold)}"
-    : "${underline=$(tput smul)}"
-    : "${nounderline=$(tput rmul)}"
-    : "${reverse=$(tput rev)}"
+		: "${reset=$(tput sgr0)}"
+		: "${rst=$(tput sgr0)}"
+		: "${bold=$(tput bold)}"
+		: "${underline=$(tput smul)}"
+		: "${nounderline=$(tput rmul)}"
+		: "${reverse=$(tput rev)}"
 
-    : "${black=$(tput bold)$(tput setaf 0)}"
-    : "${red=$(tput bold)$(tput setaf 196)}"
-    : "${green=$(tput bold)$(tput setaf 2)}"
-    : "${yellow=$(tput bold)$(tput setaf 3)}"
-    : "${blue=$(tput setaf 27)}"
-    : "${pink=$(tput setaf 5)}"
-    : "${magenta=$(tput setaf 5)}"
-    : "${cyan=$(tput setaf 6)}"
-    : "${white=$(tput setaf 7)}"
-    : "${gray=$(tput setaf 8)}"
-    : "${light_red=$(tput setaf 9)}"
-    : "${light_green=$(tput setaf 10)}"
-    : "${light_yellow=$(tput setaf 11)}"
-    : "${light_blue=$(tput setaf 12)}"
-    : "${light_magenta=$(tput setaf 13)}"
-    : "${light_cyan=$(tput setaf 14)}"
-    : "${light_white=$(tput setaf 15)}"
-    : "${orange=$(tput setaf 202)}"
-    : "${purple=$(tput setaf 125)}"
-    : "${violet=$(tput setaf 61)}"
+		: "${black=$(tput bold)$(tput setaf 0)}"
+		: "${red=$(tput bold)$(tput setaf 196)}"
+		: "${green=$(tput bold)$(tput setaf 2)}"
+		: "${yellow=$(tput bold)$(tput setaf 3)}"
+		: "${blue=$(tput setaf 27)}"
+		: "${pink=$(tput setaf 5)}"
+		: "${magenta=$(tput setaf 5)}"
+		: "${cyan=$(tput setaf 6)}"
+		: "${white=$(tput setaf 7)}"
+		: "${gray=$(tput setaf 8)}"
+		: "${light_red=$(tput setaf 9)}"
+		: "${light_green=$(tput setaf 10)}"
+		: "${light_yellow=$(tput setaf 11)}"
+		: "${light_blue=$(tput setaf 12)}"
+		: "${light_magenta=$(tput setaf 13)}"
+		: "${light_cyan=$(tput setaf 14)}"
+		: "${light_white=$(tput setaf 15)}"
+		: "${orange=$(tput setaf 202)}"
+		: "${purple=$(tput setaf 125)}"
+		: "${violet=$(tput setaf 61)}"
 
-    # Definir cores de fundo
-    : "${preto=$(tput setab 0)}"
-    : "${vermelho=$(tput setab 196)}"
-    : "${verde=$(tput setab 2)}"
-    : "${amarelo=$(tput setab 3)}"
-    : "${azul=$(tput setab 20)}"
-    : "${roxo=$(tput setab 5)}"
-    : "${ciano=$(tput setab 6)}"
-    : "${branca="${black}$(tput setab 7)"}"
-    : "${cinza=$(tput setab 8)}"
-    : "${laranja=$(tput setab 202)}"
-    : "${roxa=$(tput setab 125)}"
-    : "${violeta=$(tput setab 61)}"
+		# Definir cores de fundo
+		: "${preto=$(tput setab 0)}"
+		: "${vermelho=$(tput setab 196)}"
+		: "${verde=$(tput setab 2)}"
+		: "${amarelo=$(tput setab 3)}"
+		: "${azul=$(tput setab 20)}"
+		: "${roxo=$(tput setab 5)}"
+		: "${ciano=$(tput setab 6)}"
+		: "${branca="${black}$(tput setab 7)"}"
+		: "${cinza=$(tput setab 8)}"
+		: "${laranja=$(tput setab 202)}"
+		: "${roxa=$(tput setab 125)}"
+		: "${violeta=$(tput setab 61)}"
 
-    : "${COL_NC='\e[0m'}" # No Color
-    : "${COL_LIGHT_GREEN='\e[1;32m'}"
-    : "${COL_LIGHT_RED='\e[1;31m'}"
-    : "${DONE="${COL_LIGHT_GREEN} done!${COL_NC}"}"
-    : "${OVER="\\r\\033[K"}"
-    : "${DOTPREFIX="  ${black}::${reset} "}"
-    : "${clrkey=${light_white}}"
-    : "${TICK="${clrkey}[${green}✓✓✓${clrkey}]${rst}"}"
-    : "${CROSS="${clrkey}[${red}✗✗✗${clrkey}]${rst}"}"
-    : "${MID="${clrkey}[${red}✗✗${green}✓${clrkey}]${rst}"}"
-    : "${WARN="${clrkey}[${yellow}⚠  ${clrkey}]${yellow}"}"
-    : "${INFO="${clrkey}[${yellow}➡  ${clrkey}]${rst}"}"
+		: "${COL_NC='\e[0m'}" # No Color
+		: "${COL_LIGHT_GREEN='\e[1;32m'}"
+		: "${COL_LIGHT_RED='\e[1;31m'}"
+		: "${DONE="${COL_LIGHT_GREEN} done!${COL_NC}"}"
+		: "${OVER="\\r\\033[K"}"
+		: "${DOTPREFIX="  ${black}::${reset} "}"
+		: "${clrkey=${light_white}}"
+		: "${TICK="${clrkey}[${green}✓✓✓${clrkey}]${rst}"}"
+		: "${CROSS="${clrkey}[${red}✗✗✗${clrkey}]${rst}"}"
+		: "${MID="${clrkey}[${red}✗✗${green}✓${clrkey}]${rst}"}"
+		: "${WARN="${clrkey}[${yellow}⚠  ${clrkey}]${yellow}"}"
+		: "${INFO="${clrkey}[${yellow}➡  ${clrkey}]${rst}"}"
 
-    # dialog colors
-    REVERSE="\Zr"
-    UNDERLINE="\Zu"
-    BOLD="\Zb"
-    RESET="\Zn"
-    BLACK="\Z0"
-    YELLOW="\Z3"
-    AMARELO="\Zb\Z3"
-    WHITE="\Z7"
-    BLUE="\Z4"
-    AZUL="\Zb\Z4"
-    CYAN="\Z6"
-    RED="\Z1"
-    GREEN="\Z2"
-    MAGENTA="\Z5"
-  else
-    unset_varcolors
-  fi
+		# dialog colors
+		REVERSE="\Zr"
+		UNDERLINE="\Zu"
+		BOLD="\Zb"
+		RESET="\Zn"
+		BLACK="\Z0"
+		YELLOW="\Z3"
+		AMARELO="\Zb\Z3"
+		WHITE="\Z7"
+		BLUE="\Z4"
+		AZUL="\Zb\Z4"
+		CYAN="\Z6"
+		RED="\Z1"
+		GREEN="\Z2"
+		MAGENTA="\Z5"
+	else
+		unset_varcolors
+	fi
 }
 
 unset_varcolors() {
-  unset RED GREEN YELLOW BLUE PURPLE CYAN NC RESET BOLD
-  unset reset rst bold underline nounderline reverse
-  unset black red green yellow blue magenta cyan white gray orange purple violet
-  unset light_red light_green light_yellow light_blue light_magenta light_cyan light_white
-  unset preto vermelho verde amarelo azul roxo ciano branca cinza laranja roxa violeta
-  TICK="${white}[${verde}✓${rst}${white}]${rst}"
-  CROSS="${white}[${roxa}✗${rst}${white}]${rst}"
-  INFO="${white}[${cinza}i${rst}${white}]${rst}"
+	unset RED GREEN YELLOW BLUE PURPLE CYAN NC RESET BOLD
+	unset reset rst bold underline nounderline reverse
+	unset black red green yellow blue magenta cyan white gray orange purple violet
+	unset light_red light_green light_yellow light_blue light_magenta light_cyan light_white
+	unset preto vermelho verde amarelo azul roxo ciano branca cinza laranja roxa violeta
+	TICK="${white}[${verde}✓${rst}${white}]${rst}"
+	CROSS="${white}[${roxa}✗${rst}${white}]${rst}"
+	INFO="${white}[${cinza}i${rst}${white}]${rst}"
 }
-
 
 # Funções auxiliares
 printMessage() {
@@ -176,7 +174,7 @@ printMessage() {
 	shift
 	local message=$*
 	echo -e "${color}${message}${nc}"
-#	echo ""
+	#	echo ""
 }
 
 checkError() {
@@ -189,25 +187,26 @@ checkError() {
 
 createMenu() {
 	local title=$1
-	local isMainMenu=$2 # Novo parâmetro: true para menu principal, false para submenus
-	shift 2
+	local isMainMenu="$2" # Novo parâmetro: true para menu principal, false para submenus
+	local typeReturn="$3" # Novo parâmetro: retorn do item do menu: string ou number
+	shift 3
 	local exitOption="Sair"
 	[ "$isMainMenu" != "true" ] && exitOption="Voltar"
 	local options=("$@" "$exitOption")
 	local selected=0
 	local key
-  local gh_repo_view="$(git remote -v)"
+	local gh_repo_view="$(git remote -v)"
 
 	tput civis # Esconde o cursor
 
 	while true; do
 		#tput clear # Limpa a tela
 		clear
-  	printMessage "$orange" "$APP"
-  	printMessage "$green" "$APPDESC"
-    echo
-    printMessage "${white}" "Repositorio:"
-    printMessage "${yellow}$gh_repo_view${reset}"
+		printMessage "$orange" "$APP"
+		printMessage "$green" "$APPDESC"
+		echo
+		printMessage "${white}" "Repositorio:"
+		printMessage "${yellow}$gh_repo_view${reset}"
 
 		echo
 		echo -e "${blue}${bold}$title${nc}\n"
@@ -243,7 +242,16 @@ createMenu() {
 
 	tput cnorm # Mostra o cursor novamente
 	echo -e "\nVocê selecionou: ${green}${bold}${options[$selected]}${nc}"
-	MENU_RESULT=${options[$selected]}
+	if [[ $typeReturn == 'number' ]]; then
+		MENU_RESULT=$((++selected))
+	else
+		MENU_RESULT=${options[$selected]}
+	fi
+}
+
+inkey() {
+	echo -e "$red"
+	read -p "Tecle algo" confirm
 }
 
 removePackage() {
@@ -261,7 +269,7 @@ removePackage() {
 		return
 	fi
 
-	createMenu "Selecione o pacote para remover:" "${packages[@]}"
+	createMenu "Selecione o pacote para remover:" 'string' "${packages[@]}"
 	local selected_package=$MENU_RESULT
 
 	if [ "$selected_package" != "Sair" ]; then
@@ -282,7 +290,7 @@ removePackage() {
 
 movePackage() {
 	# Primeiro, escolher o repositório de origem
-	createMenu "Selecione o repositório de origem:" "false" "${repositories[@]}"
+	createMenu "Selecione o repositório de origem:" "false" 'string' "${repositories[@]}"
 	local sourceRepo=$MENU_RESULT
 
 	if [ "$sourceRepo" == "Voltar" ]; then
@@ -301,7 +309,7 @@ movePackage() {
 	fi
 
 	# Escolher o pacote para mover
-	createMenu "Selecione o pacote para mover:" "false" "${packages[@]}"
+	createMenu "Selecione o pacote para mover:" "false" 'string' "${packages[@]}"
 	local selectedPackage=$MENU_RESULT
 
 	if [ "$selectedPackage" == "Voltar" ]; then
@@ -310,7 +318,7 @@ movePackage() {
 
 	# Escolher o repositório de destino
 	local otherRepos=($(echo "${repositories[@]}" | tr ' ' '\n' | grep -v "^$sourceRepo$"))
-	createMenu "Selecione o repositório de destino:" "false" "${otherRepos[@]}"
+	createMenu "Selecione o repositório de destino:" "false" 'string' "${otherRepos[@]}"
 	local targetRepo=$MENU_RESULT
 
 	if [ "$targetRepo" == "Voltar" ]; then
@@ -360,7 +368,7 @@ syncDatabase() {
 	# Se receber um repositório, pergunta se quer sincronizar
 	elif [ ! -z "$1" ]; then
 		local menu_options=("Atualizar Repositório: $1")
-		createMenu "O seguinte repositório foi alterado:" "false" "${menu_options[@]}"
+		createMenu "O seguinte repositório foi alterado:" "false" 'string' "${menu_options[@]}"
 
 		if [ "$MENU_RESULT" == "Voltar" ]; then
 			return
@@ -484,12 +492,12 @@ comparePackages() {
 				;;
 			m)
 				echo -e "${white}${bold}Escolha o repositório de origem:${nc}"
-				createMenu "Selecione o repositório de origem:" "false" "${repos_with_package[@]}"
+				createMenu "Selecione o repositório de origem:" "false" 'string' "${repos_with_package[@]}"
 				local sourceRepo=$MENU_RESULT
 				if [ "$sourceRepo" != "Voltar" ]; then
 					local otherRepos=($(echo "${repositories[@]}" | tr ' ' '\n' | grep -v "^$sourceRepo$"))
 					echo -e "${white}${bold}Escolha o repositório de destino:${nc}"
-					createMenu "Selecione o repositório de destino:" "false" "${otherRepos[@]}"
+					createMenu "Selecione o repositório de destino:" "false" 'string' "${otherRepos[@]}"
 					local targetRepo=$MENU_RESULT
 					if [ "$targetRepo" != "Sair" ]; then
 						read -p "$(echo -e ${yellow}"Confirma mover $pkgname de $sourceRepo para $targetRepo? (s/n): "${nc})" confirm
@@ -505,7 +513,7 @@ comparePackages() {
 				;;
 			r)
 				echo -e "${white}${bold}Escolha o repositório de onde remover o pacote $pkgname:${nc}"
-				createMenu "Selecione o repositório:" "false" "${repos_with_package[@]}"
+				createMenu "Selecione o repositório:" "false" 'string' "${repos_with_package[@]}"
 				local removeRepo=$MENU_RESULT
 				if [ "$removeRepo" != "Voltar" ]; then
 					read -p "$(echo -e ${yellow}"Confirma remover ${blue}${bold}${pkgname}${nc} ${yellow}de $removeRepo? (s/n): "${nc})" confirm
@@ -603,7 +611,7 @@ checkExclusivePackages() {
 			return
 		fi
 
-		createMenu "Selecione o pacote para mover:" "${allExclusivePackages[@]}"
+		createMenu "Selecione o pacote para mover:" 'string' "${allExclusivePackages[@]}"
 		local selected=$MENU_RESULT
 
 		if [ "$selected" != "Sair" ]; then
@@ -611,7 +619,7 @@ checkExclusivePackages() {
 			local pkgname=$(echo "$selected" | cut -d'/' -f2)
 
 			local otherRepos=($(echo "${repositories[@]}" | tr ' ' '\n' | grep -v "^$sourceRepo$"))
-			createMenu "Selecione o repositório de destino:" "${otherRepos[@]}"
+			createMenu "Selecione o repositório de destino:" 'string' "${otherRepos[@]}"
 			local targetRepo=$MENU_RESULT
 
 			if [ "$targetRepo" != "Sair" ]; then
@@ -652,7 +660,7 @@ checkExclusivePackages() {
 			return
 		fi
 
-		createMenu "Selecione o pacote para remover:" "${allExclusivePackages[@]}"
+		createMenu "Selecione o pacote para remover:" 'string' "${allExclusivePackages[@]}"
 		local selected=$MENU_RESULT
 
 		if [ "$selected" != "Sair" ]; then
@@ -673,45 +681,155 @@ checkExclusivePackages() {
 	esac
 }
 
+sh_tags() {
+	while true; do
+		createMenu "MENU TAGS - Escolha uma ação:" "false" 'number' \
+			"Listar Tags" \
+			"Apagar Tags"
+		ACTION=$MENU_RESULT
+
+		case "$ACTION" in
+		1)
+			gh repo set-default
+			git ls-remote --tags origin
+			inkey
+			;;
+		2)
+			gh repo set-default
+			git tag | xargs -I {} sh -c 'git tag -d {} && git push origin --delete {}'
+			inkey
+			;;
+		3)
+			return
+			;;
+		*)
+			printMessage "$red" "Opção inválida selecionada."
+			;;
+		esac
+		#		echo ""
+		#		read -p "Pressione [Enter] para voltar ao menu principal..."
+	done
+}
+
+sh_releases() {
+	while true; do
+		createMenu "MENU RELEASES - Escolha uma ação:" "false" 'number' \
+			"Listar Releases" \
+			"Apagar Releases"
+		ACTION=$MENU_RESULT
+
+		case "$ACTION" in
+		1)
+			gh repo set-default
+			gh release list
+			inkey
+			;;
+		2)
+			gh repo set-default
+			gh release list
+			#			gh release list --limit 100 | grep Draft | awk '{print $1}' | xargs -I {} sh -c 'gh release delete -y {} && git tag -d {} && git push origin --delete {}'
+			gh release list --limit 100 | awk '{print $1}' | xargs -I {} sh -c 'gh release delete -y {} && git tag -d {} && git push origin --delete {}'
+			inkey
+			;;
+		3)
+			return
+			;;
+		*)
+			printMessage "$red" "Opção inválida selecionada."
+			;;
+		esac
+		#		echo ""
+		#		read -p "Pressione [Enter] para voltar ao menu principal..."
+	done
+}
+
+sh_workflows() {
+	while true; do
+		createMenu "MENU WORKFLOWS (EXECUÇẼS) - Escolha uma ação:" "false" 'number' \
+			"1 Listar Workflows" \
+			"2 Listar Workflows com falha" \
+			"3 Listar Workflows com sucesso" \
+			"4 Apagar Workflows com falha" \
+			"5 Apagar Workflows com sucesso" \
+			"6 Apagar todas Workflows"
+		ACTION=$MENU_RESULT
+
+		case "$ACTION" in
+		1)
+			#			gh repo set-default
+			gh run list
+			inkey
+			;;
+		2)
+			#			gh repo set-default
+			gh run list --status failure
+			inkey
+			;;
+		3)
+			#			gh repo set-default
+			gh run list --status success
+			inkey
+			;;
+		4)
+			#			gh repo set-default
+			for run_id in $(gh run list \
+				--status failure \
+				--json databaseId \
+				--jq '.[].databaseId'); do
+				gh run delete $run_id
+			done
+			inkey
+			;;
+		5)
+			#			gh repo set-default
+			for run_id in $(gh run list \
+				--status success \
+				--json databaseId \
+				--jq '.[].databaseId'); do
+				gh run delete $run_id
+			done
+			inkey
+			;;
+		7)
+			return
+			;;
+		*)
+			printMessage "$red" "Opção inválida selecionada."
+			;;
+		esac
+		#		echo ""
+		#		read -p "Pressione [Enter] para voltar ao menu principal..."
+	done
+}
+
 set_varcolors
 
 # Menu principal
 while true; do
-	createMenu "Escolha uma ação:" "true" \
+	createMenu "Escolha uma ação:" "true" 'string' \
 		"Sincronizar bancos de dados" \
 		"Limpar pacotes antigos" \
 		"Comparar pacotes" \
 		"Verificar pacotes exclusivos" \
 		"Remover pacote" \
 		"Mover pacote" \
-		"Listar Releases" \
-		"Apagar Releases" \
-		"Listar Tags" \
-		"Apagar Tags"
+		"Menu Releases" \
+		"Menu Tags" \
+		"Menu Workflows"
 	ACTION=$MENU_RESULT
 
 	case "$ACTION" in
-	"Listar Tags")
-		gh repo set-default
-		git ls-remote --tags origin
-		sleep 2
+	"Menu Workflows")
+		sh_workflows
 		;;
-	"Apagar Tags")
-		gh repo set-default
-		git tag | xargs -I {} sh -c 'git tag -d {} && git push origin --delete {}'
+	"Menu Tags")
+		sh_tags
 		;;
-	"Listar Releases")
-		gh repo set-default
-		gh release list
-		;;
-	"Apagar Releases")
-		gh repo set-default
-		gh release list
-		gh release list --limit 100 | grep Draft | awk '{print $1}' | xargs -I {} sh -c 'gh release delete -y {} && git tag -d {} && git push origin --delete {}'
-		gh release list --limit 100 | awk '{print $1}' | xargs -I {} sh -c 'gh release delete -y {} && git tag -d {} && git push origin --delete {}'
+	"Menu Releases")
+		sh_releases
 		;;
 	"Sincronizar bancos de dados")
-		createMenu "Selecione o repositório para sincronizar:" "false" "${repositories[@]}" "Todos"
+		createMenu "Selecione o repositório para sincronizar:" "false" 'string' "${repositories[@]}" "Todos"
 		if [ "$MENU_RESULT" != "Voltar" ]; then
 			if [ "$MENU_RESULT" == "Todos" ]; then
 				syncDatabase "all"
@@ -744,7 +862,6 @@ while true; do
 		printMessage "$red" "Opção inválida selecionada."
 		;;
 	esac
-
-	echo ""
-	read -p "Pressione [Enter] para voltar ao menu principal..."
+	#	echo ""
+	#	read -p "Pressione [Enter] para voltar ao menu principal..."
 done
