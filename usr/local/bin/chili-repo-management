@@ -726,9 +726,18 @@ sh_releases() {
 			;;
 		2)
 			gh repo set-default
-			gh release list
-			#			gh release list --limit 100 | grep Draft | awk '{print $1}' | xargs -I {} sh -c 'gh release delete -y {} && git tag -d {} && git push origin --delete {}'
-			gh release list --limit 100 | awk '{print $1}' | xargs -I {} sh -c 'gh release delete -y {} && git tag -d {} && git push origin --delete {}'
+
+			while :; do
+				tags=$(gh release list --limit 1000 --json tagName --jq '.[].tagName')
+				[ -z "$tags" ] && break
+
+				echo "$tags" | while read -r tag; do
+					echo "Removendo $tag"
+					gh release delete "$tag" -y
+					git push origin ":refs/tags/$tag"
+					git tag -d "$tag" 2>/dev/null
+				done
+			done
 			inkey
 			;;
 		3)
@@ -756,22 +765,22 @@ sh_workflows() {
 
 		case "$ACTION" in
 		1)
-			#			gh repo set-default
+			gh repo set-default
 			gh run list
 			inkey
 			;;
 		2)
-			#			gh repo set-default
+			gh repo set-default
 			gh run list --status failure
 			inkey
 			;;
 		3)
-			#			gh repo set-default
+			gh repo set-default
 			gh run list --status success
 			inkey
 			;;
 		4)
-			#			gh repo set-default
+			gh repo set-default
 			for run_id in $(gh run list \
 				--status failure \
 				--json databaseId \
@@ -781,12 +790,22 @@ sh_workflows() {
 			inkey
 			;;
 		5)
-			#			gh repo set-default
+			gh repo set-default
 			for run_id in $(gh run list \
 				--status success \
 				--json databaseId \
 				--jq '.[].databaseId'); do
 				gh run delete $run_id
+			done
+			inkey
+			;;
+		6)
+			gh repo set-default
+
+			while :; do
+				runs=$(gh run list --limit 1000 --json databaseId --jq '.[].databaseId')
+				[ -z "$runs" ] && break
+				echo "$runs" | xargs -r -n1 gh run delete
 			done
 			inkey
 			;;
