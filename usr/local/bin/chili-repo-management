@@ -696,7 +696,10 @@ sh_tags() {
 			;;
 		2)
 			gh repo set-default
-			git tag | xargs -I {} sh -c 'git tag -d {} && git push origin --delete {}'
+			# Apagar todas as tags remotas
+			git tag -l | xargs -r -n1 -I{} git push origin :refs/tags/{}
+			# Apagar todas as tags locais
+			git tag -l | xargs -r -n1 git tag -d
 			inkey
 			;;
 		3)
