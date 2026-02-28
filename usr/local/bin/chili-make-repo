@@ -1007,14 +1007,30 @@ sh_remote_push() {
 		pushd "$local_PATH" >/dev/null 2>&- || exit 1
 		msg_info "${cyan}Empurrando para o remoto: ${orange}${branch}/${organization} ${reset}"
 
-		if $verbose; then
-			echo -n "$black"
-			rsync --itemize-changes --info=skip0 --delete -Craz -e "ssh -p ${remote_PORT} -o LogLevel=ERROR" "${local_PATH}"/ "${remote_USER}"@"${remote_HOST}":"${remote_PATH}"/
-			echo -n "$reset"
-		else
-			rsync --info=skip0 --delete -Craz -e "ssh -p ${remote_PORT} -o LogLevel=ERROR" "${local_PATH}"/ "${remote_USER}"@"${remote_HOST}":"${remote_PATH}"/
-		fi
-		popd >/dev/null 2>&- || exit 1
+    if $verbose; then
+      echo -n "$black"
+      rsync --itemize-changes \
+            --info=skip0 \
+            --delete -Craz \
+            -e "ssh -p ${remote_PORT} \
+                -i $HOME/.ssh/id_rsa \
+                -o IdentitiesOnly=yes \
+                -o LogLevel=ERROR" \
+            "${local_PATH}/" \
+            "${remote_USER}@${remote_HOST}:${remote_PATH}/"
+      echo -n "$reset"
+    else
+      rsync --info=skip0 \
+            --delete -Craz \
+            -e "ssh -p ${remote_PORT} \
+                -i $HOME/.ssh/id_rsa \
+                -o IdentitiesOnly=yes \
+                -o LogLevel=ERROR" \
+            "${local_PATH}/" \
+            "${remote_USER}@${remote_HOST}:${remote_PATH}/"
+    fi
+    popd >/dev/null 2>&- || exit 1
+
 		#replicate '-'
 	done
 
