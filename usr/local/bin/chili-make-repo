@@ -908,11 +908,30 @@ sh_remote_pull() {
 		if $verbose; then
 			echo -n "$black"
 			#rsync --itemize-changes --info=skip0 -Craz -e "ssh -p ${remote_PORT}" "${remote_USER}"@"${remote_HOST}":"${remote_PATH}"/ "${local_PATH}"/
-			rsync --itemize-changes --info=skip0 -Crau -e "ssh -p ${remote_PORT} -o LogLevel=ERROR" "${remote_USER}"@"${remote_HOST}":"${remote_PATH}/" "${local_PATH}/"
+			#rsync --itemize-changes --info=skip0 -Crau -e "ssh -p ${remote_PORT} -o LogLevel=ERROR" "${remote_USER}"@"${remote_HOST}":"${remote_PATH}/" "${local_PATH}/"
+      if ! rsync --itemize-changes \
+        --info=skip0 -Crau \
+        -e "ssh -p ${remote_PORT} \
+        -i $HOME/.ssh/id_rsa \
+        -o IdentitiesOnly=yes \
+        -o LogLevel=ERROR" \
+        "${remote_USER}@${remote_HOST}:${remote_PATH}/" \
+        "${local_PATH}/"; then
+        die "Erro"
+      fi
 			echo -n "$reset"
 		else
 			#rsync --info=skip0 -Craz -e "ssh -p ${remote_PORT}" "${remote_USER}"@"${remote_HOST}":"${remote_PATH}"/ "${local_PATH}"/
-			rsync --info=skip0 -Crau -e "ssh -p ${remote_PORT} -o LogLevel=ERROR" "${remote_USER}"@"${remote_HOST}":"${remote_PATH}/" "${local_PATH}/"
+			#rsync --info=skip0 -Crau -e "ssh -p ${remote_PORT} -o LogLevel=ERROR" "${remote_USER}"@"${remote_HOST}":"${remote_PATH}/" "${local_PATH}/"
+      if ! rsync --itemize-changes --info=skip0 -Crau \
+        -e "ssh -p ${remote_PORT} \
+        -i $HOME/.ssh/id_rsa \
+        -o IdentitiesOnly=yes \
+        -o LogLevel=ERROR" \
+        "${remote_USER}@${remote_HOST}:${remote_PATH}/" \
+        "${local_PATH}/"; then
+        die "Erro"
+      fi
 		fi
 	done
 }
