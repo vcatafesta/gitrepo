@@ -824,6 +824,40 @@ sh_workflows() {
 	done
 }
 
+sh_commits_clean() {
+  read -p "Tem certeza que deseja limpar todos os commits? (s/n): " confirm
+  [[ ! $confirm =~ ^[Ss]$ ]] && return 1
+
+  mainbranch="$(git symbolic-ref --short HEAD 2>/dev/null)" || {
+    echo "Erro: HEAD destacado."
+    return 1
+  }
+
+  name="$(gh api user --jq '.name')"
+  email="$(gh api user/emails --jq '.[] | select(.primary==true) | .email')"
+
+  git branch -D backup_branch 2>/dev/null
+  git branch backup_branch || return 1
+
+  git checkout --orphan new_branch || return 1
+  git add -A
+  git commit -m "Restart commit - $(date) - $name <$email>"
+
+  git branch -D "$mainbranch"
+  git branch -m "$mainbranch"
+
+  git push -f -u origin "$mainbranch"
+
+  git branch -D backup_branch
+
+  # limpa histórico local definitivamente
+  git reflog expire --expire=now --all
+  git gc --prune=now --aggressive
+  echo "Repositório reiniciado com sucesso."
+  inkey
+}
+
+
 set_varcolors
 
 # Menu principal
@@ -837,7 +871,8 @@ while true; do
 		"Mover pacote" \
 		"Menu Releases" \
 		"Menu Tags" \
-		"Menu Workflows"
+		"Menu Workflows" \
+		"Resetar commits (clean)"
 	ACTION=$MENU_RESULT
 
 	case "$ACTION" in
@@ -879,6 +914,9 @@ while true; do
 		;;
 	"Sair")
 		exit 0
+		;;
+	"Resetar commits (clean)")
+		sh_commits_clean
 		;;
 	*)
 		printMessage "$red" "Opção inválida selecionada."
