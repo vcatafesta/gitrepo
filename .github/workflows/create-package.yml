@@ -1,0 +1,25 @@
+name: Trigger voidbr-pkgmake
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Disparar build remoto
+        run: |
+          echo "Repo atual: ${{ github.event.repository.name }}"
+
+          curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/voidlinuxbr/voidbr-pkgmake/dispatches \
+            -d "{
+              \"event_type\": \"webhook\",
+              \"client_payload\": {
+                \"package\": \"${{ github.event.repository.name }}\"
+              }
+            }"
