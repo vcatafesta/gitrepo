@@ -3,6 +3,13 @@ name: Trigger voidbr-pkgmake
 on:
   push:
     branches: ["main"]
+  workflow_dispatch: # Permite a execução manual do workflow
+    inputs:
+      debug_enabled: # Input para habilitar o modo de depuração
+        type: boolean
+        description: "With TMATE"
+        required: false
+        default: false
 
 jobs:
   trigger:
@@ -11,15 +18,15 @@ jobs:
     steps:
       - name: Disparar build remoto
         run: |
-          echo "Repo atual: ${{ github.event.repository.name }}"
+          echo "Repo atual completo: ${{ github.repository }}"
 
           curl -X POST \
             -H "Authorization: Bearer ${{ secrets.ORGANIZATION_TOKEN }}" \
             -H "Accept: application/vnd.github+json" \
-            https://api.github.com/repos/voidbr/voidbr-pkgmake/dispatches \
+            https://api.github.com/repos/voidlinuxbr/voidbr-pkgmake/dispatches \
             -d "{
               \"event_type\": \"webhook\",
               \"client_payload\": {
-                \"package\": \"${{ github.event.repository.name }}\"
+                \"repository\": \"${{ github.repository }}\"
               }
             }"
