@@ -265,6 +265,7 @@ sh_usage() {
 
     ${cyan}Opções:${reset}
       -b|build|--build ${orange}<image> ${cyan} # Build docker image${reset}
+      -f|force|--force ${orange}<image> ${cyan} # Force Build docker image${reset}
       -r|run|--run     ${orange}<image> ${cyan} # Run docker image${reset}
       -p|push|--push           ${cyan} # Push docker images into dockerhub ${reset}
       -l|list|--list           ${cyan} # List docker images${reset}
@@ -312,8 +313,7 @@ if [[ -e Dockerfile ]]; then
   imagename=$(awk -F'"' '/LABEL imagename=/ {print $2; exit}' "$Dockerfile")
   image_docker="$imagename:$version"
 else
-  #image_docker="voidlinux-docker:1.4"
-  image_docker="build-iso:1.6"
+  image_docker="${2:-build-iso:1.6}"
 fi
 
 # Loop através de todos os parâmetros ($@)
@@ -333,8 +333,16 @@ for arg in "$@"; do
 		set_varcolors
     msg "docker build --no-cache -t $image_docker ."
     #docker buildx build -t $image_docker .
-    #docker build --no-cache -t $image_docker .
+    #docker build -t $image_docker .
     if docker build -t $image_docker . ; then
+      docker history $image_docker
+    fi
+	elif [[ "$arg" = @(-f|force|--force) ]]; then
+		set_varcolors
+    msg "docker build --no-cache -t $image_docker ."
+    #docker buildx build -t $image_docker .
+    #docker build --no-cache -t $image_docker .
+    if docker build --no-cache -t $image_docker . ; then
       docker history $image_docker
     fi
 	elif [[ "$arg" = @(-y|history|--history) ]]; then
