@@ -4,7 +4,7 @@
 #  chili-repo-management
 #  Created: 2024/12/20 - 01:48
 #  Altered: 2024/12/20 - 01:48
-#  Updated: ter 24 fev 2026 01:37:40 -04
+#  Updated: sáb 28 fev 2026 21:42:24 -04
 #
 #  Copyright (c) 2019-2026, Vilmar Catafesta <vcatafesta@gmail.com>
 #  Copyright (c) 2019-2026, ChiliLinux Development Team <https://chililinux.com> <https://github.com/chililinux>
@@ -44,7 +44,7 @@ shopt -s extglob
 
 #system
 declare APP="${0##*/}"
-declare _VERSION_="0.02.23-20260223"
+declare _VERSION_="0.02.28-20260228"
 declare APPDESC="Script de Gerenciamento de Repositório local/remoto (versão $version)"
 declare distro="$(uname -n)"
 
@@ -863,6 +863,7 @@ set_varcolors
 # Menu principal
 while true; do
 	createMenu "Escolha uma ação:" "true" 'string' \
+		"Criar pacote" \
 		"Sincronizar bancos de dados" \
 		"Limpar pacotes antigos" \
 		"Comparar pacotes" \
@@ -876,6 +877,17 @@ while true; do
 	ACTION=$MENU_RESULT
 
 	case "$ACTION" in
+	"Criar pacote")
+    package=$(gh repo view --json nameWithOwner -q .nameWithOwner)
+    gh api repos/voidlinuxbr/voidbr-pkgmake/dispatches \
+      -X POST \
+      -i \
+      --input <(jq -n \
+        --arg repo "$package" \
+        --arg event "create-package $package" \
+        '{event_type:$event, client_payload:{repository:$repo}}')
+    inkey
+		;;
 	"Menu Workflows")
 		sh_workflows
 		;;
