@@ -48,7 +48,7 @@ sh_usage() {
 		${red}Uso: ${reset}$APP ${cyan}[opções]${reset}
 
 		    ${cyan}Opções:${reset}
-		      -o|--org|--organization ${orange}<name> ${cyan} # Configura organização no Github ${reset}válidos: communitybig, biglinux, chililinux ${yellow}(default: chililinux)${reset}
+		      -o|--org|--organization ${orange}<name> ${cyan} # Configura organização no Github ${reset}válidos: voidlinuxbr, voidlinux-br, communitybig, biglinux, chililinux ${yellow}(default: chililinux)${reset}
 		      -b|--build            ${orange}<branch> ${cyan} # Realizar commit/push e gerar pacote ${reset} branch válidos: ${yellow}testing, stable ${cyan}ou ${yellow}extra ${reset}
 		      -c|--commit          ${orange}<message> ${cyan} # Apenas fazer commit/push ${yellow}obrigátorio mensagem do commit ${reset}
 		      -a|--aur              ${orange}<pacote> ${cyan} # Construir pacote do AUR ${yellow}obrigátorio nome do pacote para construir ${reset}
@@ -74,6 +74,17 @@ check_param_build() {
 		die "$RED" "Erro fatal: Valor inválido para o parâmetro ${YELLOW}'-b|--build' ${RESET};
 ${INFO}São válidos: ${branchs[*]}"
 	fi
+}
+
+get_organization_param() {
+  if [[ $value_organization = @(voidlinuxbr|voidlinux-br) ]]; then
+    REPO_WORKFLOW="${value_organization}/voidbr-build-package"  # Repositório que contém os workflows
+    PKG_FILE='PKGFILE'
+  else
+    REPO_WORKFLOW="${value_organization}/build-package"         # Repositório que contém os workflows
+    PKG_FILE='PKGBUILD'
+  fi
+  ORGANIZATION="${REPO_WORKFLOW%%/*}"                           # default=chililinux
 }
 
 parse_parameters() {
@@ -138,8 +149,7 @@ parse_parameters() {
 	done
 
 	if $param_organization_was_supplied; then
-		REPO_WORKFLOW="${value_organization}/build-package" # Repositório que contém os workflows
-		ORGANIZATION="${REPO_WORKFLOW%%/*}"                 # default=chililinux
+      get_organization_param
 	fi
 
 	get_token_release # Obtem o TOKEN_RELEASE utilizando a função get_token_release
@@ -202,7 +212,7 @@ trigger_workflow() {
     package_name="${package_name//aur-/}"
     package_name="${package_name//aur\//}"
 		aur_url="https://aur.archlinux.org/${package_name}.git"
-    if [[ "$ORGANIZATION" =~ ^(chililinux|vcatafesta)$ ]]; then
+    if [[ "$ORGANIZATION" =~ ^(chililinux|vcatafesta|voidlinuxbr|voidlinux-br)$ ]]; then
       data="{\
         \"event_type\": \"aur-$package_name\", \
         \"client_payload\": { \
@@ -275,7 +285,7 @@ sh_configure_environment() {
 	#set -x
 	#set -e
 
-	declare -g REPO_WORKFLOW="chililinux/build-package" # Repositório que contém os workflows
+	declare -g REPO_WORKFLOW="chililinux/build-package"   # Repositório que contém os workflows
 	declare -g ORGANIZATION="${REPO_WORKFLOW%%/*}"        # chililinux
 	declare -g CFILETOKEN="$HOME/.GITHUB_TOKEN"           # path do arquivo que contem os tokens do github
 	declare -g GITHUB_USER_NAME
@@ -312,9 +322,9 @@ resume_and_build() {
   local repo_name=$(git config --get remote.origin.url | sed 's/.*[:/]\([^/]*\/[^.]*\).*/\1/')
 
   if [[ "$package_name" == 'erro2' ]]; then
-    die "$RED" "Erro: Arquivo PKGBUILD não encontrado."
+    die "$RED" "Erro: Arquivo ${PKG_FILE} não encontrado."
   elif [[ "$package_name" == 'erro3' ]]; then
-    die "$RED" "Erro: Nome do pacote não encontrado no PKGBUILD."
+    die "$RED" "Erro: Nome do pacote não encontrado no ${PKG_FILE}."
   fi
 
   # Confirmar as escolhas
@@ -374,13 +384,13 @@ Construir_pacote_do_AUR() {
 
 	IS_AUR_PACKAGE=true
 
-	# Verifica se existe um arquivo PKGBUILD
+	# Verifica se existe um arquivo PKGBUILD/PKGFILE
 	if ! $IS_AUR_PACKAGE; then
-		PKGBUILD_PATH=$(find "$REPO_PATH" -name PKGBUILD -print -quit)
+		PKGBUILD_PATH=$(find "$REPO_PATH" -name $PKG_FILE -print -quit)
 		if [[ -z "$PKGBUILD_PATH" ]]; then
-			die "$RED" "Erro: Nenhum arquivo PKGBUILD foi encontrado no diretório atual ou subdiretórios."
+			die "$RED" "Erro: Nenhum arquivo $PKG_FILE foi encontrado no diretório atual ou subdiretórios."
 		else
-			p_log "$GREEN" "Arquivo PKGBUILD encontrado em: $PKGBUILD_PATH"
+			p_log "$GREEN" "Arquivo $PKG_FILE encontrado em: $PKGBUILD_PATH"
 			cd "$(dirname "$PKGBUILD_PATH")" || die "$RED" "Erro: não consegui entrar em $PKGBUILD_PATH"
 		fi
 	fi

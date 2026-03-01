@@ -33,7 +33,7 @@
 ##############################################################################
 declare distro="$(uname -n)"
 readonly DEPENDENCIES=('git' 'tput')
-readonly organizations=('communitybig' 'biglinux' 'chililinux' 'talesam' 'vcatafesta')
+readonly organizations=(voidlinuxbr voidlinux-br communitybig biglinux chililinux talesam vcatafesta)
 readonly branchs=('testing' 'stable' 'extra' 'aur')
 shopt -s extglob # Habilita o uso de padrões estendidos (extglob)
 
@@ -648,7 +648,7 @@ get_package_name() {
 	local pkgbuild_path
 	local pkgname
 
-	pkgbuild_path=$(find . -name PKGBUILD -print -quit)
+	pkgbuild_path=$(find . -name $PKG_FILE -print -quit)
 	if [[ -z "$pkgbuild_path" ]]; then
 		#die "$RED" "Erro: Arquivo PKGBUILD não encontrado."
 		echo 'erro2'
