@@ -31,7 +31,7 @@
 ##############################################################################
 # Maintainer: Vilmar Catafesta <vcatafesta@gmail.com>
 
-pkgname=gitrepo
+pkgname=chili-gitrepo
 pkgdesc="Wrapper git para o ChiliLinux"
 pkgver=$(date +%Y%m%d)
 pkgrel=$(date +%H%M)
