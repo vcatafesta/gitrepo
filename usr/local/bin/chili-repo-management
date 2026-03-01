@@ -879,7 +879,7 @@ while true; do
 	case "$ACTION" in
 	"Criar pacote")
     package=$(gh repo view --json nameWithOwner -q .nameWithOwner)
-    gh api repos/voidlinuxbr/voidbr-pkgmake/dispatches \
+    gh api repos/voidlinuxbr/voidbr-build-package/dispatches \
       -X POST \
       -i \
       --input <(jq -n \
